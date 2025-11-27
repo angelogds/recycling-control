@@ -70,3 +70,11 @@ body {
 .modal-content {
     border-radius: 16px !important;
 }
+.table-success {
+    background: #0f3e1e !important;
+    color: #fff;
+}
+
+.card-premium h4 {
+    margin-bottom: 10px;
+}
