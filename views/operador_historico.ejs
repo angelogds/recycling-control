@@ -1,0 +1,23 @@
+<% layout('layouts/base') %>
+
+<h3>Histórico de Ciclos</h3>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>ID</th><th>Digestor</th><th>Início</th><th>Fim</th><th>Status</th><th>PDF</th>
+        </tr>
+    </thead>
+    <tbody>
+    <% ciclos.forEach(c => { %>
+        <tr>
+            <td><%= c.id %></td>
+            <td><%= c.digestor_id %></td>
+            <td><%= c.started_at %></td>
+            <td><%= c.ended_at %></td>
+            <td><%= c.status %></td>
+            <td><a href="/reports/cycle/<%= c.id %>" target="_blank">PDF</a></td>
+        </tr>
+    <% }) %>
+    </tbody>
+</table>
