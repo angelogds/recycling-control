@@ -1,0 +1,37 @@
+cat > views/portaria/portaria_painel.ejs << 'EOF'
+<%- include('../layouts/base_top', { title: "Portaria", usuario: usuario }) %>
+
+<h2 class="title-premium mb-4">Portaria — Chegadas</h2>
+
+<div class="mb-3">
+  <a href="/portaria/chegada" class="btn btn-premium">Registrar Chegada</a>
+</div>
+
+<div class="card card-premium p-3">
+  <h4 class="title-premium">Entradas pendentes</h4>
+  <table class="table mt-3">
+    <thead><tr class="table-success"><th>Placa</th><th>Toneladas</th><th>Chegada</th><th>Status</th></tr></thead>
+    <tbody id="listaEntradas"><tr><td colspan="4" class="text-muted text-center">Carregando...</td></tr></tbody>
+  </table>
+</div>
+
+<script>
+async function loadEntradas(){
+  const rows = await fetch('/api/entries/pending').then(r=>r.json());
+  const t = document.getElementById('listaEntradas'); t.innerHTML='';
+  if(!rows || rows.length===0){ t.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Nenhuma entrada</td></tr>'; return; }
+  rows.forEach(r => {
+    t.innerHTML += `<tr>
+      <td>${r.truck_plate}</td>
+      <td>${r.toneladas_declared} tn</td>
+      <td>${new Date(r.arrival_at).toLocaleString()}</td>
+      <td>${r.status}</td>
+    </tr>`;
+  });
+}
+loadEntradas();
+setInterval(loadEntradas,4000);
+</script>
+
+<%- include('../layouts/base_bottom') %>
+EOF
