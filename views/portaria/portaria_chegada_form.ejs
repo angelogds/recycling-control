@@ -1,0 +1,24 @@
+cat > views/portaria/portaria_chegada_form.ejs << 'EOF'
+<%- include('../layouts/base_top', { title: "Registrar Chegada", usuario: usuario }) %>
+
+<h2 class="title-premium mb-4">Registrar Chegada</h2>
+
+<div class="card card-premium p-4">
+  <form method="POST" action="/portaria/chegada">
+    <div class="mb-3">
+      <label class="form-label">Placa</label>
+      <input name="placa" class="form-control" required>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Toneladas</label>
+      <input name="toneladas" type="number" step="0.1" class="form-control" required>
+    </div>
+    <div class="d-flex justify-content-end gap-2">
+      <a href="/portaria" class="btn btn-outline-premium">Cancelar</a>
+      <button class="btn btn-premium">Registrar</button>
+    </div>
+  </form>
+</div>
+
+<%- include('../layouts/base_bottom') %>
+EOF
