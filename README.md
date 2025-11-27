@@ -1,9 +1,16 @@
-# Recycling Control - Controle de Matéria-Prima e Digestores
+# Recycling Control - Sistema de Controle de Processo
 
-Projeto MVP para controlar chegada de matéria-prima, descarregamento em tovas, trituração e cozimento em digestores.
+## Instalação local
+1. Clonar repo
+2. `npm install`
+3. Criar DB e seed: `npm run init-db`
+4. Iniciar: `npm start` (ou `npm run dev`)
 
-## Como rodar localmente
+A aplicação roda em `http://localhost:3002` por padrão.
 
-1. Instale dependências:
-```bash
-npm install
+## Deploy
+- Push para GitHub e configure Railway/Heroku.
+- Se Railway: não se esqueça de rodar `npm run init-db` durante build ou usar um volume persistente.
+
+## Estrutura
+/...
