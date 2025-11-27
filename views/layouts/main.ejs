@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title || "Controle de Processo" %></title>
+
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<nav style="background:#0c3d26; color:white; padding:10px 20px; display:flex; justify-content:space-between; align-items:center;">
+    <div style="display:flex; align-items:center; gap:10px;">
+        <img src="/img/logo_menu_256.png" style="height:40px;">
+        <span style="font-size:20px; font-weight:600;">Controle de Processo</span>
+    </div>
+
+    <div style="font-size:18px;">
+        <%= usuario ? usuario.nome : "" %>
+    </div>
+</nav>
+
+<main style="padding:20px;">
+    <%- body %>
+</main>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/js/app.js"></script>
+
+</body>
+</html>
