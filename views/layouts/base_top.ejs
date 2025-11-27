@@ -2,33 +2,17 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title><%= title %></title>
 
-    <!-- BOOTSTRAP -->
-    <link
-        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-        rel="stylesheet"
-    >
-
-    <!-- CSS PREMIUM -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/css/style.css">
-
-    <!-- Socket.io -->
-    <script src="/socket.io/socket.io.js"></script>
 </head>
 
-<body class="bg-light">
+<body>
 
-<nav class="navbar navbar-dark bg-dark px-4 py-3 shadow-sm">
-    <span class="navbar-brand mb-0 h1">
-        <strong>Controle de Processo</strong>
-    </span>
-
-    <span class="text-white fw-bold">
-        <%= usuario.nome %>
-    </span>
-</nav>
+<div class="navbar-premium">
+    <div class="fw-bold">⚙️ Controle de Processo</div>
+    <div><%= usuario ? usuario.nome : "" %></div>
+</div>
 
 <div class="container mt-4">
