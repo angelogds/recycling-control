@@ -1,16 +1,28 @@
-<%- include('layouts/base_top', { title: "Registrar Chegada", usuario: usuario }) %>
+<%- include("layouts/base_top", { title: "Registrar Chegada", usuario: usuario }) %>
 
-<h2 class="title-premium mb-4">Registrar Chegada de Caminhão</h2>
+<h2 class="title-premium mb-4">Registrar Chegada do Caminhão</h2>
 
-<form method="POST" action="/portaria/chegada" class="card card-premium p-4">
+<div class="card card-premium p-4">
 
-    <label class="form-label">Placa</label>
-    <input type="text" class="form-control mb-3" name="placa">
+    <form method="POST" action="/portaria/chegada">
 
-    <label class="form-label">Toneladas Declaradas</label>
-    <input type="number" step="0.1" class="form-control mb-3" name="toneladas">
+        <div class="mb-3">
+            <label class="form-label fw-bold">Placa do Caminhão</label>
+            <input required name="placa" class="form-control" placeholder="ABC-1234">
+        </div>
 
-    <button class="btn btn-premium w-100">Salvar</button>
-</form>
+        <div class="mb-3">
+            <label class="form-label fw-bold">Toneladas Declaradas</label>
+            <input required type="number" step="0.1" name="toneladas" class="form-control" placeholder="Ex: 12.5">
+        </div>
 
-<%- include('layouts/base_bottom') %>
+        <div class="d-flex gap-2">
+            <a href="/portaria" class="btn btn-outline-premium">Cancelar</a>
+            <button class="btn btn-premium">Registrar Chegada</button>
+        </div>
+
+    </form>
+
+</div>
+
+<%- include("layouts/base_bottom") %>
