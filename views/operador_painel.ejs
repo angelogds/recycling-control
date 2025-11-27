@@ -1,1 +1,321 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Painel Operador — Digestores</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <!-- Bootstrap CSS (CDN) -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body{font-family:Inter,Helvetica,Arial;background:#f4f6f8;padding:18px}
+    .card-digestor{border-radius:12px;box-shadow:0 6px 18px rgba(2,6,23,0.06);padding:16px;background:white}
+    .status-badge{padding:6px 10px;border-radius:999px;font-weight:700}
+    .small-muted{font-size:13px;color:#666}
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h4>Painel Operador — Digestores</h4>
+      <div class="small-muted">Usuário: <strong><%= usuario.nome %></strong> — <%= usuario.role %></div>
+    </div>
+    <div>
+      <button class="btn btn-outline-secondary" onclick="refreshAll()">Atualizar</button>
+      <button class="btn btn-primary" onclick="generateTestPDF()">Gerar PDF Teste (último ciclo)</button>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <ul class="nav nav-tabs" id="mainTabs" role="tablist">
+    <li class="nav-item" role="presentation"><button class="nav-link active" id="digestors-tab" data-bs-toggle="tab" data-bs-target="#digestors" type="button">Digestores</button></li>
+    <li class="nav-item" role="presentation"><button class="nav-link" id="tovas-tab" data-bs-toggle="tab" data-bs-target="#tovas" type="button">Tovas & Caminhões</button></li>
+  </ul>
+
+  <div class="tab-content mt-3">
+    <div class="tab-pane fade show active" id="digestors" role="tabpanel">
+      <div class="row g-3" id="digestorGrid"></div>
+    </div>
+
+    <div class="tab-pane fade" id="tovas" role="tabpanel">
+      <div class="row">
+        <div class="col-md-6">
+          <h6>Tovas</h6>
+          <div id="tovasList"></div>
+        </div>
+        <div class="col-md-6">
+          <h6>Caminhões Pendentes</h6>
+          <div id="entriesList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr/>
+  <div id="log" class="p-3 bg-white rounded shadow-sm" style="min-height:60px"></div>
+</div>
+
+<!-- Modais (Bootstrap) -->
+<!-- Modal: Iniciar Carregamento -->
+<div class="modal fade" id="modalStartCarga" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="formStartCarga" class="modal-content">
+      <div class="modal-header"><h5 class="modal-title">Iniciar Carregamento</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">
+        <input type="hidden" id="m_digestor_id">
+        <div class="mb-3"><label class="form-label">Tova</label><select id="m_from_tova" class="form-select"></select></div>
+        <div class="mb-3"><label class="form-label">Toneladas a carregar</label><input id="m_toneladas" step="0.1" type="number" class="form-control" required></div>
+        <div class="small text-muted">Selecione a tova de origem e a tonelagem a ser carregada para o digestor.</div>
+      </div>
+      <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-primary">Iniciar</button></div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: Finalizar Trituração -->
+<div class="modal fade" id="modalFinishTrit" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="formFinishTrit" class="modal-content">
+      <div class="modal-header"><h5 class="modal-title">Finalizar Trituração</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">
+        <input type="hidden" id="m_tritura_id">
+        <div class="mb-3"><label class="form-label">Toneladas trituradas</label><input id="m_trit_ton" step="0.1" type="number" class="form-control" required></div>
+      </div>
+      <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-primary">Finalizar</button></div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: Finalizar Cozimento -->
+<div class="modal fade" id="modalFinishCook" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="formFinishCook" class="modal-content">
+      <div class="modal-header"><h5 class="modal-title">Finalizar Cozimento</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">
+        <input type="hidden" id="m_cook_id">
+        <div class="mb-3"><label class="form-label">Observações (opcional)</label><textarea id="m_cook_notes" class="form-control" rows="3"></textarea></div>
+      </div>
+      <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-primary">Finalizar</button></div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: Descarregar -->
+<div class="modal fade" id="modalDischarge" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="formDischarge" class="modal-content">
+      <div class="modal-header"><h5 class="modal-title">Registrar Descarregamento</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">
+        <input type="hidden" id="m_dis_digestor">
+        <input type="hidden" id="m_dis_trit">
+        <input type="hidden" id="m_dis_cook">
+        <div class="mb-3"><label class="form-label">Toneladas descarregadas</label><input id="m_dis_ton" step="0.1" type="number" class="form-control"></div>
+        <div class="mb-3"><label class="form-label">Observações</label><textarea id="m_dis_notes" class="form-control" rows="2"></textarea></div>
+      </div>
+      <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-success">Confirmar Descarregamento</button></div>
+    </form>
+  </div>
+</div>
+
+<!-- Socket.io + Bootstrap JS -->
+<script src="/socket.io/socket.io.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+const socket = io();
+const logEl = document.getElementById('log');
+function appendLog(txt){
+  logEl.innerText = new Date().toLocaleString() + ' — ' + txt + '\\n' + logEl.innerText;
+}
+
+// Atualizações em tempo real
+socket.on('digestors:update', data => {
+  renderDigestors(data);
+});
+socket.on('tovas:update', data => renderTovas(data));
+socket.on('entries:update', data => renderEntries(data));
+
+// Inicial fetch
+async function refreshAll(){
+  try{
+    const d = await fetchJSON('/api/digestors'); renderDigestors(d);
+    const t = await fetchJSON('/api/tovas'); renderTovas(t);
+    const e = await fetchJSON('/api/entries/pending'); renderEntries(e);
+    appendLog('Atualização manual concluída');
+  } catch(err){ appendLog('Erro refresh: ' + err.message); }
+}
+
+// Helpers
+async function fetchJSON(url, opts){ const r = await fetch(url, opts); if(!r.ok) throw new Error(r.statusText); return r.json(); }
+function statusBadgeClass(status){
+  if(status === 'idle') return 'bg-success text-white';
+  if(status === 'loading' || status === 'triturating') return 'bg-warning text-dark';
+  if(status === 'cooking') return 'bg-warning text-dark';
+  if(status === 'waiting_discharge') return 'bg-orange text-dark';
+  if(status === 'maintenance') return 'bg-danger text-white';
+  return 'bg-secondary text-white';
+}
+
+function renderDigestors(list){
+  const grid = document.getElementById('digestorGrid');
+  grid.innerHTML = '';
+  list.forEach(d => {
+    const col = document.createElement('div'); col.className='col-md-6';
+    const card = document.createElement('div'); card.className='card-digestor';
+    const trit = d.current_tritura;
+    const cook = d.current_cooking;
+    const cyc = d.current_cycle;
+    const statusCls = d.status === 'idle' ? 'badge bg-success' : (d.status==='cooking' ? 'badge bg-warning text-dark' : 'badge bg-secondary');
+    card.innerHTML = `
+      <div class="d-flex justify-content-between align-items-start">
+        <div><h5>${d.nome}</h5><div class="small-muted">Capacidade: ${d.capacidade_tn} tn</div></div>
+        <div><span class="status-badge ${statusBadgeClass(d.status)}" style="padding:8px 12px;border-radius:10px">${d.status.toUpperCase()}</span></div>
+      </div>
+      <hr/>
+      <div class="small">
+        ${ trit ? `<div><strong>Trituração:</strong> ID ${trit.id} • Solicitado ${trit.toneladas_solicitadas || '—'} tn • Início ${trit.start_tritura_at || '—'}</div>` : '<div><strong>Trituração:</strong> —</div>'}
+        ${ cook ? `<div><strong>Cozimento:</strong> ID ${cook.id} • Início ${cook.start_cook_at || '—'}</div>` : '<div><strong>Cozimento:</strong> —</div>'}
+        ${ cyc ? `<div><strong>Ciclo:</strong> ID ${cyc.id} • Início ${cyc.started_at || '—'}</div>` : '<div><strong>Ciclo:</strong> —</div>'}
+      </div>
+      <div class="mt-3 d-flex gap-2 flex-wrap">
+        <button class="btn btn-primary btn-sm" onclick="openStartCarga(${d.id})">Iniciar Carregamento</button>
+        <button class="btn btn-outline-primary btn-sm" onclick="openFinishTrit(${d.id}, ${trit ? trit.id : 'null'})" ${trit ? '' : 'disabled'}>Finalizar Trituração</button>
+        <button class="btn btn-outline-secondary btn-sm" onclick="openFinishCook(${d.id}, ${cook ? cook.id : 'null'})" ${cook ? '' : 'disabled'}>Finalizar Cozimento</button>
+        <button class="btn btn-success btn-sm" onclick="openDischarge(${d.id}, ${trit ? trit.id : 'null'}, ${cook ? cook.id : 'null'})" ${d.status==='waiting_discharge' ? '' : ''}>Descarregar</button>
+        <button class="btn btn-light btn-sm" onclick="generateCyclePDF(${cyc ? cyc.id : 'null'})" ${cyc ? '' : 'disabled'}>PDF</button>
+      </div>
+    `;
+    col.appendChild(card); grid.appendChild(col);
+  });
+}
+
+// Render tovas
+function renderTovas(tovas){
+  const el = document.getElementById('tovasList'); el.innerHTML = '';
+  tovas.forEach(t => {
+    const row = document.createElement('div'); row.className='mb-2 p-2 bg-white rounded shadow-sm';
+    row.innerHTML = `<strong>${t.nome}</strong><div class="small-muted">Capacidade: ${t.capacidade_tn} tn • Atual: ${t.current_tn} tn</div>`;
+    el.appendChild(row);
+  });
+}
+
+// Render entries
+function renderEntries(entries){
+  const el = document.getElementById('entriesList'); el.innerHTML = '';
+  entries.forEach(en => {
+    const row = document.createElement('div'); row.className='mb-2 p-2 bg-white rounded shadow-sm';
+    row.innerHTML = `<strong>${en.truck_plate || '—'}</strong> • ${en.toneladas_declared} tn • Chegada: ${en.arrival_at} • Status: ${en.status}`;
+    el.appendChild(row);
+  });
+}
+
+/* ---------- Modal actions ---------- */
+// abrir iniciar carga
+function openStartCarga(digestorId){
+  document.getElementById('m_digestor_id').value = digestorId;
+  // preencher tovas no select
+  fetchJSON('/api/tovas').then(tovas => {
+    const sel = document.getElementById('m_from_tova');
+    sel.innerHTML = tovas.map(t => `<option value="${t.id}">${t.nome} (${t.current_tn} tn)</option>`).join('');
+    new bootstrap.Modal(document.getElementById('modalStartCarga')).show();
+  });
+}
+
+// submit iniciar carga
+document.getElementById('formStartCarga').addEventListener('submit', async function(e){
+  e.preventDefault();
+  const digestor_id = document.getElementById('m_digestor_id').value;
+  const from_tova_id = document.getElementById('m_from_tova').value;
+  const toneladas_solicitadas = parseFloat(document.getElementById('m_toneladas').value);
+  try{
+    const res = await fetchJSON('/api/trituracao/start',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({digestor_id,from_tova_id,toneladas_solicitadas})});
+    appendLog('Iniciada trituração id=' + res.trituration_id);
+    bootstrap.Modal.getInstance(document.getElementById('modalStartCarga')).hide();
+    // broadcast via server
+    refreshAll();
+  } catch(err){ appendLog('Erro iniciar: ' + err.message); }
+});
+
+// abrir finalizar tritura
+function openFinishTrit(digestorId, trituraId){
+  if(!trituraId){ appendLog('Sem trituração ativa'); return; }
+  document.getElementById('m_tritura_id').value = trituraId;
+  new bootstrap.Modal(document.getElementById('modalFinishTrit')).show();
+}
+document.getElementById('formFinishTrit').addEventListener('submit', async function(e){
+  e.preventDefault();
+  const trit = document.getElementById('m_tritura_id').value;
+  const ton = parseFloat(document.getElementById('m_trit_ton').value);
+  try{
+    await fetchJSON('/api/trituracao/finish',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({trituration_id:trit,toneladas_trituradas:ton})});
+    appendLog('Trituração finalizada id=' + trit);
+    bootstrap.Modal.getInstance(document.getElementById('modalFinishTrit')).hide();
+    refreshAll();
+  } catch(err){ appendLog('Erro finish trit: ' + err.message); }
+});
+
+// abrir finalizar cook
+function openFinishCook(digestorId, cookId){
+  if(!cookId){ appendLog('Sem cozimento ativo'); return; }
+  document.getElementById('m_cook_id').value = cookId;
+  new bootstrap.Modal(document.getElementById('modalFinishCook')).show();
+}
+document.getElementById('formFinishCook').addEventListener('submit', async function(e){
+  e.preventDefault();
+  const id = document.getElementById('m_cook_id').value;
+  const notes = document.getElementById('m_cook_notes').value;
+  try{
+    await fetchJSON('/api/cooking/finish',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cooking_id:id})});
+    appendLog('Cozimento finalizado id=' + id);
+    bootstrap.Modal.getInstance(document.getElementById('modalFinishCook')).hide();
+    refreshAll();
+  } catch(err){ appendLog('Erro finish cook: ' + err.message); }
+});
+
+// abrir descarregar
+function openDischarge(digestorId, tritId, cookId){
+  document.getElementById('m_dis_digestor').value = digestorId;
+  document.getElementById('m_dis_trit').value = tritId || '';
+  document.getElementById('m_dis_cook').value = cookId || '';
+  new bootstrap.Modal(document.getElementById('modalDischarge')).show();
+}
+document.getElementById('formDischarge').addEventListener('submit', async function(e){
+  e.preventDefault();
+  const digestor_id = document.getElementById('m_dis_digestor').value;
+  const trit = document.getElementById('m_dis_trit').value || null;
+  const cook = document.getElementById('m_dis_cook').value || null;
+  const toneladas_discarded = document.getElementById('m_dis_ton').value ? parseFloat(document.getElementById('m_dis_ton').value) : null;
+  const notes = document.getElementById('m_dis_notes').value || null;
+  try{
+    const res = await fetchJSON('/api/digestor/discharge',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({digestor_id,trituration_cycle_id:trit,cooking_cycle_id:cook,toneladas_discarded,notes})});
+    appendLog('Descarregamento registrado id=' + res.discharge_id);
+    bootstrap.Modal.getInstance(document.getElementById('modalDischarge')).hide();
+    refreshAll();
+  } catch(err){ appendLog('Erro discharge: ' + err.message); }
+});
+
+// gerar PDF (usa endpoint /reports/cycle/:id)
+async function generateCyclePDF(cycleId){
+  if(!cycleId){ appendLog('Nenhum ciclo selecionado para PDF'); return; }
+  try{
+    const res = await fetchJSON('/reports/cycle/' + cycleId);
+    appendLog('PDF gerado: ' + res.url);
+    window.open(res.url, '_blank');
+  } catch(err){ appendLog('Erro gerar PDF: ' + err.message); }
+}
+
+// gerar PDF teste: pega último ciclo (simples)
+async function generateTestPDF(){
+  try{
+    const cycles = await fetchJSON('/api/cycles/last'); // vamos criar endpoint abaixo
+    if(!cycles || !cycles.id){ appendLog('Nenhum ciclo para gerar PDF'); return; }
+    generateCyclePDF(cycles.id);
+  } catch(err){ appendLog('Erro gerar teste: ' + err.message); }
+}
+
+// auxiliar refresh
+refreshAll();
+</script>
+</body>
+</html>
 
