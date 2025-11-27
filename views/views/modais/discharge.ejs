@@ -1,0 +1,30 @@
+cat > views/modais/discharge.ejs << 'EOF'
+<!-- MODAL: Descarregar Digestor -->
+<div class="modal fade" id="modalDischarge" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content card-premium">
+      <div class="modal-body">
+        <h4 class="title-premium">Descarregar Digestor</h4>
+        <input type="hidden" id="discharge_digestor_id">
+        <input type="hidden" id="discharge_trit_id">
+        <input type="hidden" id="discharge_cook_id">
+
+        <div class="mb-3">
+          <label class="form-label">Toneladas descarregadas</label>
+          <input id="ton_descarregadas" type="number" class="form-control" step="0.1" min="0">
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Observações</label>
+          <textarea id="discharge_notes" class="form-control" rows="2"></textarea>
+        </div>
+
+        <div class="d-flex justify-content-end gap-2">
+          <button class="btn btn-outline-premium" data-bs-dismiss="modal">Cancelar</button>
+          <button class="btn btn-warning" onclick="confirmDischarge()">Descarregar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+EOF
