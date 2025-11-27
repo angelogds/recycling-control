@@ -1,32 +1,57 @@
-<%- include('layouts/base_top', { title: "Portaria", usuario: usuario }) %>
+<%- include("layouts/base_top", { title: "Portaria", usuario: usuario }) %>
 
-<h2 class="title-premium mb-3">Portaria – Controle de Chegada</h2>
+<h2 class="title-premium mb-4">Portaria – Controle de Chegadas</h2>
 
-<a class="btn btn-premium mb-4" href="/portaria/chegada">Registrar Chegada</a>
+<div class="mb-3">
+    <a href="/portaria/chegada" class="btn btn-premium">Registrar Chegada</a>
+</div>
 
-<div id="listaChegadas" class="row g-3"></div>
+<div class="card card-premium p-3">
+    <h4 class="title-premium">Entradas Pendentes</h4>
+
+    <table class="table table-bordered mt-3">
+        <thead>
+            <tr class="table-success">
+                <th>Placa</th>
+                <th>Toneladas</th>
+                <th>Chegada</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody id="listaEntradas">
+            <tr>
+                <td colspan="4" class="text-center text-muted">Carregando...</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
 
 <script>
-async function carregarChegadas(){
-    const dados = await fetch('/api/entries/pending').then(r=>r.json());
-    const lista = document.getElementById("listaChegadas");
-    lista.innerHTML = "";
+function loadEntradas(){
+    fetch("/api/entries/pending")
+        .then(r=>r.json())
+        .then(data=>{
+            const tbody = document.getElementById("listaEntradas");
+            tbody.innerHTML = "";
 
-    dados.forEach(item => {
-        const col = document.createElement("div");
-        col.className = "col-md-4";
+            data.forEach(e=>{
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${e.truck_plate}</td>
+                        <td>${e.toneladas_declared} tn</td>
+                        <td>${new Date(e.arrival_at).toLocaleString()}</td>
+                        <td>${e.status.toUpperCase()}</td>
+                    </tr>`;
+            });
 
-        col.innerHTML = `
-            <div class="card card-premium p-3">
-                <h5 class="title-premium">${item.truck_plate}</h5>
-                <p class="mb-1"><strong>${item.toneladas_declared} tn</strong></p>
-                <p class="small text-muted">Status: ${item.status}</p>
-            </div>
-        `
-        lista.appendChild(col);
-    });
+            if (data.length === 0){
+                tbody.innerHTML = `<tr><td colspan="4" class="text-muted text-center">Nenhuma entrada pendente.</td></tr>`;
+            }
+        });
 }
-carregarChegadas();
+
+loadEntradas();
+setInterval(loadEntradas, 4000);
 </script>
 
-<%- include('layouts/base_bottom') %>
+<%- include("layouts/base_bottom") %>
