@@ -9,10 +9,11 @@
   <div id="logContent" class="mt-2 small text-muted">Aguardando eventos...</div>
 </div>
 
-<%- include('./modais/start_carga') %>
-<%- include('./modais/finish_tritura') %>
-<%- include('./modais/finish_cook') %>
-<%- include('./modais/discharge') %>
+<%- include('modais/start_carga') %>
+<%- include('modais/finish_tritura') %>
+<%- include('modais/finish_cook') %>
+<%- include('modais/discharge') %>
+
 <script src="/socket.io/socket.io.js"></script>
 <script src="/js/operador_painel.js"></script>
 
