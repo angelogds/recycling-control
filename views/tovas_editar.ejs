@@ -1,0 +1,19 @@
+<% layout('layouts/base') %>
+
+<h3>Editar Tova</h3>
+
+<form method="POST" action="/tovas/<%= tova.id %>/update">
+
+    <div class="mb-3">
+        <label class="form-label">Nome</label>
+        <input class="form-control" type="text" name="nome" value="<%= tova.nome %>">
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Capacidade (tn)</label>
+        <input class="form-control" type="number" name="capacidade_tn" value="<%= tova.capacidade_tn %>">
+    </div>
+
+    <button class="btn btn-primary">Salvar</button>
+
+</form>
