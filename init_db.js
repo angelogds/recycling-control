@@ -1,34 +1,23 @@
 const fs = require("fs");
-const path = require("path");
 const sqlite3 = require("sqlite3").verbose();
 
-const dbFile = path.join(__dirname, "database.sqlite");
-const sqlFile = path.join(__dirname, "init_db.sql");
+const DB_FILE = "database.sqlite";
+const SQL_FILE = "init_db.sql";
 
 console.log("🔄 Iniciando criação do banco...");
 
-if (!fs.existsSync(sqlFile)) {
-  console.error("❌ Arquivo init_db.sql não encontrado!");
-  process.exit(1);
-}
+if (fs.existsSync(DB_FILE)) fs.unlinkSync(DB_FILE);
 
-const sql = fs.readFileSync(sqlFile, "utf-8");
+const db = new sqlite3.Database(DB_FILE);
 
-// Remove DB antigo (OPCIONAL)
-if (fs.existsSync(dbFile)) {
-  console.log("🗑 Removendo banco antigo (database.sqlite)...");
-  fs.unlinkSync(dbFile);
-}
-
-const db = new sqlite3.Database(dbFile);
+const sql = fs.readFileSync(SQL_FILE, "utf8");
 
 db.exec(sql, (err) => {
   if (err) {
-    console.error("❌ Erro ao executar SQL:", err);
-    process.exit(1);
+    console.error("❌ Erro ao criar banco:", err);
+  } else {
+    console.log("✅ Banco criado com sucesso!");
+    console.log("📌 Arquivo:", DB_FILE);
   }
-
-  console.log("✅ Banco criado com sucesso!");
-  console.log("📌 Arquivo:", dbFile);
   db.close();
 });
