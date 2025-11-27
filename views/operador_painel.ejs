@@ -1,20 +1,18 @@
-<%- include('./layouts/base_top', { title: "Painel do Operador", usuario: usuario }) %>
+<%- include('layouts/base_top') %>
 
-<h2 class="title-premium mb-4">Painel do Operador</h2>
+<div class="container mt-4">
+    <h1 class="page-title">Painel do Operador</h1>
 
-<div class="row g-4" id="digestorGrid"></div>
-
-<div class="card card-premium p-3 mt-4">
-  <strong class="title-premium">Log do sistema:</strong>
-  <div id="logContent" class="mt-2 small text-muted">Aguardando eventos...</div>
+    <div class="log-box mt-4">
+        <h5><b>Log do sistema:</b></h5>
+        <div id="logText" class="log-area">Aguardando eventos...</div>
+    </div>
 </div>
 
+<!-- Modais -->
 <%- include('modais/start_carga') %>
 <%- include('modais/finish_tritura') %>
 <%- include('modais/finish_cook') %>
 <%- include('modais/discharge') %>
 
-<script src="/socket.io/socket.io.js"></script>
-<script src="/js/operador_painel.js"></script>
-
-<%- include('./layouts/base_bottom') %>
+<%- include('layouts/base_bottom') %>
