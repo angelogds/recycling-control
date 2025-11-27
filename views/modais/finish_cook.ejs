@@ -1,21 +1,10 @@
-cat > views/modais/finish_cook.ejs << 'EOF'
-<!-- MODAL: Finalizar Cozimento -->
-<div class="modal fade" id="modalFinishCook" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content card-premium">
-      <div class="modal-body">
-        <h4 class="title-premium">Finalizar Cozimento</h4>
-        <input type="hidden" id="finish_cook_id">
-        <div class="mb-3">
-          <label class="form-label">Observações (opcional)</label>
-          <textarea id="cook_notes" class="form-control" rows="3"></textarea>
-        </div>
-        <div class="d-flex justify-content-end gap-2">
-          <button class="btn btn-outline-premium" data-bs-dismiss="modal">Cancelar</button>
-          <button class="btn btn-premium" onclick="confirmFinishCook()">Finalizar</button>
-        </div>
-      </div>
-    </div>
-  </div>
+<div class="modal">
+    <h2>Finalizar Cozimento</h2>
+
+    <form id="finish-cook-form">
+        <label>ID do Cozimento:</label>
+        <input type="number" name="cooking_id" required>
+
+        <button type="submit">Finalizar</button>
+    </form>
 </div>
-EOF
