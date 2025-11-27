@@ -1,22 +1,17 @@
-cat > views/operador/operador_painel.ejs << 'EOF'
 <%- include('../layouts/base_top', { title: "Painel do Operador", usuario: usuario }) %>
 
 <h2 class="title-premium mb-4">Painel do Operador</h2>
 
-<div class="row g-4" id="digestorGrid">
-  <!-- preenchido por JS -->
-</div>
+<div class="row g-4" id="digestorGrid"></div>
 
 <div class="card card-premium p-3 mt-4">
   <strong class="title-premium">Log do sistema:</strong>
   <div id="logContent" class="mt-2 small text-muted">Aguardando eventos...</div>
 </div>
 
-<!-- includes modais separados -->
 <%- include('../modais/start_carga') %>
 <%- include('../modais/finish_tritura') %>
 <%- include('../modais/finish_cook') %>
 <%- include('../modais/discharge') %>
 
 <%- include('../layouts/base_bottom') %>
-EOF
