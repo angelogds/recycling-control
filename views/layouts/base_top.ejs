@@ -1,18 +1,23 @@
-mkdir -p views/layouts
 cat > views/layouts/base_top.ejs << 'EOF'
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <title><%= title %></title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="/css/style.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title><%= title || "Controle de Processo" %></title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-<div class="navbar-premium">
-    <div class="fw-bold">⚙️ Controle de Processo</div>
-    <div><%= usuario ? usuario.nome : "" %></div>
-</div>
-<div class="container mt-4">
+  <header class="navbar-premium">
+    <div class="d-flex align-items-center gap-3">
+      <img src="/img/logo_menu_256.png" alt="logo" style="height:34px; width:auto;">
+      <strong>Controle de Processo</strong>
+    </div>
+    <div class="text-end text-white small">
+      <%= usuario ? usuario.nome : '' %>
+    </div>
+  </header>
+
+  <main class="container mt-4 mb-5">
 EOF
