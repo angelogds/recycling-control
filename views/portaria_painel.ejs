@@ -1,0 +1,36 @@
+<% layout('layouts/base') %>
+
+<h3>Portaria — Chegada de Caminhões</h3>
+
+<div class="mb-3">
+    <a class="btn btn-success" href="/portaria/chegada">Registrar Chegada</a>
+</div>
+
+<div id="listaChegadas" class="row g-2"></div>
+
+<script>
+async function carregarChegadas(){
+    const dados = await fetch('/api/entries/pending').then(r=>r.json());
+
+    const lista = document.getElementById("listaChegadas");
+    lista.innerHTML = "";
+
+    dados.forEach(item => {
+        const col = document.createElement("div");
+        col.className = "col-md-4";
+
+        col.innerHTML = `
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5>${item.truck_plate}</h5>
+                    <p>${item.toneladas_declared} tn</p>
+                    <p class="small text-muted">Status: ${item.status}</p>
+                </div>
+            </div>
+        `;
+        lista.appendChild(col);
+    });
+}
+
+carregarChegadas();
+</script>
