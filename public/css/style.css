@@ -1,57 +1,72 @@
-/* TÍTULOS PREMIUM */
+body {
+    background: #f5f7f5;
+    font-family: "Inter", sans-serif;
+}
+
+.navbar-premium {
+    background: #0f3e1e;
+    color: white;
+    padding: 12px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
 .title-premium {
-    color: #146c43;
+    color: #0f3e1e;
     font-weight: 700;
 }
 
-/* CARD PREMIUM */
 .card-premium {
     background: #ffffff;
     border-radius: 12px;
-    padding: 18px;
-    box-shadow: 0 3px 8px rgba(0,0,0,0.12);
-    transition: 0.2s ease-in-out;
-}
-.card-premium:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+    border: 2px solid #d8e7d8;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
-/* BOTÃO PREMIUM VERDE */
 .btn-premium {
-    background: #198754;
+    background: #0f3e1e;
     color: white;
-    border: none;
-    font-weight: 600;
+    font-weight: bold;
 }
+
 .btn-premium:hover {
-    background: #146c43;
+    background: #14592a;
     color: white;
 }
 
-/* BOTÃO PREMIUM OUTLINE */
 .btn-outline-premium {
-    border: 2px solid #198754;
-    color: #198754;
-    font-weight: 600;
+    border: 2px solid #0f3e1e;
+    color: #0f3e1e;
+    font-weight: bold;
 }
+
 .btn-outline-premium:hover {
-    background: #198754;
+    background: #0f3e1e;
     color: white;
 }
 
-/* BADGES */
 .badge-status {
-    background: #198754;
-    padding: 5px 10px;
-    border-radius: 6px;
+    background: #0f3e1e;
     color: white;
-    font-size: 12px;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-weight: bold;
 }
 
-/* NAVBAR */
-.navbar-premium {
-    background: #198754;
-    color: white;
-    padding: 16px;
+.progress-premium {
+    height: 14px;
+    border-radius: 10px;
+    background: #cfe6cf;
+}
+
+.progress-premium-inner {
+    height: 100%;
+    width: 100%;
+    background: #0f3e1e;
+    border-radius: 10px;
+}
+
+.modal-content {
+    border-radius: 16px !important;
 }
