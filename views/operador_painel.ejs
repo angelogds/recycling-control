@@ -3,7 +3,7 @@
 <h2 class="mb-4 title-premium">Painel do Operador</h2>
 
 <div class="row g-4 mb-4" id="digestorGrid">
-    <!-- preenchido pelo socket -->
+    <!-- Os digestores serão carregados pelo operador.js -->
 </div>
 
 <div id="log" class="card card-premium p-3">
@@ -11,55 +11,9 @@
     <div id="logContent" class="mt-2 small text-muted">Aguardando eventos...</div>
 </div>
 
-<script>
-const socket = io();
+<!-- Modais -->
+<div id="modalArea"></div>
 
-socket.on("digestors:update", (data) => renderDigestors(data));
-
-function addLog(msg) {
-    const el = document.getElementById("logContent");
-    el.innerHTML = `<div>${new Date().toLocaleString()} → ${msg}</div>` + el.innerHTML;
-}
-
-async function loadInitial(){
-    const d = await fetch('/api/digestors').then(r=>r.json());
-    renderDigestors(d);
-}
-loadInitial();
-
-function renderDigestors(list){
-    const grid = document.getElementById("digestorGrid");
-    grid.innerHTML = "";
-
-    list.forEach(d => {
-        const col = document.createElement("div");
-        col.className = "col-md-6";
-
-        col.innerHTML = `
-            <div class="card card-premium p-3">
-                <h4 class="title-premium">${d.nome}</h4>
-                <p class="text-muted mb-1">Capacidade: ${d.capacidade_tn} tn</p>
-
-                <span class="badge badge-status mb-2">${d.status.toUpperCase()}</span>
-
-                <div class="small">
-                    <strong>Trituração:</strong> ${d.current_tritura ? "#" + d.current_tritura.id : "Nenhuma"}<br>
-                    <strong>Cozimento:</strong> ${d.current_cooking ? "#" + d.current_cooking.id : "Nenhuma"}<br>
-                    <strong>Ciclo:</strong> ${d.current_cycle ? "#" + d.current_cycle.id : "Nenhum"}
-                </div>
-
-                <div class="mt-3 d-flex flex-wrap gap-2">
-                    <button class="btn btn-premium btn-sm" onclick="openStartCarga(${d.id})">Iniciar Carregamento</button>
-                    <button class="btn btn-outline-premium btn-sm" onclick="openFinishTrit(${d.id}, ${d.current_tritura ? d.current_tritura.id : 'null'})">Finalizar Trituração</button>
-                    <button class="btn btn-outline-premium btn-sm" onclick="openFinishCook(${d.id}, ${d.current_cooking ? d.current_cooking.id : 'null'})">Finalizar Cozimento</button>
-                    <button class="btn btn-warning btn-sm" onclick="openDischarge(${d.id}, ${d.current_tritura ? d.current_tritura.id : 'null'}, ${d.current_cooking ? d.current_cooking.id : 'null'})">Descarregar</button>
-                </div>
-            </div>
-        `;
-
-        grid.appendChild(col);
-    });
-}
-</script>
+<script src="/js/operador.js"></script>
 
 <%- include('layouts/base_bottom') %>
