@@ -1,18 +1,29 @@
-<%- include('layouts/base_top') %>
+<% layout('layouts/main') %>
 
-<div class="container mt-4">
-    <h1 class="page-title">Painel do Operador</h1>
+<h1>Painel do Operador</h1>
 
-    <div class="log-box mt-4">
-        <h5><b>Log do sistema:</b></h5>
-        <div id="logText" class="log-area">Aguardando eventos...</div>
-    </div>
+<h3>Log do sistema:</h3>
+<p style="color:#555;">Aguardando eventos...</p>
+
+<div id="log-box" style="padding:10px; background:#f2f2f2; border-radius:6px; font-family:monospace; height:250px; overflow-y:auto;">
 </div>
 
-<!-- Modais -->
-<%- include('modais/start_carga') %>
-<%- include('modais/finish_tritura') %>
-<%- include('modais/finish_cook') %>
-<%- include('modais/discharge') %>
+<script>
+const socket = io();
 
-<%- include('layouts/base_bottom') %>
+socket.on("connect", () => {
+    document.getElementById("log-box").innerHTML += "<p>Socket conectado...</p>";
+});
+
+socket.on("digestors:update", data => {
+    document.getElementById("log-box").innerHTML += "<p>Atualização de digestores recebida.</p>";
+});
+
+socket.on("tovas:update", data => {
+    document.getElementById("log-box").innerHTML += "<p>Atualização de tovas recebida.</p>";
+});
+
+socket.on("entries:update", data => {
+    document.getElementById("log-box").innerHTML += "<p>Atualização de entradas recebida.</p>";
+});
+</script>
