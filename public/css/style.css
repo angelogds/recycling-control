@@ -1,49 +1,8 @@
-mkdir -p public/css public/js public/img
-cat > public/css/style.css << 'EOF'
-body {
-    background: #f5f7f5;
-    font-family: "Inter", sans-serif;
-}
-.navbar-premium {
-    background: #0f3e1e;
-    color: white;
-    padding: 12px 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-.title-premium {
-    color: #0f3e1e;
-    font-weight: 700;
-}
-.card-premium {
-    background: #ffffff;
-    border-radius: 12px;
-    border: 2px solid #d8e7d8;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-}
-.btn-premium {
-    background: #0f3e1e;
-    color: white;
-    font-weight: bold;
-}
-.btn-premium:hover { background: #14592a; color: white; }
-.btn-outline-premium {
-    border: 2px solid #0f3e1e;
-    color: #0f3e1e;
-    font-weight: bold;
-}
-.btn-outline-premium:hover { background: #0f3e1e; color: white; }
-.badge-status {
-    background: #0f3e1e;
-    color: white;
-    padding: 6px 14px;
-    border-radius: 6px;
-    font-weight: bold;
-}
-.progress-premium { height: 14px; border-radius: 10px; background: #cfe6cf; }
-.progress-premium-inner { height: 100%; width: 100%; background: #0f3e1e; border-radius: 10px; }
-.modal-content { border-radius: 16px !important; }
-.table-success { background: #0f3e1e !important; color: #fff; }
-.card-premium h4 { margin-bottom: 10px; }
-EOF
+body { background:#f8fafb; font-family: Inter, Arial, sans-serif; }
+.navbar-brand { font-weight:700; }
+h1.page-title, .display-5 { color:#166534; }
+.card { border-radius:12px; box-shadow:0 6px 18px rgba(0,0,0,0.05); }
+.btn-premium { background:#166534; color:white; border:1px solid #166534; }
+.btn-outline-premium { border:1px solid #166534; color:#166534; background:transparent; }
+.badge-status { background:#166534; color:white; padding:.5rem 1rem; border-radius:6px; }
+.container { max-width:1200px; }
