@@ -288,6 +288,60 @@ app.post("/api/digestor/discharge", (req, res) => {
     }
   );
 });
+/* ================================================================
+   API — Histórico de ciclos completos (Painel do Operador / Histórico)
+================================================================ */
+
+app.get("/api/cycles", (req, res) => {
+    const { digestor_id, limit } = req.query;
+
+    let sql = `
+        SELECT 
+            cy.id,
+            cy.digestor_id,
+            d.nome AS digestor_nome,
+            cy.started_at,
+            cy.ended_at,
+            cy.status,
+
+            tc.start_tritura_at,
+            tc.end_tritura_at,
+            tc.toneladas_trituradas,
+
+            cc.start_cook_at,
+            cc.end_cook_at,
+
+            dc.toneladas_discarded,
+            dc.notes
+        FROM cycles cy
+        LEFT JOIN digestors d ON d.id = cy.digestor_id
+        LEFT JOIN trituration_cycles tc ON tc.id = cy.trituration_id
+        LEFT JOIN cooking_cycles cc ON cc.id = cy.cooking_id
+        LEFT JOIN digestor_discharges dc ON dc.cycle_id = cy.id
+    `;
+
+    const params = [];
+
+    if (digestor_id) {
+        sql += " WHERE cy.digestor_id = ? ";
+        params.push(digestor_id);
+    }
+
+    sql += " ORDER BY cy.id DESC ";
+
+    if (limit) {
+        sql += " LIMIT ? ";
+        params.push(Number(limit));
+    }
+
+    db.all(sql, params, (err, rows) => {
+        if (err) {
+            console.error("Erro ao buscar ciclos:", err);
+            return res.status(500).json({ error: err.message });
+        }
+        res.json(rows || []);
+    });
+});
 
 /* ============================================
    Socket.IO
