@@ -1,56 +1,9 @@
-cat > views/portaria_painel.ejs << 'EOF'
-<%- include("layouts/base_top", { title: "Portaria", usuario: usuario }) %>
+<%- include('layouts/base_top', { title: title, usuario: usuario }) %>
 
-<h2 class="title-premium mb-4">Portaria – Controle de Chegadas</h2>
+<h1 class="display-6"><%= title %></h1>
 
-<div class="mb-3">
-    <a href="/portaria/chegada" class="btn btn-premium">Registrar Chegada</a>
-</div>
+<p><a class="btn btn-primary" href="/portaria/chegada">Registrar Chegada</a></p>
 
-<div class="card card-premium p-3">
-    <h4 class="title-premium">Entradas Pendentes</h4>
+<div class="mt-4" id="entriesList"></div>
 
-    <table class="table table-bordered mt-3">
-        <thead>
-            <tr class="table-success">
-                <th>Placa</th>
-                <th>Toneladas</th>
-                <th>Chegada</th>
-                <th>Status</th>
-            </tr>
-        </thead>
-        <tbody id="listaEntradas">
-            <tr>
-                <td colspan="4" class="text-center text-muted">Carregando...</td>
-            </tr>
-        </tbody>
-    </table>
-</div>
-
-<script>
-function loadEntradas(){
-    fetch("/api/entries/pending")
-        .then(r=>r.json())
-        .then(data=>{
-            const tbody = document.getElementById("listaEntradas");
-            tbody.innerHTML = "";
-            data.forEach(e=>{
-                tbody.innerHTML += `
-                    <tr>
-                        <td>${e.truck_plate}</td>
-                        <td>${e.toneladas_declared} tn</td>
-                        <td>${new Date(e.arrival_at).toLocaleString()}</td>
-                        <td>${e.status.toUpperCase()}</td>
-                    </tr>`;
-            });
-            if (data.length === 0){
-                tbody.innerHTML = `<tr><td colspan="4" class="text-muted text-center">Nenhuma entrada pendente.</td></tr>`;
-            }
-        });
-}
-loadEntradas();
-setInterval(loadEntradas, 4000);
-</script>
-
-<%- include("layouts/base_bottom") %>
-EOF
+<%- include('layouts/base_bottom') %>
