@@ -1,29 +1,32 @@
-<h3>Tovas — Situação Atual</h3>
+<%- include('layouts/base_top', { title: "Tovas", usuario: usuario }) %>
 
-<div id="listaTovas" class="row g-2"></div>
+<h2 class="title-premium mb-4">Tovas – Situação Atual</h2>
+
+<div id="listaTovas" class="row g-4"></div>
 
 <script>
-async function carregar(){
+async function loadTovas(){
     const tovas = await fetch('/api/tovas').then(r=>r.json());
-
     const area = document.getElementById("listaTovas");
     area.innerHTML = "";
 
     tovas.forEach(t => {
         const div = document.createElement("div");
         div.className = "col-md-4";
+
         div.innerHTML = `
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h5>${t.nome}</h5>
-                    <p>Atual: ${t.current_tn} tn</p>
-                    <p class="small text-muted">Capacidade: ${t.capacidade_tn}</p>
-                </div>
+            <div class="card card-premium p-3">
+                <h4 class="title-premium">${t.nome}</h4>
+                <p class="mb-1">Atual: <strong>${t.current_tn} tn</strong></p>
+                <p class="text-muted small">Capacidade: ${t.capacidade_tn} tn</p>
+
+                <a href="/tovas/${t.id}/editar" class="btn btn-outline-premium btn-sm">Editar</a>
             </div>
         `;
         area.appendChild(div);
     });
 }
-
-carregar();
+loadTovas();
 </script>
+
+<%- include('layouts/base_bottom') %>
