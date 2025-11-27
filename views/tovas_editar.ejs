@@ -1,17 +1,16 @@
-<h3>Editar Tova</h3>
+<%- include('layouts/base_top', { title: "Editar Tova", usuario: usuario }) %>
 
-<form method="POST" action="/tovas/<%= tova.id %>/update">
+<h2 class="title-premium mb-4">Editar Tova</h2>
 
-    <div class="mb-3">
-        <label class="form-label">Nome</label>
-        <input class="form-control" type="text" name="nome" value="<%= tova.nome %>">
-    </div>
+<form method="POST" action="/tovas/<%= tova.id %>/update" class="card card-premium p-4">
 
-    <div class="mb-3">
-        <label class="form-label">Capacidade (tn)</label>
-        <input class="form-control" type="number" name="capacidade_tn" value="<%= tova.capacidade_tn %>">
-    </div>
+    <label class="form-label">Nome</label>
+    <input type="text" class="form-control mb-3" name="nome" value="<%= tova.nome %>">
 
-    <button class="btn btn-primary">Salvar</button>
+    <label class="form-label">Capacidade (tn)</label>
+    <input type="number" class="form-control mb-3" name="capacidade_tn" value="<%= tova.capacidade_tn %>">
 
+    <button class="btn btn-premium w-100">Salvar</button>
 </form>
+
+<%- include('layouts/base_bottom') %>
