@@ -1,3 +1,4 @@
+cat > views/portaria_painel.ejs << 'EOF'
 <%- include("layouts/base_top", { title: "Portaria", usuario: usuario }) %>
 
 <h2 class="title-premium mb-4">Portaria – Controle de Chegadas</h2>
@@ -33,7 +34,6 @@ function loadEntradas(){
         .then(data=>{
             const tbody = document.getElementById("listaEntradas");
             tbody.innerHTML = "";
-
             data.forEach(e=>{
                 tbody.innerHTML += `
                     <tr>
@@ -43,15 +43,14 @@ function loadEntradas(){
                         <td>${e.status.toUpperCase()}</td>
                     </tr>`;
             });
-
             if (data.length === 0){
                 tbody.innerHTML = `<tr><td colspan="4" class="text-muted text-center">Nenhuma entrada pendente.</td></tr>`;
             }
         });
 }
-
 loadEntradas();
 setInterval(loadEntradas, 4000);
 </script>
 
 <%- include("layouts/base_bottom") %>
+EOF
