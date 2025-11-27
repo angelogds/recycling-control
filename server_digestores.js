@@ -2,6 +2,9 @@
    SISTEMA COMPLETO – CONTROLE DE PROCESSO DE RECICLAGEM
    COM: OPERADOR ✔ PORTARIA ✔ TOVAS ✔ DIGESTORES ✔ PDF ✔ SOCKET.IO ✔
    =========================================================== */
+const expressLayouts = require('express-ejs-layouts');
+app.use(expressLayouts);
+app.set("layout", "layouts/base"); 
 
 const express = require("express");
 const sqlite3 = require("sqlite3").verbose();
