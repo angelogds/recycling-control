@@ -1,0 +1,62 @@
+<% layout('layouts/base') %>
+
+<h3 class="mb-3">Painel do Operador</h3>
+
+<div class="row g-3 mb-3" id="digestorGrid">
+    <!-- Conteúdo dinâmico via JS -->
+</div>
+
+<div id="log" class="p-3 bg-white rounded shadow-sm border">
+    <small class="text-muted">Log do sistema...</small>
+</div>
+
+<script>
+const socket = io();
+
+socket.on("digestors:update", (data) => renderDigestors(data));
+socket.on("tovas:update", renderTovas);
+socket.on("entries:update", renderEntries);
+
+// Busca inicial
+loadInitial();
+
+async function loadInitial() {
+    const d = await fetch('/api/digestors').then(r=>r.json());
+    renderDigestors(d);
+}
+
+// Renderiza digestores
+function renderDigestors(list){
+    const grid = document.getElementById("digestorGrid");
+    grid.innerHTML = "";
+
+    list.forEach(d => {
+        const col = document.createElement("div");
+        col.className = "col-md-6";
+
+        col.innerHTML = `
+            <div class="card shadow-sm">
+                <div class="card-body">
+
+                    <h5 class="card-title">${d.nome}</h5>
+                    <p class="text-muted">Capacidade: ${d.capacidade_tn} tn</p>
+
+                    <div class="badge bg-primary mb-2">${d.status.toUpperCase()}</div>
+
+                    <p class="small">
+                        <strong>Trituração:</strong> ${d.current_tritura ? "#" + d.current_tritura.id : "Nenhuma"}<br>
+                        <strong>Cozimento:</strong> ${d.current_cooking ? "#" + d.current_cooking.id : "Nenhuma"}<br>
+                        <strong>Ciclo:</strong> ${d.current_cycle ? "#" + d.current_cycle.id : "Nenhum"}
+                    </p>
+
+                    <button class="btn btn-success btn-sm" onclick="openStartCarga(${d.id})">Iniciar Carregamento</button>
+                    <button class="btn btn-outline-primary btn-sm" onclick="openFinishTrit(${d.id}, ${d.current_tritura ? d.current_tritura.id : 'null'})">Finalizar Trituração</button>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="openFinishCook(${d.id}, ${d.current_cooking ? d.current_cooking.id : 'null'})">Finalizar Cozimento</button>
+                    <button class="btn btn-warning btn-sm" onclick="openDischarge(${d.id}, ${d.current_tritura ? d.current_tritura.id : 'null'}, ${d.current_cooking ? d.current_cooking.id : 'null'})">Descarregar</button>
+                </div>
+            </div>
+        `;
+        grid.appendChild(col);
+    });
+}
+</script>
