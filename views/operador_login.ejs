@@ -1,0 +1,21 @@
+<% layout('layouts/base') %>
+
+<div class="col-md-4 mx-auto">
+
+<h3 class="mb-3 text-center">Login Operador</h3>
+
+<form method="POST" action="/login/operador">
+    <div class="mb-3">
+        <label class="form-label">E-mail</label>
+        <input type="email" class="form-control" name="email">
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Senha</label>
+        <input type="password" class="form-control" name="senha">
+    </div>
+
+    <button class="btn btn-primary w-100">Entrar</button>
+</form>
+
+</div>
