@@ -1,3 +1,57 @@
-body { background: #f4f6f8; font-family: Inter, Arial, Helvetica, sans-serif; }
-.card-digestor { border-radius: 10px; padding: 12px; background: white; }
-.small-muted { font-size: 13px; color: #666; }
+/* TÍTULOS PREMIUM */
+.title-premium {
+    color: #146c43;
+    font-weight: 700;
+}
+
+/* CARD PREMIUM */
+.card-premium {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 18px;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.12);
+    transition: 0.2s ease-in-out;
+}
+.card-premium:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+}
+
+/* BOTÃO PREMIUM VERDE */
+.btn-premium {
+    background: #198754;
+    color: white;
+    border: none;
+    font-weight: 600;
+}
+.btn-premium:hover {
+    background: #146c43;
+    color: white;
+}
+
+/* BOTÃO PREMIUM OUTLINE */
+.btn-outline-premium {
+    border: 2px solid #198754;
+    color: #198754;
+    font-weight: 600;
+}
+.btn-outline-premium:hover {
+    background: #198754;
+    color: white;
+}
+
+/* BADGES */
+.badge-status {
+    background: #198754;
+    padding: 5px 10px;
+    border-radius: 6px;
+    color: white;
+    font-size: 12px;
+}
+
+/* NAVBAR */
+.navbar-premium {
+    background: #198754;
+    color: white;
+    padding: 16px;
+}
