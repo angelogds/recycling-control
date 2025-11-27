@@ -1,15 +1,14 @@
-<h3>Portaria — Chegada de Caminhões</h3>
+<%- include('layouts/base_top', { title: "Portaria", usuario: usuario }) %>
 
-<div class="mb-3">
-    <a class="btn btn-success" href="/portaria/chegada">Registrar Chegada</a>
-</div>
+<h2 class="title-premium mb-3">Portaria – Controle de Chegada</h2>
 
-<div id="listaChegadas" class="row g-2"></div>
+<a class="btn btn-premium mb-4" href="/portaria/chegada">Registrar Chegada</a>
+
+<div id="listaChegadas" class="row g-3"></div>
 
 <script>
 async function carregarChegadas(){
     const dados = await fetch('/api/entries/pending').then(r=>r.json());
-
     const lista = document.getElementById("listaChegadas");
     lista.innerHTML = "";
 
@@ -18,17 +17,16 @@ async function carregarChegadas(){
         col.className = "col-md-4";
 
         col.innerHTML = `
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h5>${item.truck_plate}</h5>
-                    <p>${item.toneladas_declared} tn</p>
-                    <p class="small text-muted">Status: ${item.status}</p>
-                </div>
+            <div class="card card-premium p-3">
+                <h5 class="title-premium">${item.truck_plate}</h5>
+                <p class="mb-1"><strong>${item.toneladas_declared} tn</strong></p>
+                <p class="small text-muted">Status: ${item.status}</p>
             </div>
-        `;
+        `
         lista.appendChild(col);
     });
 }
-
 carregarChegadas();
 </script>
+
+<%- include('layouts/base_bottom') %>
