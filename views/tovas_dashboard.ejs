@@ -1,32 +1,44 @@
-<%- include('layouts/base_top', { title: "Tovas", usuario: usuario }) %>
+<%- include("layouts/base_top", { title: "Tovas", usuario: usuario }) %>
 
-<h2 class="title-premium mb-4">Tovas – Situação Atual</h2>
+<h2 class="title-premium mb-4">Painel das Tovas</h2>
 
-<div id="listaTovas" class="row g-4"></div>
+<div class="row g-4" id="tovasGrid">
+    <!-- preenchido por JS -->
+</div>
 
 <script>
 async function loadTovas(){
     const tovas = await fetch('/api/tovas').then(r=>r.json());
-    const area = document.getElementById("listaTovas");
-    area.innerHTML = "";
+    const grid = document.getElementById("tovasGrid");
+    grid.innerHTML = "";
 
     tovas.forEach(t => {
-        const div = document.createElement("div");
-        div.className = "col-md-4";
+        const col = document.createElement("div");
+        col.className = "col-md-6";
 
-        div.innerHTML = `
+        col.innerHTML = `
             <div class="card card-premium p-3">
+
                 <h4 class="title-premium">${t.nome}</h4>
-                <p class="mb-1">Atual: <strong>${t.current_tn} tn</strong></p>
                 <p class="text-muted small">Capacidade: ${t.capacidade_tn} tn</p>
+
+                <div class="progress-premium mb-2">
+                    <div class="progress-premium-inner"
+                        style="width:${(t.current_tn / t.capacidade_tn) * 100}%;"></div>
+                </div>
+
+                <p><strong>Atual:</strong> ${t.current_tn} tn</p>
 
                 <a href="/tovas/${t.id}/editar" class="btn btn-outline-premium btn-sm">Editar</a>
             </div>
         `;
-        area.appendChild(div);
+
+        grid.appendChild(col);
     });
 }
+
 loadTovas();
+setInterval(loadTovas, 5000);
 </script>
 
-<%- include('layouts/base_bottom') %>
+<%- include("layouts/base_bottom") %>
