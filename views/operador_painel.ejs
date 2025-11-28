@@ -1,42 +1,42 @@
-<table class="table table-bordered table-striped digestor-table mt-4 shadow-sm">
-    <thead class="table-success">
-        <tr>
-            <th>Digestor</th>
-            <th>Capacidade</th>
-            <th>Status</th>
-            <th>Barra de Progresso</th>
-            <th>Trituração</th>
-            <th>Cozimento</th>
-            <th>Ciclo</th>
-            <th class="text-center">Ações</th>
-        </tr>
-    </thead>
+<%- include('layouts/base_top', { title: "Painel do Operador" }) %>
 
-    <tbody id="digestoresTableBody">
-        <% digestores.forEach(d => { %>
+<div class="container mt-4">
+
+    <h1 class="page-title mb-4">Painel do Operador</h1>
+
+    <!-- ===================== TABELA DOS DIGESTORES ===================== -->
+    <table class="table table-bordered table-striped shadow-sm">
+        <thead class="table-success">
+            <tr>
+                <th>Digestor</th>
+                <th>Capacidade</th>
+                <th>Status</th>
+                <th>Barra de Progresso</th>
+                <th>Trituração</th>
+                <th>Cozimento</th>
+                <th>Ciclo</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+
+        <tbody id="digestoresTableBody">
+            <% digestores.forEach(d => { %>
             <tr id="row-<%= d.id %>">
 
                 <!-- Nome -->
-                <td><strong><%= d.nome %></strong></td>
+                <td><strong>Digestor <%= d.id %></strong></td>
 
                 <!-- Capacidade -->
                 <td><%= d.capacidade_tn %> tn</td>
 
                 <!-- Status -->
-                <td>
-                    <span id="status-<%= d.id %>"
-                          class="badge bg-success status-pill">
-                        IDLE
-                    </span>
-                </td>
+                <td id="status-<%= d.id %>" class="fw-bold text-success">IDLE</td>
 
-                <!-- BAR -->
-                <td style="width: 280px;">
-                    <div class="progress" style="height: 20px;">
-                        <div id="bar-<%= d.id %>"
-                             class="progress-bar bg-success"
-                             role="progressbar"
-                             style="width: 0%;">
+                <!-- Barra -->
+                <td style="width: 220px;">
+                    <div class="progress" style="height: 16px;">
+                        <div id="bar-<%= d.id %>" class="progress-bar bg-success"
+                            style="width: 0%; transition: width 0.5s;">
                             0%
                         </div>
                     </div>
@@ -46,31 +46,93 @@
                 <td id="tritura-<%= d.id %>">Nenhuma</td>
 
                 <!-- Cozimento -->
-                <td id="cozimento-<%= d.id %>">Nenhum</td>
+                <td id="cook-<%= d.id %>">Nenhuma</td>
 
                 <!-- Ciclo -->
                 <td id="ciclo-<%= d.id %>">Nenhum</td>
 
                 <!-- AÇÕES -->
-                <td class="text-center">
-                    <button class="btn btn-success btn-sm" onclick="openStartCarga(<%= d.id %>)">
-                        <i class="bi bi-play-fill"></i> Iniciar
-                    </button>
-
-                    <button class="btn btn-primary btn-sm" onclick="openFinishTritura(<%= d.id %>)">
-                        <i class="bi bi-check-lg"></i> Finalizar Tritura
-                    </button>
-
-                    <button class="btn btn-info btn-sm" onclick="openFinishCook(<%= d.id %>)">
-                        <i class="bi bi-fire"></i> Finalizar Cozimento
-                    </button>
-
-                    <button class="btn btn-warning btn-sm" onclick="openDischarge(<%= d.id %>)">
-                        <i class="bi bi-truck"></i> Descarregar
-                    </button>
+                <td>
+                    <button class="btn btn-success btn-sm" onclick="abrirStart(<%= d.id %>)">Iniciar</button>
+                    <button class="btn btn-outline-success btn-sm" onclick="abrirFinishT(<%= d.id %>)">Finalizar Tritura</button>
+                    <button class="btn btn-outline-success btn-sm" onclick="abrirFinishC(<%= d.id %>)">Finalizar Cozimento</button>
+                    <button class="btn btn-warning btn-sm" onclick="abrirDischarge(<%= d.id %>)">Descarregar</button>
                 </td>
 
             </tr>
-        <% }) %>
-    </tbody>
-</table>
+            <% }) %>
+        </tbody>
+
+    </table>
+
+    <!-- ===================== LOG ===================== -->
+    <div class="card mt-4">
+        <div class="card-header bg-success text-white fw-bold">Log do sistema:</div>
+        <div id="logContent" class="card-body text-muted">Aguardando eventos...</div>
+    </div>
+
+</div>
+
+<%- include('modais/start_carga') %>
+<%- include('modais/finish_tritura') %>
+<%- include('modais/finish_cook') %>
+<%- include('modais/discharge') %>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    const socket = io();
+
+    socket.on("digestors:update", (digestores) => {
+        digestores.forEach(d => {
+
+            // STATUS ---------------------------------
+            const st = document.getElementById(`status-${d.id}`);
+            if (!st) return;
+
+            let statusText = "IDLE";
+            let barPct = 0;
+
+            if (d.current_tritura) {
+                statusText = "Triturando";
+                barPct = 40;
+            }
+
+            if (d.current_cooking) {
+                statusText = "Cozinhando";
+                barPct = 75;
+            }
+
+            if (d.current_cycle) {
+                statusText = "Ciclo Completo";
+                barPct = 100;
+            }
+
+            st.innerText = statusText;
+            st.classList.remove("text-success", "text-warning");
+            if (statusText === "IDLE") st.classList.add("text-success");
+            else st.classList.add("text-warning");
+
+            // BARRA -----------------------------------
+            const bar = document.getElementById(`bar-${d.id}`);
+            if (bar) {
+                bar.style.width = barPct + "%";
+                bar.innerText = barPct + "%";
+            }
+
+            // TRITURAÇÃO ----------------------------
+            document.getElementById(`tritura-${d.id}`).innerText =
+                d.current_tritura ? "#" + d.current_tritura.id : "Nenhuma";
+
+            // COZIMENTO ------------------------------
+            document.getElementById(`cook-${d.id}`).innerText =
+                d.current_cooking ? "#" + d.current_cooking.id : "Nenhuma";
+
+            // CICLO ---------------------------------
+            document.getElementById(`ciclo-${d.id}`).innerText =
+                d.current_cycle ? "#" + d.current_cycle.id : "Nenhum";
+        });
+    });
+
+</script>
+
+<%- include('layouts/base_bottom') %>
