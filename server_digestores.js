@@ -7,6 +7,8 @@ const bodyParser = require("body-parser");
 const sqlite3 = require("sqlite3").verbose();
 const { Server } = require("socket.io");
 const PDFDocument = require("pdfkit");
+const gerarPDFCiclo = require("./utils/pdf_ciclos");
+
 
 const app = express();
 const server = http.createServer(app);
@@ -181,6 +183,15 @@ app.post("/api/digestor/discharge", (req, res) => {
 io.on("connection", (socket) => {
   console.log("🔌 Cliente conectado:", socket.id);
   broadcastState();
+});
+app.get("/relatorio/ciclo/:id", async (req, res) => {
+    const cicloId = req.params.id;
+
+    // 🔥 PEGAR DADOS DO BANCO (digestor, tritura, cook, discharge, operador)
+    // aqui você preenche os dados do ciclo
+
+    const pdfFile = await gerarPDFCiclo(dadosCiclo);
+    res.download(path.join(__dirname, "public", "reports", pdfFile));
 });
 
 const PORT = process.env.PORT || 3002;
