@@ -100,6 +100,10 @@ app.get("/operador/historico", (req, res) => {
     res.render("operador_historico", { usuario: req.user, title: "Histórico", historico: rows || [] });
   });
 });
+// Histórico dos ciclos
+app.get("/operador/historico", (req, res) => {
+    res.render("operador_historico", { usuario: req.user });
+});
 
 app.get("/portaria", (req, res) => res.render("portaria_painel", { usuario: req.user, title: "Portaria" }));
 app.get("/portaria/chegada", (req, res) => res.render("portaria_chegada_form", { usuario: req.user, title: "Registrar Chegada" }));
@@ -184,6 +188,55 @@ io.on("connection", (socket) => {
   console.log("🔌 Cliente conectado:", socket.id);
   broadcastState();
 });
+// Lista todos os ciclos (para o histórico)
+app.get("/api/cycles/all", (req, res) => {
+
+    const sql = `
+        SELECT cy.id, cy.started_at, cy.ended_at, cy.status,
+               d.nome AS digestor_name
+        FROM cycles cy
+        LEFT JOIN digestors d ON cy.digestor_id = d.id
+        ORDER BY cy.id DESC
+        LIMIT 200
+    `;
+
+    db.all(sql, [], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(rows || []);
+    });
+});
+
+// Dados detalhados de um ciclo específico
+app.get("/api/cycles/:id", (req, res) => {
+    const id = req.params.id;
+
+    const sql = `
+        SELECT 
+            cy.*,
+            d.nome AS digestor_name,
+            tc.start_tritura_at,
+            tc.end_tritura_at,
+            tc.toneladas_trituradas,
+            cc.start_cook_at,
+            cc.end_cook_at,
+            dd.toneladas_discarded,
+            dd.notes
+        FROM cycles cy
+        LEFT JOIN digestors d ON cy.digestor_id = d.id
+        LEFT JOIN trituration_cycles tc ON cy.trituration_id = tc.id
+        LEFT JOIN cooking_cycles cc ON cy.cooking_id = cc.id
+        LEFT JOIN digestor_discharges dd ON dd.cooking_cycle_id = cc.id
+        WHERE cy.id = ?
+    `;
+
+    db.get(sql, [id], (err, row) => {
+        if (err) return res.status(500).json({ error: err.message });
+        if (!row) return res.status(404).json({ error: "Ciclo não encontrado" });
+
+        res.json(row);
+    });
+});
+
 // utils/pdf_ciclos.js — PDF PREMIUM CAMPOS DO GADO
 const PDFDocument = require("pdfkit");
 const fs = require("fs");
