@@ -117,6 +117,11 @@ function broadcastState() {
     }
     io.emit("tovas:update", tovas || []);
   });
+io.emit("progress:update", {
+    digestor_id,
+    progress,
+    mode // "tritura", "cook", "idle"
+});
 
   // Entradas pendentes
   db.all("SELECT id, truck_plate, toneladas_declared, arrival_at, status FROM entries WHERE status != 'reception_finished' ORDER BY arrival_at DESC LIMIT 50", [], (err3, rows) => {
