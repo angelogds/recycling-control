@@ -1,0 +1,15 @@
+app.get("/api/cycles/:id", (req, res) => {
+    const id = req.params.id;
+
+    db.get("SELECT * FROM cycles WHERE id=?", [id], (err, cycle) => {
+        if (!cycle) return res.json({});
+
+        Promise.all([
+            new Promise(r => db.get("SELECT * FROM trituration_cycles WHERE id=?", [cycle.trituration_id], (_, t) => r(t))),
+            new Promise(r => db.get("SELECT * FROM cooking_cycles WHERE id=?", [cycle.cooking_id], (_, c) => r(c))),
+            new Promise(r => db.get("SELECT * FROM digestor_discharges WHERE cycle_id=?", [id], (_, d) => r(d)))
+        ]).then(([trit, cook, discharge]) => {
+            res.json({ ...cycle, trit, cook, discharge });
+        });
+    });
+});
