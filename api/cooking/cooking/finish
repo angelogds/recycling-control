@@ -1,0 +1,22 @@
+app.post("/api/cooking/finish", (req, res) => {
+    const { cooking_id } = req.body;
+
+    if (!cooking_id) {
+        return res.status(400).json({ error: "ID do cozimento não informado." });
+    }
+
+    const now = new Date().toISOString();
+
+    db.run(
+        `UPDATE cooking_cycles
+         SET end_cook_at = ?, status = 'finished'
+         WHERE id = ?`,
+        [now, cooking_id],
+        (err) => {
+            if (err) return res.status(500).json({ error: err.message });
+
+            broadcastState();
+            res.json({ ok: true });
+        }
+    );
+});
