@@ -2,137 +2,86 @@
 
 <div class="container mt-4">
 
-    <h1 class="page-title mb-4">Histórico de Ciclos</h1>
+    <h1 class="page-title mb-4">
+        <i class="bi bi-clock-history me-2"></i>
+        Histórico de Ciclos
+    </h1>
 
-    <div class="card shadow-sm border-0 p-3">
+    <table class="table table-striped table-hover shadow-sm">
+        <thead class="table-success">
+            <tr>
+                <th>ID</th>
+                <th>Digestor</th>
+                <th>Início</th>
+                <th>Fim</th>
+                <th>Status</th>
+                <th class="text-center">Ações</th>
+            </tr>
+        </thead>
 
-        <table class="table table-striped align-middle">
-            <thead class="table-success">
-                <tr>
-                    <th>ID Ciclo</th>
-                    <th>Digestor</th>
-                    <th>Início</th>
-                    <th>Fim</th>
-                    <th>Status</th>
-                    <th class="text-center">Ações</th>
-                </tr>
-            </thead>
-
-            <tbody id="tableBody">
-                <tr>
-                    <td colspan="6" class="text-center text-muted py-4">
-                        Carregando histórico...
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-
-    </div>
+        <tbody id="cyclesTableBody">
+            <tr>
+                <td colspan="6" class="text-center text-muted py-4">
+                    Nenhum ciclo registrado.
+                </td>
+            </tr>
+        </tbody>
+    </table>
 </div>
 
-<!-- MODAL DETALHES -->
-<div class="modal fade" id="modalDetalhes" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content border-0 shadow">
-
-            <div class="modal-header bg-success text-white">
-                <h5 class="modal-title">Detalhes do Ciclo</h5>
-                <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-
-            <div class="modal-body" id="detalhesBody">
-                Carregando...
-            </div>
-
-            <div class="modal-footer">
-                <button class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
-            </div>
-
-        </div>
-    </div>
-</div>
+<!-- Modal de Detalhes do Ciclo -->
+<%- include('modais/detalhes_ciclo') %>
 
 <script>
 async function carregarHistorico() {
-    const rows = await fetch("/api/cycles/all").then(r => r.json());
+    const res = await fetch('/api/cycles/all');
+    const lista = await res.json();
 
-    const tbody = document.getElementById("tableBody");
+    const tbody = document.getElementById("cyclesTableBody");
     tbody.innerHTML = "";
 
-    if (rows.length === 0) {
+    if (lista.length === 0) {
         tbody.innerHTML = `
-            <tr><td colspan="6" class="text-center text-muted py-4">
-                Nenhum ciclo registrado.
-            </td></tr>
-        `;
+            <tr>
+                <td colspan="6" class="text-center text-muted py-4">
+                    Nenhum ciclo registrado.
+                </td>
+            </tr>`;
         return;
     }
 
-    rows.forEach(c => {
+    lista.forEach(c => {
         tbody.innerHTML += `
-        <tr>
-            <td>${c.id}</td>
-            <td>${c.digestor_name}</td>
-            <td>${c.started_at || "—"}</td>
-            <td>${c.ended_at || "—"}</td>
-            <td><span class="badge bg-${c.status === "finished" ? "success" : "warning"}">${c.status}</span></td>
-
-            <td class="text-center">
-                <button class="btn btn-outline-success btn-sm" onclick="gerarPDF(${c.id})">
-                    <i class="bi bi-file-earmark-pdf"></i> PDF
-                </button>
-
-                <button class="btn btn-success btn-sm" onclick="abrirDetalhes(${c.id})">
-                    <i class="bi bi-search"></i> Ver
-                </button>
-            </td>
-        </tr>
+            <tr>
+                <td>${c.id}</td>
+                <td>Digestor ${c.digestor_id}</td>
+                <td>${c.start_cycle_at || "-"}</td>
+                <td>${c.end_cycle_at || "-"}</td>
+                <td><span class="badge bg-${c.status === "in_progress" ? "warning" : "success"}">${c.status}</span></td>
+                <td class="text-center">
+                    <button class="btn btn-success btn-sm" onclick="abrirDetalhes(${c.id})">
+                        <i class="bi bi-search"></i> Ver
+                    </button>
+                </td>
+            </tr>
         `;
     });
 }
 
-async function gerarPDF(id) {
-    const res = await fetch(`/reports/cycle/${id}`);
-    const json = await res.json();
-
-    if (json.url) {
-        window.open(json.url, "_blank");
-    } else {
-        alert("Erro ao gerar PDF!");
-    }
-}
-
 async function abrirDetalhes(id) {
-    const modal = new bootstrap.Modal(document.getElementById("modalDetalhes"));
-    document.getElementById("detalhesBody").innerHTML = "Carregando...";
+    const res = await fetch(`/api/cycles/${id}`);
+    const ciclo = await res.json();
 
-    const dados = await fetch(`/api/cycles/${id}`).then(r => r.json());
+    document.getElementById("dc_id").innerText = ciclo.id;
+    document.getElementById("dc_digestor").innerText = ciclo.digestor_id;
+    document.getElementById("dc_inicio").innerText = ciclo.start_cycle_at;
+    document.getElementById("dc_fim").innerText = ciclo.end_cycle_at || "—";
 
-    document.getElementById("detalhesBody").innerHTML = `
-        <h5>Ciclo #${dados.id}</h5>
-        <p><strong>Digestor:</strong> ${dados.digestor_name}</p>
+    document.getElementById("dc_tritura").innerText = ciclo.trit ? ciclo.trit.toneladas_trituradas + " tn" : "—";
+    document.getElementById("dc_cook").innerText = ciclo.cook ? ciclo.cook.status : "—";
+    document.getElementById("dc_descarga").innerText = ciclo.discharge ? ciclo.discharge.toneladas_discarded + " tn" : "—";
 
-        <div class="border p-2 rounded bg-light">
-            <strong>Trituração</strong><br>
-            Início: ${dados.start_tritura_at || "—"}<br>
-            Fim: ${dados.end_tritura_at || "—"}<br>
-            Toneladas: ${dados.toneladas_trituradas || "—"}
-        </div>
-
-        <div class="border p-2 rounded bg-light mt-2">
-            <strong>Cozimento</strong><br>
-            Início: ${dados.start_cook_at || "—"}<br>
-            Fim: ${dados.end_cook_at || "—"}
-        </div>
-
-        <div class="border p-2 rounded bg-light mt-2">
-            <strong>Descarga</strong><br>
-            Toneladas: ${dados.toneladas_discarded || "—"}<br>
-            Observações: ${dados.notes || "—"}
-        </div>
-    `;
-
-    modal.show();
+    new bootstrap.Modal(document.getElementById("modalDetalhesCiclo")).show();
 }
 
 carregarHistorico();
