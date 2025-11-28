@@ -1,20 +1,26 @@
-<!-- start_carga.ejs -->
 <div class="modal fade" id="modalStartCarga" tabindex="-1">
-  <div class="modal-dialog">
-    <form id="formStartCarga" class="modal-content">
-      <div class="modal-header"><h5 class="modal-title">Iniciar Carregamento</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-      <div class="modal-body">
-        <input type="hidden" id="sc_digestor_id" name="digestor_id">
-        <div class="mb-3">
-          <label>Da Tova</label>
-          <select id="sc_from_tova" name="from_tova_id" class="form-select"></select>
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">Iniciar Trituração</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <form id="formStartCarga">
+                <div class="modal-body">
+                    <input type="hidden" id="start_digestor_id">
+
+                    <label class="form-label">Tova de Origem:</label>
+                    <input type="number" class="form-control" id="start_tova_id" required>
+
+                    <label class="form-label mt-2">Toneladas Solicitadas:</label>
+                    <input type="number" class="form-control" id="start_ton" required>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-premium">Iniciar</button>
+                </div>
+            </form>
         </div>
-        <div class="mb-3">
-          <label>Toneladas solicitadas</label>
-          <input id="sc_ton" name="toneladas_solicitadas" class="form-control" type="number" step="0.1" required>
-        </div>
-      </div>
-      <div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button><button class="btn btn-success" type="submit">Iniciar</button></div>
-    </form>
-  </div>
+    </div>
 </div>
