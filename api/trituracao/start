@@ -1,0 +1,25 @@
+app.post("/api/trituracao/start", (req, res) => {
+    const { digestor_id, from_tova_id, toneladas_solicitadas } = req.body;
+
+    if (!digestor_id || !from_tova_id || !toneladas_solicitadas) {
+        return res.status(400).json({ error: "Dados incompletos para iniciar trituração." });
+    }
+
+    const now = new Date().toISOString();
+
+    db.run(
+        `INSERT INTO trituration_cycles 
+        (digestor_id, from_tova_id, toneladas_solicitadas, start_tritura_at, status, operator_id)
+        VALUES (?, ?, ?, ?, 'started', ?)`,
+        [digestor_id, from_tova_id, toneladas_solicitadas, now, req.user.id],
+        function (err) {
+            if (err) return res.status(500).json({ error: err.message });
+
+            broadcastState();
+            res.json({
+                ok: true,
+                trituration_id: this.lastID
+            });
+        }
+    );
+});
