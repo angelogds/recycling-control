@@ -1,26 +1,55 @@
+<!-- Modal: Iniciar Trituração -->
 <div class="modal fade" id="modalStartCarga" tabindex="-1">
     <div class="modal-dialog">
-        <div class="modal-content">
+        <div class="modal-content border-success">
             <div class="modal-header bg-success text-white">
                 <h5 class="modal-title">Iniciar Trituração</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
 
-            <form id="formStartCarga">
-                <div class="modal-body">
-                    <input type="hidden" id="start_digestor_id">
+            <div class="modal-body">
+                <input type="hidden" id="startDigestorId">
 
-                    <label class="form-label">Tova de Origem:</label>
-                    <input type="number" class="form-control" id="start_tova_id" required>
+                <label class="form-label">Tova de Origem:</label>
+                <select id="startTova" class="form-select">
+                    <option value="1">Tova 1</option>
+                    <option value="2">Tova 2</option>
+                    <option value="3">Tova 3</option>
+                </select>
 
-                    <label class="form-label mt-2">Toneladas Solicitadas:</label>
-                    <input type="number" class="form-control" id="start_ton" required>
-                </div>
+                <label class="form-label mt-3">Toneladas Solicitadas:</label>
+                <input type="number" id="startTon" class="form-control" placeholder="Ex: 8">
+            </div>
 
-                <div class="modal-footer">
-                    <button type="submit" class="btn btn-premium">Iniciar</button>
-                </div>
-            </form>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button class="btn btn-success" onclick="confirmStartCarga()">Iniciar</button>
+            </div>
         </div>
     </div>
 </div>
+
+<script>
+function abrirStart(id) {
+    document.getElementById("startDigestorId").value = id;
+    new bootstrap.Modal(document.getElementById("modalStartCarga")).show();
+}
+
+function confirmStartCarga() {
+    const id = document.getElementById("startDigestorId").value;
+    const tova = document.getElementById("startTova").value;
+    const ton = document.getElementById("startTon").value;
+
+    fetch("/api/trituracao/start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            digestor_id: id,
+            from_tova_id: tova,
+            toneladas_solicitadas: ton
+        })
+    });
+
+    bootstrap.Modal.getInstance(document.getElementById("modalStartCarga")).hide();
+}
+</script>
