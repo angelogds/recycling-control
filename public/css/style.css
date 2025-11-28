@@ -322,3 +322,26 @@ body{
 .progress-bar.idle {
     background: #1e6d36 !important;
 }
+.digestor-table th {
+    background: #116530 !important;
+    color: white !important;
+    font-size: 18px;
+}
+
+.status-pill {
+    padding: 6px 12px;
+    font-size: 14px;
+    border-radius: 50px;
+}
+
+.table td, .table th {
+    vertical-align: middle !important;
+}
+
+.progress-bar {
+    transition: width 0.5s ease-in-out;
+}
+
+.btn-sm {
+    margin: 3px;
+}
