@@ -1,157 +1,39 @@
-<%- include('layouts/base_top', { title: "Painel do Operador", usuario: usuario }) %>
+div.innerHTML = `
+    <h4>${d.nome}</h4>
+    <div class="muted">Capacidade: ${d.capacidade_tn} tn</div>
 
-<div class="container">
-  <h1 class="page-title">Painel do Operador</h1>
-
-  <div id="digestorGrid" class="row-g"></div>
-
-  <div class="log-card">
-    <strong>Log do sistema:</strong>
-    <div id="logContent" class="mt-2 text-muted">Aguardando eventos...</div>
-  </div>
-</div>
-
-<script>
-  const socket = io();
-
-  function addLog(msg){
-    const el = document.getElementById('logContent');
-    const now = new Date().toLocaleString();
-    el.innerHTML = `<div style="margin-bottom:6px;"><small class="text-muted">${now}</small> — ${msg}</div>` + el.innerHTML;
-  }
-
-  socket.on('digestors:update', data => {
-    renderDigestors(data || []);
-    addLog('Estado atualizado via socket.');
-  });
-
-  async function loadInitial(){
-    try{
-      const d = await fetch('/api/digestors').then(r=>r.json());
-      renderDigestors(d || []);
-      addLog('Dados carregados (inicial).');
-    }catch(e){
-      addLog('Erro ao carregar dados: ' + e.message);
-    }
-  }
-
-  function renderDigestors(list){
-    const grid = document.getElementById('digestorGrid');
-    grid.innerHTML = '';
-    list.forEach(d => {
-      const div = document.createElement('div');
-      div.className = 'card-premium';
-
-      // status text & class
-      const stateText = (d.status || 'IDLE').toString().toUpperCase();
-      const statusCls = window.statusClass(d.status || 'idle');
-
-      // determine progress width (dummy visual based on current_cycle existence)
-      let progressWidth = '96%';
-      if(d.current_cycle) progressWidth = '60%';
-      if(d.current_cooking) progressWidth = '90%';
-
-      div.innerHTML = `
-        <h4>${d.nome}</h4>
-        <div class="muted">Capacidade: ${d.capacidade_tn} tn</div>
-
-        <div class="status-bar" aria-hidden="true">
-          <span class="status-progress ${statusCls}" style="width:${progressWidth}">${stateText}</span>
+    <!-- Barra de progresso dinâmica -->
+    <div class="progress mt-2" style="height: 18px; border-radius: 10px;">
+        <div id="bar-${d.id}"
+             class="progress-bar progress-bar-striped progress-bar-animated"
+             role="progressbar"
+             style="width: 0%; background:#1e6d36;">
+             0%
         </div>
-
-        <div class="small">
-          <div><strong>Trituração:</strong> ${d.current_tritura ? ('#' + d.current_tritura.id) : 'Nenhuma'}</div>
-          <div><strong>Cozimento:</strong> ${d.current_cooking ? ('#' + d.current_cooking.id) : 'Nenhuma'}</div>
-          <div><strong>Ciclo:</strong> ${d.current_cycle ? ('#' + d.current_cycle.id) : 'Nenhum'}</div>
-        </div>
-
-        <div class="mt-3 gap-2">
-          <button class="btn-premium" onclick="startCarga(${d.id})"><i class="bi bi-truck-loading"></i> Iniciar Carregamento</button>
-          <button class="btn-outline-premium" onclick="finishTrit(${d.current_tritura ? d.current_tritura.id : 'null'})"><i class="bi bi-hammer"></i> Finalizar Trituração</button>
-          <button class="btn-outline-premium" onclick="finishCook(${d.current_cooking ? d.current_cooking.id : 'null'})"><i class="bi bi-thermometer-high"></i> Finalizar Cozimento</button>
-          <button class="btn-warning" onclick="discharge(${d.id}, ${d.current_tritura ? d.current_tritura.id : 'null'}, ${d.current_cooking ? d.current_cooking.id : 'null'})"><i class="bi bi-box-arrow-in-down"></i> Descarregar</button>
-        </div>
-      `;
-
-      grid.appendChild(div);
-    });
-  }
-
-  // action stubs: call API and add logs
-  async function startCarga(digestor_id){
-    const toneladas_solicitadas = prompt('Toneladas a solicitar para carga (tn):', '10');
-    const from_tova_id = prompt('Tova id (ex: 1):', '1');
-    if(!toneladas_solicitadas || !from_tova_id) return addLog('Ação de iniciar carga cancelada.');
-    try{
-      const res = await fetch('/api/trituracao/start', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ digestor_id, from_tova_id, toneladas_solicitadas })
-      });
-      const j = await res.json();
-      addLog('Iniciada trituração #' + (j.trituration_id || '??') + ' no digestor ' + digestor_id);
-    }catch(e){ addLog('Erro startCarga: ' + e.message); }
-  }
-
-  async function finishTrit(trit_id){
-    if(!trit_id){ return addLog('Nenhuma trituração ativa para finalizar.'); }
-    const toneladas_trituradas = prompt('Confirme toneladas trituradas (tn):', '10');
-    if(toneladas_trituradas === null) return addLog('Finalizar trituração cancelado.');
-    try{
-      await fetch('/api/trituracao/finish', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ trituration_id: trit_id, toneladas_trituradas })
-      });
-      addLog('Trituração #' + trit_id + ' finalizada.');
-    }catch(e){ addLog('Erro finishTrit: ' + e.message); }
-  }
-
-  async function finishCook(cook_id){
-    if(!cook_id){ return addLog('Nenhum cozimento ativo para finalizar.'); }
-    try{
-      await fetch('/api/cooking/finish', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ cooking_id: cook_id })
-      });
-      addLog('Cozimento #' + cook_id + ' finalizado.');
-    }catch(e){ addLog('Erro finishCook: ' + e.message); }
-  }
-
-  async function discharge(digestor_id, trit_id, cook_id){
-    const toneladas = prompt('Toneladas descarregadas (tn):','0');
-    const notes = prompt('Observações (opcional):','');
-    try{
-      const res = await fetch('/api/digestor/discharge', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ digestor_id, trituration_cycle_id: trit_id, cooking_cycle_id: cook_id, toneladas_discarded: toneladas, notes })
-      });
-      const j = await res.json();
-      addLog('Digestor ' + digestor_id + ' descarregado (id ' + (j.discharge_id||'?') + ').');
-    }catch(e){ addLog('Erro discharge: ' + e.message); }
-  }
-
-  // init
-  loadInitial();
-</script>
-
-<div class="card mt-4 p-3">
-    <h5><b>Log do sistema:</b></h5>
-    <div id="systemLog" style="height:150px; overflow:auto; font-size:14px;">
-        Aguardando eventos...
     </div>
-</div>
 
-<script>
-function addLog(msg){
-    const box = document.getElementById("systemLog");
-    box.innerHTML += `<div>• ${msg}</div>`;
-    box.scrollTop = box.scrollHeight;
+    <div class="small">
+      <div><strong>Trituração:</strong> ${d.current_tritura ? ('#' + d.current_tritura.id) : 'Nenhuma'}</div>
+      <div><strong>Cozimento:</strong> ${d.current_cooking ? ('#' + d.current_cooking.id) : 'Nenhuma'}</div>
+      <div><strong>Ciclo:</strong> ${d.current_cycle ? ('#' + d.current_cycle.id) : 'Nenhum'}</div>
+    </div>
+
+    <div class="mt-3 gap-2">
+      <button class="btn-premium" onclick="startCarga(${d.id})"><i class="bi bi-truck-loading"></i> Iniciar Carregamento</button>
+      <button class="btn-outline-premium" onclick="finishTrit(${d.current_tritura ? d.current_tritura.id : 'null'})"><i class="bi bi-hammer"></i> Finalizar Trituração</button>
+      <button class="btn-outline-premium" onclick="finishCook(${d.current_cooking ? d.current_cooking.id : 'null'})"><i class="bi bi-thermometer-high"></i> Finalizar Cozimento</button>
+      <button class="btn-warning" onclick="discharge(${d.id}, ${d.current_tritura ? d.current_tritura.id : 'null'}, ${d.current_cooking ? d.current_cooking.id : 'null'})"><i class="bi bi-box-arrow-in-down"></i> Descarregar</button>
+    </div>
+`;
+
+// Atualiza percentual da barra
+let pct = 0;
+if (d.current_tritura) pct = 40;
+if (d.current_cooking) pct = 75;
+if (d.current_cycle) pct = 100;
+
+const bar = div.querySelector(`#bar-${d.id}`);
+if (bar) {
+    bar.style.width = pct + "%";
+    bar.innerText = pct + "%";
 }
-
-socket.on("log", (msg) => addLog(msg));
-</script>
-
-<%- include('layouts/base_bottom') %>
