@@ -1,55 +1,76 @@
-div.innerHTML = `
-    <h4>${d.nome}</h4>
-    <div class="muted">Capacidade: ${d.capacidade_tn} tn</div>
+<table class="table table-bordered table-striped digestor-table mt-4 shadow-sm">
+    <thead class="table-success">
+        <tr>
+            <th>Digestor</th>
+            <th>Capacidade</th>
+            <th>Status</th>
+            <th>Barra de Progresso</th>
+            <th>Trituração</th>
+            <th>Cozimento</th>
+            <th>Ciclo</th>
+            <th class="text-center">Ações</th>
+        </tr>
+    </thead>
 
-    <!-- Barra de progresso dinâmica -->
-    <div class="progress mt-2" style="height: 18px; border-radius: 10px;">
-        <div id="bar-${d.id}"
-             class="progress-bar progress-bar-striped progress-bar-animated"
-             role="progressbar"
-             style="width: 0%; background:#1e6d36;">
-             0%
-        </div>
-    </div>
+    <tbody id="digestoresTableBody">
+        <% digestores.forEach(d => { %>
+            <tr id="row-<%= d.id %>">
 
-    <div class="small">
-      <div><strong>Trituração:</strong> ${d.current_tritura ? ('#' + d.current_tritura.id) : 'Nenhuma'}</div>
-      <div><strong>Cozimento:</strong> ${d.current_cooking ? ('#' + d.current_cooking.id) : 'Nenhuma'}</div>
-      <div><strong>Ciclo:</strong> ${d.current_cycle ? ('#' + d.current_cycle.id) : 'Nenhum'}</div>
-    </div>
+                <!-- Nome -->
+                <td><strong><%= d.nome %></strong></td>
 
-    <div class="mt-3 gap-2">
-      <button class="btn-premium" onclick="startCarga(${d.id})"><i class="bi bi-truck-loading"></i> Iniciar Carregamento</button>
-      <button class="btn-outline-premium" onclick="finishTrit(${d.current_tritura ? d.current_tritura.id : 'null'})"><i class="bi bi-hammer"></i> Finalizar Trituração</button>
-      <button class="btn-outline-premium" onclick="finishCook(${d.current_cooking ? d.current_cooking.id : 'null'})"><i class="bi bi-thermometer-high"></i> Finalizar Cozimento</button>
-      <button class="btn-warning" onclick="discharge(${d.id}, ${d.current_tritura ? d.current_tritura.id : 'null'}, ${d.current_cooking ? d.current_cooking.id : 'null'})"><i class="bi bi-box-arrow-in-down"></i> Descarregar</button>
-    </div>
-`;
+                <!-- Capacidade -->
+                <td><%= d.capacidade_tn %> tn</td>
 
-// Atualiza percentual da barra
-let pct = 0;
-if (d.current_tritura) pct = 40;
-if (d.current_cooking) pct = 75;
-if (d.current_cycle) pct = 100;
+                <!-- Status -->
+                <td>
+                    <span id="status-<%= d.id %>"
+                          class="badge bg-success status-pill">
+                        IDLE
+                    </span>
+                </td>
 
-const bar = div.querySelector(`#bar-${d.id}`);
-if (bar) {
-    bar.style.width = pct + "%";
-    bar.innerText = pct + "%";
-}
-<script>
-socket.on("progress:update", data => {
-    const bar = document.getElementById(`bar-${data.digestor_id}`);
-    if (!bar) return;
+                <!-- BAR -->
+                <td style="width: 280px;">
+                    <div class="progress" style="height: 20px;">
+                        <div id="bar-<%= d.id %>"
+                             class="progress-bar bg-success"
+                             role="progressbar"
+                             style="width: 0%;">
+                            0%
+                        </div>
+                    </div>
+                </td>
 
-    bar.style.width = data.progress + "%";
-    bar.innerText = data.progress + "%";
+                <!-- Trituração -->
+                <td id="tritura-<%= d.id %>">Nenhuma</td>
 
-    // Cores
-    bar.classList.remove("triturando", "cozinhando", "idle");
+                <!-- Cozimento -->
+                <td id="cozimento-<%= d.id %>">Nenhum</td>
 
-    if (data.mode === "tritura") bar.classList.add("triturando");
-    else if (data.mode === "cook") bar.classList.add("cozinhando");
-    else bar.classList.add("idle");
-});
-</script>
+                <!-- Ciclo -->
+                <td id="ciclo-<%= d.id %>">Nenhum</td>
+
+                <!-- AÇÕES -->
+                <td class="text-center">
+                    <button class="btn btn-success btn-sm" onclick="openStartCarga(<%= d.id %>)">
+                        <i class="bi bi-play-fill"></i> Iniciar
+                    </button>
+
+                    <button class="btn btn-primary btn-sm" onclick="openFinishTritura(<%= d.id %>)">
+                        <i class="bi bi-check-lg"></i> Finalizar Tritura
+                    </button>
+
+                    <button class="btn btn-info btn-sm" onclick="openFinishCook(<%= d.id %>)">
+                        <i class="bi bi-fire"></i> Finalizar Cozimento
+                    </button>
+
+                    <button class="btn btn-warning btn-sm" onclick="openDischarge(<%= d.id %>)">
+                        <i class="bi bi-truck"></i> Descarregar
+                    </button>
+                </td>
+
+            </tr>
+        <% }) %>
+    </tbody>
+</table>
