@@ -37,3 +37,19 @@ if (bar) {
     bar.style.width = pct + "%";
     bar.innerText = pct + "%";
 }
+<script>
+socket.on("progress:update", data => {
+    const bar = document.getElementById(`bar-${data.digestor_id}`);
+    if (!bar) return;
+
+    bar.style.width = data.progress + "%";
+    bar.innerText = data.progress + "%";
+
+    // Cores
+    bar.classList.remove("triturando", "cozinhando", "idle");
+
+    if (data.mode === "tritura") bar.classList.add("triturando");
+    else if (data.mode === "cook") bar.classList.add("cozinhando");
+    else bar.classList.add("idle");
+});
+</script>
