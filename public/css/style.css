@@ -254,3 +254,56 @@ body{
     border-left: 5px solid #0a5a32;
     border-radius: 8px;
 }
+/* BOTÕES PREMIUM – Verde corporativo */
+.btn-premium {
+    background: linear-gradient(135deg, #2a8d48, #1e6d36);
+    color: #fff;
+    border: none;
+    padding: 8px 18px;
+    border-radius: 8px;
+    transition: 0.25s ease;
+    font-weight: 600;
+}
+
+.btn-premium:hover {
+    transform: translateY(-3px);
+    box-shadow: 0px 4px 10px rgba(0,0,0,0.25);
+    filter: brightness(1.15);
+}
+
+.btn-yellow {
+    background: #ffc107;
+    color: #000;
+    border-radius: 8px;
+    padding: 8px 16px;
+    transition: 0.25s;
+    font-weight: 600;
+}
+
+.btn-yellow:hover {
+    background: #ffca2c;
+    transform: translateY(-3px);
+}
+
+/* Borda suave dos cards */
+.card-premium {
+    border-radius: 16px;
+    border: 1px solid #e5e5e5;
+    transition: 0.25s;
+}
+
+.card-premium:hover {
+    transform: scale(1.02);
+}
+
+/* Indicador de status */
+.status-indicator {
+    height: 8px;
+    width: 100%;
+    border-radius: 6px;
+    margin-top: 10px;
+    transition: 0.35s ease-in-out;
+}
+.status-idle { background:#1e6d36; }
+.status-triturando { background:#f39c12; }
+.status-cozinhando { background:#d32f2f; }
