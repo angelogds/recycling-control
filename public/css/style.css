@@ -211,3 +211,46 @@ body{
   70% { box-shadow: 0 0 0 14px rgba(47,143,74,0); }
   100% { box-shadow: 0 0 0 0 rgba(47,143,74,0); }
 }
+/* Botões premium */
+.btn-premium {
+    background: #0a5a32;
+    color: white;
+    border-radius: 6px;
+    transition: 0.2s;
+}
+.btn-premium:hover {
+    background: #0d733f;
+    transform: scale(1.02);
+}
+
+/* Títulos premium */
+.page-title {
+    color: #0a5a32;
+    font-weight: 700;
+}
+
+/* Links no menu */
+.text-premium {
+    color: #0a5a32 !important;
+    font-weight: 500;
+}
+.text-premium:hover {
+    color: #0d733f !important;
+}
+
+/* Tabela premium */
+.table-success th {
+    background: #0a5a32 !important;
+    color: white !important;
+}
+
+/* Modal Premium */
+.modal-header.bg-success {
+    background: #0a5a32 !important;
+}
+
+/* Cards */
+.card-premium {
+    border-left: 5px solid #0a5a32;
+    border-radius: 8px;
+}
