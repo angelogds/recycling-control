@@ -1,12 +1,22 @@
 <div class="modal fade" id="modalFinishCook" tabindex="-1">
-  <div class="modal-dialog">
-    <form id="formFinishCook" class="modal-content">
-      <div class="modal-header"><h5 class="modal-title">Finalizar Cozimento</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-      <div class="modal-body">
-        <input type="hidden" id="fc_cook_id" name="cooking_id">
-        <p>Confirma finalizar o cozimento?</p>
-      </div>
-      <div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-primary" type="submit">Confirmar</button></div>
-    </form>
-  </div>
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Finalizar Cozimento</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <form id="formFinishCook">
+                <div class="modal-body">
+                    <input type="hidden" id="finish_cook_id">
+
+                    <p>Confirma o término do cozimento?</p>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-premium">Finalizar</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
