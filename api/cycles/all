@@ -1,0 +1,6 @@
+app.get("/api/cycles/all", (req, res) => {
+    db.all("SELECT * FROM cycles ORDER BY id DESC", [], (err, rows) => {
+        if (err) return res.json([]);
+        res.json(rows);
+    });
+});
