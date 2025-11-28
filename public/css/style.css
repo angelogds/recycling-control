@@ -307,3 +307,18 @@ body{
 .status-idle { background:#1e6d36; }
 .status-triturando { background:#f39c12; }
 .status-cozinhando { background:#d32f2f; }
+
+.progress-bar {
+    transition: width 0.5s ease-in-out;
+    font-weight: bold;
+    font-size: 13px;
+}
+.progress-bar.triturando {
+    background: #f39c12 !important;
+}
+.progress-bar.cozinhando {
+    background: #d32f2f !important;
+}
+.progress-bar.idle {
+    background: #1e6d36 !important;
+}
