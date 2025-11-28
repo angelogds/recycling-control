@@ -1,0 +1,42 @@
+<div class="modal fade" id="modalDetalhesCiclo" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content shadow border-success">
+
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-clipboard-data me-2"></i>
+                    Detalhes do Ciclo
+                </h5>
+                <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>ID do ciclo:</strong> <span id="dc_id"></span></p>
+                        <p><strong>Digestor:</strong> <span id="dc_digestor"></span></p>
+                        <p><strong>Início:</strong> <span id="dc_inicio"></span></p>
+                        <p><strong>Fim:</strong> <span id="dc_fim"></span></p>
+                    </div>
+
+                    <div class="col-md-6">
+                        <p><strong>Trituração:</strong> <span id="dc_tritura"></span></p>
+                        <p><strong>Cozimento:</strong> <span id="dc_cook"></span></p>
+                        <p><strong>Descarga:</strong> <span id="dc_descarga"></span></p>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+                <a class="btn btn-outline-success" id="btn_pdf" target="_blank">
+                    <i class="bi bi-filetype-pdf me-2"></i> Gerar PDF
+                </a>
+
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+
+        </div>
+    </div>
+</div>
