@@ -143,8 +143,16 @@ app.get("/", (req, res) => res.redirect("/operador/painel"));
 
 // Operador - painel (socket-driven)
 app.get("/operador/painel", (req, res) => {
-  res.render("operador_painel", { usuario: req.user, title: "Painel do Operador" });
+    db.all("SELECT * FROM digestors ORDER BY id", [], (err, digestores) => {
+        if (err) return res.status(500).send("Erro ao carregar digestores");
+
+        res.render("operador_painel", {
+            usuario: req.user,
+            digestores
+        });
+    });
 });
+
 
 // Histórico (view)
 app.get("/operador/historico", (req, res) => {
