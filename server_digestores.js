@@ -238,7 +238,7 @@ app.get("/api/cycles/:id", (req, res) => {
 });
 
 // utils/pdf_ciclos.js — PDF PREMIUM CAMPOS DO GADO
-const PDFDocument = require("pdfkit");
+
 const fs = require("fs");
 const path = require("path");
 const QRCode = require("qrcode");
