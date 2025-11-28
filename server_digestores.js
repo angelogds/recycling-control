@@ -109,19 +109,60 @@ function broadcastState() {
   });
 
   // Tovas
-  db.all("SELECT id, nome, capacidade_tn, current_tn FROM tovas ORDER BY id", [], (err2, tovas) => {
-    if (err2) {
-      console.error("DB error (tovas):", err2);
-      io.emit("tovas:update", []);
-      return;
-    }
-    io.emit("tovas:update", tovas || []);
-  });
-io.emit("progress:update", {
-    digestor_id,
-    progress,
-    mode // "tritura", "cook", "idle"
-});
+  function broadcastState() {
+
+    // -------------------- DIGESTORES --------------------
+    db.all("SELECT * FROM digestors ORDER BY id", [], (err, digestores) => {
+        if (err || !digestores) return;
+
+        const promises = digestores.map(d =>
+            new Promise(resolve => {
+
+                db.get(
+                    "SELECT * FROM trituration_cycles WHERE digestor_id=? AND status IN ('created','started') ORDER BY id DESC LIMIT 1",
+                    [d.id],
+                    (_, trit) => {
+
+                        db.get(
+                            "SELECT * FROM cooking_cycles WHERE digestor_id=? AND status IN ('created','started') ORDER BY id DESC LIMIT 1",
+                            [d.id],
+                            (_, cook) => {
+
+                                db.get(
+                                    "SELECT * FROM cycles WHERE digestor_id=? AND status='in_progress' ORDER BY id DESC LIMIT 1",
+                                    [d.id],
+                                    (_, cycle) => {
+
+                                        resolve({
+                                            ...d,
+                                            current_tritura: trit || null,
+                                            current_cook: cook || null,
+                                            current_cycle: cycle || null
+                                        });
+                                    }
+                                );
+                            }
+                        );
+                    }
+                );
+            })
+        );
+
+        Promise.all(promises).then(result => {
+            io.emit("digestors:update", result);
+        });
+    });
+
+    // -------------------- TOVAS --------------------
+    db.all("SELECT * FROM tovas ORDER BY id", [], (_, rows) => {
+        io.emit("tovas:update", rows || []);
+    });
+
+    // -------------------- ENTRADAS --------------------
+    db.all("SELECT * FROM entries ORDER BY arrival_at DESC LIMIT 50", [], (_, rows) => {
+        io.emit("entries:update", rows || []);
+    });
+}
 
   // Entradas pendentes
   db.all("SELECT id, truck_plate, toneladas_declared, arrival_at, status FROM entries WHERE status != 'reception_finished' ORDER BY arrival_at DESC LIMIT 50", [], (err3, rows) => {
