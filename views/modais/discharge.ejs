@@ -1,32 +1,51 @@
+<!-- Modal: Descarregar Digestor -->
 <div class="modal fade" id="modalDischarge" tabindex="-1">
     <div class="modal-dialog">
-        <div class="modal-content">
-
-            <div class="modal-header bg-primary text-white">
+        <div class="modal-content border-warning">
+            <div class="modal-header bg-warning">
                 <h5 class="modal-title">Descarregar Digestor</h5>
-                <button type="button" class="btn-close"></button>
+                <button class="btn-close" data-bs-dismiss="modal"></button>
             </div>
 
-            <form id="formDischarge">
-                <div class="modal-body">
+            <div class="modal-body">
+                <input type="hidden" id="dischargeDigestorId">
 
-                    <input type="hidden" id="discharge_digestor_id">
-                    <input type="hidden" id="discharge_tritura_id">
-                    <input type="hidden" id="discharge_cook_id">
+                <label class="form-label">Toneladas Descarregadas:</label>
+                <input type="number" id="dischargeTon" class="form-control" placeholder="Ex: 15">
 
-                    <label class="form-label">Toneladas Descarregadas:</label>
-                    <input type="number" id="discharge_ton" class="form-control" required>
+                <label class="form-label mt-3">Observações:</label>
+                <textarea id="dischargeNotes" class="form-control"></textarea>
+            </div>
 
-                    <label class="form-label mt-2">Observações:</label>
-                    <textarea class="form-control" id="discharge_notes"></textarea>
-
-                </div>
-
-                <div class="modal-footer">
-                    <button type="submit" class="btn btn-premium">Confirmar</button>
-                </div>
-            </form>
-
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button class="btn btn-warning" onclick="confirmDischarge()">Descarregar</button>
+            </div>
         </div>
     </div>
 </div>
+
+<script>
+function abrirDischarge(id) {
+    document.getElementById("dischargeDigestorId").value = id;
+    new bootstrap.Modal(document.getElementById("modalDischarge")).show();
+}
+
+function confirmDischarge() {
+    const id = document.getElementById("dischargeDigestorId").value;
+    const ton = document.getElementById("dischargeTon").value;
+    const notes = document.getElementById("dischargeNotes").value;
+
+    fetch("/api/digestor/discharge", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            digestor_id: id,
+            toneladas_discarded: ton,
+            notes: notes
+        })
+    });
+
+    bootstrap.Modal.getInstance(document.getElementById("modalDischarge")).hide();
+}
+</script>
