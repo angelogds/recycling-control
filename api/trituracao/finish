@@ -1,0 +1,22 @@
+app.post("/api/trituracao/finish", (req, res) => {
+    const { trituration_id, toneladas_trituradas } = req.body;
+
+    if (!trituration_id || !toneladas_trituradas) {
+        return res.status(400).json({ error: "Dados incompletos para finalizar trituração." });
+    }
+
+    const now = new Date().toISOString();
+
+    db.run(
+        `UPDATE trituration_cycles
+         SET end_tritura_at = ?, toneladas_trituradas = ?, status = 'finished'
+         WHERE id = ?`,
+        [now, toneladas_trituradas, trituration_id],
+        (err) => {
+            if (err) return res.status(500).json({ error: err.message });
+
+            broadcastState();
+            res.json({ ok: true });
+        }
+    );
+});
