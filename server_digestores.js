@@ -184,15 +184,133 @@ io.on("connection", (socket) => {
   console.log("🔌 Cliente conectado:", socket.id);
   broadcastState();
 });
-app.get("/relatorio/ciclo/:id", async (req, res) => {
-    const cicloId = req.params.id;
+// utils/pdf_ciclos.js — PDF PREMIUM CAMPOS DO GADO
+const PDFDocument = require("pdfkit");
+const fs = require("fs");
+const path = require("path");
+const QRCode = require("qrcode");
 
-    // 🔥 PEGAR DADOS DO BANCO (digestor, tritura, cook, discharge, operador)
-    // aqui você preenche os dados do ciclo
+async function gerarPDFCicloPremium(ciclo, outputPath) {
+    return new Promise(async (resolve, reject) => {
 
-    const pdfFile = await gerarPDFCiclo(dadosCiclo);
-    res.download(path.join(__dirname, "public", "reports", pdfFile));
-});
+        const doc = new PDFDocument({
+            size: "A4",
+            margin: 40
+        });
+
+        const stream = fs.createWriteStream(outputPath);
+        doc.pipe(stream);
+
+        // =========================================================
+        //  CAPA DO RELATÓRIO
+        // =========================================================
+        doc.rect(0, 0, doc.page.width, 180)
+            .fill("#0a5a32");
+
+        const logoPath = path.join(__dirname, "..", "public", "img", "logo.png");
+        if (fs.existsSync(logoPath)) {
+            doc.image(logoPath, doc.page.width - 180, 25, { width: 140 });
+        }
+
+        doc.fill("white")
+            .fontSize(26)
+            .text("RELATÓRIO DE CICLO", 40, 50)
+            .fontSize(16)
+            .text("Setor de Manutenção Industrial", 40, 95)
+            .fontSize(14)
+            .text("Fábrica de Reciclagem – Campo do Gado", 40, 125);
+
+        doc.moveDown(3);
+
+        // =========================================================
+        //  QR CODE
+        // =========================================================
+        const qrData = `Ciclo ${ciclo.id} - Digestor ${ciclo.digestor_name} - ${ciclo.started_at}`;
+        const qrImage = await QRCode.toDataURL(qrData);
+
+        doc.image(Buffer.from(qrImage.split(",")[1], "base64"), 40, 200, {
+            width: 120,
+        });
+
+        doc.fillColor("black")
+            .fontSize(12)
+            .text(`Ciclo Nº: ${ciclo.id}`, 180, 200)
+            .text(`Digestor: ${ciclo.digestor_name}`, 180, 220)
+            .text(`Data início: ${ciclo.started_at}`, 180, 240)
+            .text(`Data fim: ${ciclo.ended_at}`, 180, 260);
+
+        doc.addPage();
+
+        // =========================================================
+        //  TABELA — TRITURAÇÃO
+        // =========================================================
+        doc.fontSize(18).fillColor("#0a5a32").text("✔ Dados da Trituração", { underline: true });
+        doc.moveDown();
+
+        tabela(doc, [
+            ["Início Trituração:", ciclo.start_tritura_at || "—"],
+            ["Fim Trituração:", ciclo.end_tritura_at || "—"],
+            ["Toneladas Trituradas:", ciclo.toneladas_trituradas || "—"],
+        ]);
+
+        doc.moveDown(2);
+
+        // =========================================================
+        //  TABELA — COZIMENTO
+        // =========================================================
+        doc.fontSize(18).fillColor("#0a5a32").text("✔ Dados do Cozimento", { underline: true });
+        doc.moveDown();
+
+        tabela(doc, [
+            ["Início Cozimento:", ciclo.start_cook_at || "—"],
+            ["Fim Cozimento:", ciclo.end_cook_at || "—"],
+        ]);
+
+        doc.moveDown(2);
+
+        // =========================================================
+        //  TABELA — DESCARGA (opcional)
+        // =========================================================
+        doc.fontSize(18).fillColor("#0a5a32").text("✔ Descarregamento", { underline: true });
+        doc.moveDown();
+
+        tabela(doc, [
+            ["Toneladas Descartadas:", ciclo.toneladas_discarded || "—"],
+            ["Observações:", ciclo.notes || "—"],
+        ]);
+
+        doc.moveDown(3);
+
+        // =========================================================
+        //  ASSINATURA
+        // =========================================================
+        doc.fontSize(14).fillColor("#000").text("Assinatura do Operador:", 40);
+        doc.moveDown(4);
+
+        doc.fontSize(12).text("_____________________________", 40);
+        doc.text(`${ciclo.operator_name || "Operador"}`, 40, doc.y + 5);
+
+        doc.end();
+
+        stream.on("finish", () => resolve(outputPath));
+        stream.on("error", reject);
+
+    });
+}
+
+// =========================================================
+// FUNÇÃO DE TABELA PREMIUM
+// =========================================================
+function tabela(doc, rows) {
+    rows.forEach(([label, content]) => {
+        doc.fontSize(12).fillColor("#0a5a32").text(label, { continued: true });
+        doc.fillColor("black").text(`  ${content}`);
+        doc.moveDown(0.3);
+    });
+}
+
+module.exports = gerarPDFCicloPremium;
+
 
 const PORT = process.env.PORT || 3002;
 server.listen(PORT, () => {
