@@ -7,7 +7,7 @@ const bodyParser = require("body-parser");
 const sqlite3 = require("sqlite3").verbose();
 const { Server } = require("socket.io");
 const PDFDocument = require("pdfkit");
-const gerarPDFCiclo = require("./utils/pdf_ciclos");
+const gerarPDFCicloPremium = require("./utils/pdf_ciclos");
 
 
 const app = express();
