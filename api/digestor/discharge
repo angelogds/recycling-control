@@ -1,0 +1,50 @@
+app.post("/api/digestor/discharge", (req, res) => {
+    const {
+        digestor_id,
+        trituration_cycle_id,
+        cooking_cycle_id,
+        toneladas_discarded,
+        notes
+    } = req.body;
+
+    if (!digestor_id || !trituration_cycle_id || !cooking_cycle_id) {
+        return res.status(400).json({ error: "Dados incompletos para descarga." });
+    }
+
+    db.run(
+        `INSERT INTO digestor_discharges
+        (digestor_id, trituration_cycle_id, cooking_cycle_id, toneladas_discarded, operator_id, notes)
+        VALUES (?, ?, ?, ?, ?, ?)`,
+        [
+            digestor_id,
+            trituration_cycle_id,
+            cooking_cycle_id,
+            toneladas_discarded || 0,
+            req.user.id,
+            notes || null
+        ],
+        function (err) {
+            if (err) return res.status(500).json({ error: err.message });
+
+            const discharge_id = this.lastID;
+
+            // Atualiza digestor
+            db.run(
+                `UPDATE digestors SET status='idle' WHERE id=?`,
+                [digestor_id]
+            );
+
+            // Fecha o ciclo no banco
+            db.run(
+                `UPDATE cycles
+                 SET status='finished', end_at=DATETIME('now')
+                 WHERE digestor_id = ? AND status='in_progress'`,
+                [digestor_id],
+                () => {
+                    broadcastState();
+                    res.json({ ok: true, discharge_id });
+                }
+            );
+        }
+    );
+});
