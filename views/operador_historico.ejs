@@ -1,20 +1,141 @@
-<%- include('layouts/base_top', { title: title, usuario: usuario }) %>
+<%- include('layouts/base_top', { title: "Histórico de Ciclos" }) %>
 
-<h2><%= title %></h2>
+<div class="container mt-4">
 
-<table class="table">
-  <thead><tr><th>ID</th><th>Digestor</th><th>Toneladas</th><th>Operador</th><th>Data</th></tr></thead>
-  <tbody>
-    <% historico.forEach(h => { %>
-      <tr>
-        <td><%= h.id %></td>
-        <td><%= h.digestor_id %></td>
-        <td><%= h.toneladas_discarded %></td>
-        <td><%= h.operator_id %></td>
-        <td><%= h.created_at %></td>
-      </tr>
-    <% }) %>
-  </tbody>
-</table>
+    <h1 class="page-title mb-4">Histórico de Ciclos</h1>
+
+    <div class="card shadow-sm border-0 p-3">
+
+        <table class="table table-striped align-middle">
+            <thead class="table-success">
+                <tr>
+                    <th>ID Ciclo</th>
+                    <th>Digestor</th>
+                    <th>Início</th>
+                    <th>Fim</th>
+                    <th>Status</th>
+                    <th class="text-center">Ações</th>
+                </tr>
+            </thead>
+
+            <tbody id="tableBody">
+                <tr>
+                    <td colspan="6" class="text-center text-muted py-4">
+                        Carregando histórico...
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+    </div>
+</div>
+
+<!-- MODAL DETALHES -->
+<div class="modal fade" id="modalDetalhes" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content border-0 shadow">
+
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">Detalhes do Ciclo</h5>
+                <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body" id="detalhesBody">
+                Carregando...
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+async function carregarHistorico() {
+    const rows = await fetch("/api/cycles/all").then(r => r.json());
+
+    const tbody = document.getElementById("tableBody");
+    tbody.innerHTML = "";
+
+    if (rows.length === 0) {
+        tbody.innerHTML = `
+            <tr><td colspan="6" class="text-center text-muted py-4">
+                Nenhum ciclo registrado.
+            </td></tr>
+        `;
+        return;
+    }
+
+    rows.forEach(c => {
+        tbody.innerHTML += `
+        <tr>
+            <td>${c.id}</td>
+            <td>${c.digestor_name}</td>
+            <td>${c.started_at || "—"}</td>
+            <td>${c.ended_at || "—"}</td>
+            <td><span class="badge bg-${c.status === "finished" ? "success" : "warning"}">${c.status}</span></td>
+
+            <td class="text-center">
+                <button class="btn btn-outline-success btn-sm" onclick="gerarPDF(${c.id})">
+                    <i class="bi bi-file-earmark-pdf"></i> PDF
+                </button>
+
+                <button class="btn btn-success btn-sm" onclick="abrirDetalhes(${c.id})">
+                    <i class="bi bi-search"></i> Ver
+                </button>
+            </td>
+        </tr>
+        `;
+    });
+}
+
+async function gerarPDF(id) {
+    const res = await fetch(`/reports/cycle/${id}`);
+    const json = await res.json();
+
+    if (json.url) {
+        window.open(json.url, "_blank");
+    } else {
+        alert("Erro ao gerar PDF!");
+    }
+}
+
+async function abrirDetalhes(id) {
+    const modal = new bootstrap.Modal(document.getElementById("modalDetalhes"));
+    document.getElementById("detalhesBody").innerHTML = "Carregando...";
+
+    const dados = await fetch(`/api/cycles/${id}`).then(r => r.json());
+
+    document.getElementById("detalhesBody").innerHTML = `
+        <h5>Ciclo #${dados.id}</h5>
+        <p><strong>Digestor:</strong> ${dados.digestor_name}</p>
+
+        <div class="border p-2 rounded bg-light">
+            <strong>Trituração</strong><br>
+            Início: ${dados.start_tritura_at || "—"}<br>
+            Fim: ${dados.end_tritura_at || "—"}<br>
+            Toneladas: ${dados.toneladas_trituradas || "—"}
+        </div>
+
+        <div class="border p-2 rounded bg-light mt-2">
+            <strong>Cozimento</strong><br>
+            Início: ${dados.start_cook_at || "—"}<br>
+            Fim: ${dados.end_cook_at || "—"}
+        </div>
+
+        <div class="border p-2 rounded bg-light mt-2">
+            <strong>Descarga</strong><br>
+            Toneladas: ${dados.toneladas_discarded || "—"}<br>
+            Observações: ${dados.notes || "—"}
+        </div>
+    `;
+
+    modal.show();
+}
+
+carregarHistorico();
+</script>
 
 <%- include('layouts/base_bottom') %>
