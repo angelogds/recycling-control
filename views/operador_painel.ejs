@@ -137,4 +137,21 @@
   loadInitial();
 </script>
 
+<div class="card mt-4 p-3">
+    <h5><b>Log do sistema:</b></h5>
+    <div id="systemLog" style="height:150px; overflow:auto; font-size:14px;">
+        Aguardando eventos...
+    </div>
+</div>
+
+<script>
+function addLog(msg){
+    const box = document.getElementById("systemLog");
+    box.innerHTML += `<div>• ${msg}</div>`;
+    box.scrollTop = box.scrollHeight;
+}
+
+socket.on("log", (msg) => addLog(msg));
+</script>
+
 <%- include('layouts/base_bottom') %>
