@@ -2,137 +2,178 @@
 
 <div class="container mt-4">
 
-    <h1 class="page-title mb-4">Painel do Operador</h1>
+    <!-- Cabeçalho -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="page-title">
+            <i class="bi bi-speedometer2 me-2"></i>
+            Painel do Operador
+        </h1>
 
-    <!-- ===================== TABELA DOS DIGESTORES ===================== -->
-    <table class="table table-bordered table-striped shadow-sm">
-        <thead class="table-success">
-            <tr>
-                <th>Digestor</th>
-                <th>Capacidade</th>
-                <th>Status</th>
-                <th>Barra de Progresso</th>
-                <th>Trituração</th>
-                <th>Cozimento</th>
-                <th>Ciclo</th>
-                <th>Ações</th>
-            </tr>
-        </thead>
+        <a href="/operador/historico" class="btn btn-outline-light">
+            <i class="bi bi-clock-history me-2"></i>
+            Histórico de Ciclos
+        </a>
+    </div>
 
-        <tbody id="digestoresTableBody">
-            <% digestores.forEach(d => { %>
-            <tr id="row-<%= d.id %>">
+    <!-- Tabela de Digestores -->
+    <div class="table-responsive shadow rounded">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-success">
+                <tr>
+                    <th>Digestor</th>
+                    <th>Capacidade</th>
+                    <th>Status</th>
+                    <th>Barra de Progresso</th>
+                    <th>Trituração</th>
+                    <th>Cozimento</th>
+                    <th>Ciclo</th>
+                    <th class="text-center">Ações</th>
+                </tr>
+            </thead>
+            <tbody id="digestoresTableBody">
 
-                <!-- Nome -->
-                <td><strong>Digestor <%= d.id %></strong></td>
+                <% digestores.forEach(d => { %>
+                    <tr id="row-<%= d.id %>">
 
-                <!-- Capacidade -->
-                <td><%= d.capacidade_tn %> tn</td>
+                        <!-- Nome -->
+                        <td class="fw-bold"><%= d.nome %></td>
 
-                <!-- Status -->
-                <td id="status-<%= d.id %>" class="fw-bold text-success">IDLE</td>
+                        <!-- Capacidade -->
+                        <td><%= d.capacidade_tn %> tn</td>
 
-                <!-- Barra -->
-                <td style="width: 220px;">
-                    <div class="progress" style="height: 16px;">
-                        <div id="bar-<%= d.id %>" class="progress-bar bg-success"
-                            style="width: 0%; transition: width 0.5s;">
-                            0%
-                        </div>
-                    </div>
-                </td>
+                        <!-- Status -->
+                        <td id="status-<%= d.id %>" class="fw-bold text-success">IDLE</td>
 
-                <!-- Trituração -->
-                <td id="tritura-<%= d.id %>">Nenhuma</td>
+                        <!-- Barra -->
+                        <td style="width: 220px;">
+                            <div class="progress" style="height: 14px;">
+                                <div id="bar-<%= d.id %>"
+                                     class="progress-bar bg-success"
+                                     style="width: 0%; transition: width 0.5s;">
+                                    0%
+                                </div>
+                            </div>
+                        </td>
 
-                <!-- Cozimento -->
-                <td id="cook-<%= d.id %>">Nenhuma</td>
+                        <!-- Trituração -->
+                        <td id="trit-<%= d.id %>">Nenhuma</td>
 
-                <!-- Ciclo -->
-                <td id="ciclo-<%= d.id %>">Nenhum</td>
+                        <!-- Cozimento -->
+                        <td id="cook-<%= d.id %>">Nenhuma</td>
 
-                <!-- AÇÕES -->
-                <td>
-                    <button class="btn btn-success btn-sm" onclick="abrirStart(<%= d.id %>)">Iniciar</button>
-                    <button class="btn btn-outline-success btn-sm" onclick="abrirFinishT(<%= d.id %>)">Finalizar Tritura</button>
-                    <button class="btn btn-outline-success btn-sm" onclick="abrirFinishC(<%= d.id %>)">Finalizar Cozimento</button>
-                    <button class="btn btn-warning btn-sm" onclick="abrirDischarge(<%= d.id %>)">Descarregar</button>
-                </td>
+                        <!-- Ciclo -->
+                        <td id="cycle-<%= d.id %>">Nenhum</td>
 
-            </tr>
-            <% }) %>
-        </tbody>
+                        <!-- Ações -->
+                        <td class="text-center">
 
-    </table>
+                            <!-- Iniciar Trituração -->
+                            <button class="btn btn-op btn-tritura"
+                                    onclick="openStartTritura(<%= d.id %>)"
+                                    id="btn-start-<%= d.id %>">
+                                <i class="bi bi-play-fill"></i> Iniciar
+                            </button>
 
-    <!-- ===================== LOG ===================== -->
-    <div class="card mt-4">
-        <div class="card-header bg-success text-white fw-bold">Log do sistema:</div>
-        <div id="logContent" class="card-body text-muted">Aguardando eventos...</div>
+                            <!-- Finalizar Tritura -->
+                            <button class="btn btn-op btn-finish-tritura disabled"
+                                    id="btn-finish-trit-<%= d.id %>"
+                                    onclick="openFinishTritura(<%= d.id %>)">
+                                Finalizar Tritura
+                            </button>
+
+                            <!-- Finalizar Cozimento -->
+                            <button class="btn btn-op btn-cook disabled"
+                                    id="btn-finish-cook-<%= d.id %>"
+                                    onclick="openFinishCook(<%= d.id %>)">
+                                Finalizar Cozimento
+                            </button>
+
+                            <!-- Descarregar -->
+                            <button class="btn btn-op btn-discharge disabled"
+                                    id="btn-discharge-<%= d.id %>"
+                                    onclick="openDischarge(<%= d.id %>)">
+                                Descarregar
+                            </button>
+
+                        </td>
+
+                    </tr>
+                <% }) %>
+
+            </tbody>
+        </table>
+    </div>
+
+    <!-- LOGS -->
+    <div class="card bg-success text-white mt-4 shadow">
+        <div class="card-header fw-bold">
+            Log do sistema:
+        </div>
+        <div class="card-body bg-light text-dark" id="logContent">
+            Aguardando eventos...
+        </div>
     </div>
 
 </div>
 
+<!-- IMPORTAÇÃO DOS MODAIS -->
 <%- include('modais/start_carga') %>
 <%- include('modais/finish_tritura') %>
 <%- include('modais/finish_cook') %>
 <%- include('modais/discharge') %>
 
+<!-- SCRIPT SOCKET.IO -->
 <script src="/socket.io/socket.io.js"></script>
 <script>
-    const socket = io();
+const socket = io();
 
-    socket.on("digestors:update", (digestores) => {
-        digestores.forEach(d => {
+// LOG
+function log(msg) {
+    document.getElementById("logContent").innerHTML =
+        "<div>" + msg + "</div>" + document.getElementById("logContent").innerHTML;
+}
 
-            // STATUS ---------------------------------
-            const st = document.getElementById(`status-${d.id}`);
-            if (!st) return;
+// Atualização de estados
+socket.on("digestors:update", lista => {
+    lista.forEach(d => {
+        // status
+        document.getElementById("status-" + d.id).innerText =
+            d.current_tritura ? "TRITURANDO" :
+            d.current_cook ? "COZINHANDO" :
+            "IDLE";
 
-            let statusText = "IDLE";
-            let barPct = 0;
+        // barra
+        let pct = 0;
+        if (d.current_tritura) pct = 40;
+        if (d.current_cook) pct = 75;
+        if (d.current_cycle && d.current_cycle.status === "finished") pct = 100;
 
-            if (d.current_tritura) {
-                statusText = "Triturando";
-                barPct = 40;
-            }
+        const bar = document.getElementById("bar-" + d.id);
+        if (bar) {
+            bar.style.width = pct + "%";
+            bar.innerText = pct + "%";
+        }
 
-            if (d.current_cooking) {
-                statusText = "Cozinhando";
-                barPct = 75;
-            }
+        // texto
+        document.getElementById("trit-" + d.id).innerText =
+            d.current_tritura ? ("#" + d.current_tritura.id) : "Nenhuma";
 
-            if (d.current_cycle) {
-                statusText = "Ciclo Completo";
-                barPct = 100;
-            }
+        document.getElementById("cook-" + d.id).innerText =
+            d.current_cook ? ("#" + d.current_cook.id) : "Nenhuma";
 
-            st.innerText = statusText;
-            st.classList.remove("text-success", "text-warning");
-            if (statusText === "IDLE") st.classList.add("text-success");
-            else st.classList.add("text-warning");
+        document.getElementById("cycle-" + d.id).innerText =
+            d.current_cycle ? ("#" + d.current_cycle.id) : "Nenhum";
 
-            // BARRA -----------------------------------
-            const bar = document.getElementById(`bar-${d.id}`);
-            if (bar) {
-                bar.style.width = barPct + "%";
-                bar.innerText = barPct + "%";
-            }
+        // botões
+        document.getElementById("btn-start-" + d.id).classList.toggle("disabled", !!d.current_tritura);
 
-            // TRITURAÇÃO ----------------------------
-            document.getElementById(`tritura-${d.id}`).innerText =
-                d.current_tritura ? "#" + d.current_tritura.id : "Nenhuma";
+        document.getElementById("btn-finish-trit-" + d.id).classList.toggle("disabled", !d.current_tritura);
 
-            // COZIMENTO ------------------------------
-            document.getElementById(`cook-${d.id}`).innerText =
-                d.current_cooking ? "#" + d.current_cooking.id : "Nenhuma";
+        document.getElementById("btn-finish-cook-" + d.id).classList.toggle("disabled", !d.current_cook);
 
-            // CICLO ---------------------------------
-            document.getElementById(`ciclo-${d.id}`).innerText =
-                d.current_cycle ? "#" + d.current_cycle.id : "Nenhum";
-        });
+        document.getElementById("btn-discharge-" + d.id).classList.toggle("disabled", !(d.current_cycle && !d.current_cook));
     });
-
+});
 </script>
 
 <%- include('layouts/base_bottom') %>
