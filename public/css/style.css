@@ -368,3 +368,49 @@ body{
 
 .btn-discharge { background-color: #ffc107; color: #333; font-weight: bold; }
 .btn-discharge:hover { background-color: #e0a800; }
+.btn-op {
+    font-weight: bold;
+    padding: 6px 14px;
+    border-radius: 6px;
+    margin: 3px;
+    transition: 0.25s ease-in-out;
+}
+
+.btn-op.disabled {
+    opacity: 0.35;
+    pointer-events: none;
+}
+
+/* Botões coloridos */
+.btn-tritura {
+    background-color: #027a39;
+    color: white;
+}
+.btn-tritura:hover {
+    background-color: #025f2d;
+}
+
+.btn-finish-tritura {
+    background-color: #0d6efd;
+    color: white;
+}
+.btn-finish-tritura:hover {
+    background-color: #0a58ca;
+}
+
+.btn-cook {
+    background-color: #6f42c1;
+    color: white;
+}
+.btn-cook:hover {
+    background-color: #59359d;
+}
+
+.btn-discharge {
+    background-color: #ffc107;
+    color: #333;
+    font-weight: bold;
+}
+.btn-discharge:hover {
+    background-color: #e0a800;
+}
