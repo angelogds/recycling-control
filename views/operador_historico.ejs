@@ -33,6 +33,21 @@
 <%- include('modais/detalhes_ciclo') %>
 
 <script>
+// ---------------------------------------------------------
+// Formata datas no padrão brasileiro
+// ---------------------------------------------------------
+function formatarData(dt) {
+    if (!dt) return "—";
+    try {
+        return new Date(dt).toLocaleString("pt-BR");
+    } catch {
+        return dt;
+    }
+}
+
+// ---------------------------------------------------------
+// Carrega histórico na tabela
+// ---------------------------------------------------------
 async function carregarHistorico() {
     const res = await fetch('/api/cycles/all');
     const lista = await res.json();
@@ -51,35 +66,67 @@ async function carregarHistorico() {
     }
 
     lista.forEach(c => {
+        const statusCor =
+            c.status === "in_progress" ? "warning" :
+            c.status === "finalizado" ? "success" :
+            "secondary";
+
         tbody.innerHTML += `
             <tr>
                 <td>${c.id}</td>
                 <td>Digestor ${c.digestor_id}</td>
-                <td>${c.start_cycle_at || "-"}</td>
-                <td>${c.end_cycle_at || "-"}</td>
-                <td><span class="badge bg-${c.status === "in_progress" ? "warning" : "success"}">${c.status}</span></td>
+                <td>${formatarData(c.start_cycle_at)}</td>
+                <td>${formatarData(c.end_cycle_at)}</td>
+
+                <td>
+                    <span class="badge bg-${statusCor} text-uppercase">
+                        ${c.status}
+                    </span>
+                </td>
+
                 <td class="text-center">
-                    <button class="btn btn-success btn-sm" onclick="abrirDetalhes(${c.id})">
+
+                    <!-- Botão Ver Detalhes -->
+                    <button class="btn btn-primary btn-sm me-1"
+                            onclick="abrirDetalhes(${c.id})">
                         <i class="bi bi-search"></i> Ver
                     </button>
+
+                    <!-- Botão PDF (somente para finalizados) -->
+                    ${
+                        c.status === "finalizado"
+                        ? `<a href="/pdf/ciclo/${c.id}" class="btn btn-success btn-sm">
+                                <i class="bi bi-filetype-pdf"></i> PDF
+                           </a>`
+                        : `<span class="text-muted small">—</span>`
+                    }
+
                 </td>
             </tr>
         `;
     });
 }
 
+// ---------------------------------------------------------
+// Abre modal com detalhes
+// ---------------------------------------------------------
 async function abrirDetalhes(id) {
     const res = await fetch(`/api/cycles/${id}`);
     const ciclo = await res.json();
 
     document.getElementById("dc_id").innerText = ciclo.id;
     document.getElementById("dc_digestor").innerText = ciclo.digestor_id;
-    document.getElementById("dc_inicio").innerText = ciclo.start_cycle_at;
-    document.getElementById("dc_fim").innerText = ciclo.end_cycle_at || "—";
+    document.getElementById("dc_inicio").innerText = formatarData(ciclo.start_cycle_at);
+    document.getElementById("dc_fim").innerText = formatarData(ciclo.end_cycle_at);
 
-    document.getElementById("dc_tritura").innerText = ciclo.trit ? ciclo.trit.toneladas_trituradas + " tn" : "—";
-    document.getElementById("dc_cook").innerText = ciclo.cook ? ciclo.cook.status : "—";
-    document.getElementById("dc_descarga").innerText = ciclo.discharge ? ciclo.discharge.toneladas_discarded + " tn" : "—";
+    document.getElementById("dc_tritura").innerText =
+        ciclo.trit ? ciclo.trit.toneladas_trituradas + " tn" : "—";
+
+    document.getElementById("dc_cook").innerText =
+        ciclo.cook ? ciclo.cook.status : "—";
+
+    document.getElementById("dc_descarga").innerText =
+        ciclo.discharge ? ciclo.discharge.toneladas_discarded + " tn" : "—";
 
     new bootstrap.Modal(document.getElementById("modalDetalhesCiclo")).show();
 }
