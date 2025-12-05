@@ -396,6 +396,19 @@ app.get("/api/cycles/:id", (req, res) => {
     res.json(row);
   });
 });
+// LISTA TODOS OS CICLOS COMPLETOS
+app.get("/api/cycles/all", (req, res) => {
+    db.all(
+        `SELECT id, digestor_id, start_time, end_time, status 
+         FROM cycles ORDER BY id DESC`,
+        [],
+        (err, rows) => {
+            if (err) return res.json([]);
+
+            return res.json(rows);
+        }
+    );
+});
 
 /* -------------------------
    PDF REPORT ROUTE
@@ -455,6 +468,38 @@ app.get("/reports/cycle/:id", async (req, res) => {
       res.status(500).send("Erro ao gerar PDF");
     }
   });
+});
+// -------------------------------------------
+// ROTAS PARA PDF DO CICLO
+// -------------------------------------------
+const gerarPdfCiclo = require("./utils/pdf_ciclos");
+const path = require("path");
+const fs = require("fs");
+
+// Gera PDF de um ciclo específico
+app.get("/pdf/ciclo/:id", async (req, res) => {
+    const cicloId = req.params.id;
+
+    db.get(`SELECT * FROM cycles WHERE id = ?`, [cicloId], async (err, ciclo) => {
+        if (err) return res.status(500).send("Erro ao buscar ciclo");
+        if (!ciclo) return res.status(404).send("Ciclo não encontrado");
+
+        try {
+            const reportsDir = path.join(__dirname, "public", "reports");
+            if (!fs.existsSync(reportsDir)) {
+                fs.mkdirSync(reportsDir, { recursive: true });
+            }
+
+            const outputFile = path.join(reportsDir, `ciclo_${ciclo.id}.pdf`);
+
+            await gerarPdfCiclo(ciclo, outputFile);
+
+            return res.download(outputFile);
+        } catch (error) {
+            console.error(error);
+            return res.status(500).send("Falha ao gerar PDF");
+        }
+    });
 });
 
 /* -------------------------
