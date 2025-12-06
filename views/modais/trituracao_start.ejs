@@ -1,0 +1,30 @@
+<div class="modal fade" id="modalIniciarTrituracao">
+  <div class="modal-dialog">
+    <div class="modal-content">
+
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title">Iniciar Trituração</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <input type="hidden" id="start_digestor_id">
+
+        <label class="form-label">Tova de Origem:</label>
+        <select class="form-select" id="start_tova">
+          <option value="1">Tova 1</option>
+          <option value="2">Tova 2</option>
+        </select>
+
+        <label class="form-label mt-3">Toneladas Solicitadas:</label>
+        <input type="number" class="form-control" id="start_ton" placeholder="Ex: 8">
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button class="btn btn-premium" onclick="iniciarTrituracao()">Iniciar</button>
+      </div>
+
+    </div>
+  </div>
+</div>
