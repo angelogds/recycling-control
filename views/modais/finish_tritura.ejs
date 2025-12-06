@@ -1,46 +1,24 @@
-<!-- Modal: Finalizar Trituração -->
-<div class="modal fade" id="modalFinishTritura" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content border-success">
-            <div class="modal-header bg-success text-white">
-                <h5 class="modal-title">Finalizar Trituração</h5>
-                <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
+<div class="modal fade" id="modalFinalizarTrituracao">
+  <div class="modal-dialog">
+    <div class="modal-content">
 
-            <div class="modal-body">
-                <input type="hidden" id="finishTrituraId">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title">Finalizar Trituração</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
 
-                <label class="form-label">Toneladas Trituradas:</label>
-                <input type="number" id="finishTrituraTon" class="form-control" placeholder="Ex: 12">
-            </div>
+      <div class="modal-body">
+        <input type="hidden" id="finish_trit_id">
 
-            <div class="modal-footer">
-                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button class="btn btn-success" onclick="confirmFinishTritura()">Finalizar</button>
-            </div>
-        </div>
+        <label class="form-label">Toneladas Trituradas:</label>
+        <input type="number" class="form-control" id="finish_ton" placeholder="Ex: 8">
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button class="btn btn-finish-tritura" onclick="finalizarTrituracao()">Finalizar</button>
+      </div>
+
     </div>
+  </div>
 </div>
-
-<script>
-function abrirFinishT(id) {
-    document.getElementById("finishTrituraId").value = id;
-    new bootstrap.Modal(document.getElementById("modalFinishTritura")).show();
-}
-
-function confirmFinishTritura() {
-    const trit = document.getElementById("finishTrituraId").value;
-    const ton = document.getElementById("finishTrituraTon").value;
-
-    fetch("/api/trituracao/finish", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            trituration_id: trit,
-            toneladas_trituradas: ton
-        })
-    });
-
-    bootstrap.Modal.getInstance(document.getElementById("modalFinishTritura")).hide();
-}
-</script>
