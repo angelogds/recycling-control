@@ -1,41 +1,23 @@
-<!-- Modal: Finalizar Cozimento -->
-<div class="modal fade" id="modalFinishCook" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content border-success">
-            <div class="modal-header bg-success text-white">
-                <h5 class="modal-title">Finalizar Cozimento</h5>
-                <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
+<div class="modal fade" id="modalFinalizarCozimento">
+  <div class="modal-dialog">
+    <div class="modal-content">
 
-            <div class="modal-body">
-                <input type="hidden" id="finishCookId">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title">Finalizar Cozimento</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
 
-                <label class="form-label">Confirmar finalização?</label>
-            </div>
+      <div class="modal-body">
+        <input type="hidden" id="finish_cook_id">
 
-            <div class="modal-footer">
-                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button class="btn btn-success" onclick="confirmFinishCook()">Finalizar</button>
-            </div>
-        </div>
+        <p class="text-muted">Confirme que o cozimento do digestor foi concluído.</p>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button class="btn btn-cook" onclick="finalizarCozimento()">Finalizar</button>
+      </div>
+
     </div>
+  </div>
 </div>
-
-<script>
-function abrirFinishC(id) {
-    document.getElementById("finishCookId").value = id;
-    new bootstrap.Modal(document.getElementById("modalFinishCook")).show();
-}
-
-function confirmFinishCook() {
-    const id = document.getElementById("finishCookId").value;
-
-    fetch("/api/cooking/finish", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cooking_id: id })
-    });
-
-    bootstrap.Modal.getInstance(document.getElementById("modalFinishCook")).hide();
-}
-</script>
