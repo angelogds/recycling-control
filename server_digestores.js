@@ -171,38 +171,53 @@ app.get("/logout", (req, res) => {
   req.session.destroy(() => res.redirect("/login"));
 });
 
-// ---------- Seed: criar usuário admin se não existir ----------
-db.get("SELECT COUNT(*) AS cnt FROM users", [], (err, row) => {
-  if (err) {
-    console.error("Erro ao verificar usuários:", err);
-    return;
-  }
+// ============================================================
+// SEED ADMIN — Executar somente após o DB existir
+// ============================================================
+function seedAdminUser() {
+  db.get("SELECT name FROM sqlite_master WHERE type='table' AND name='users'", (err, row) => {
+    if (err) {
+      console.error("Erro verificando tabela users:", err);
+      return;
+    }
 
-  if ((row?.cnt || 0) === 0) {
-    const admin = {
-      username: "angelo",
-      nome: "Administrador",
-      role: "admin",
-      senha: "@nloFa1107"
-    };
+    if (!row) {
+      console.log("⚠️ Tabela 'users' ainda não existe. Seed será ignorado.");
+      return;
+    }
 
-    bcrypt.hash(admin.senha, 10)
-      .then(hash => {
-        db.run(
-          "INSERT INTO users (username, nome, role, password) VALUES (?, ?, ?, ?)",
-          [admin.username, admin.nome, admin.role, hash],
-          err => {
-            if (err) {
-              console.error("Erro ao criar admin:", err);
-            } else {
-              console.log("✔ Usuário admin criado: angelo / @nloFa1107");
+    db.get("SELECT COUNT(*) AS cnt FROM users", [], (err2, row2) => {
+      if (err2) {
+        console.error("Erro contando usuários:", err2);
+        return;
+      }
+
+      if (row2.cnt === 0) {
+        const adminUser = {
+          username: "angelo",
+          nome: "Administrador",
+          role: "admin",
+          passwordPlain: "@nloFa1107"
+        };
+
+        bcrypt.hash(adminUser.passwordPlain, 10).then(hash => {
+          db.run(
+            "INSERT INTO users (username, nome, role, password) VALUES (?, ?, ?, ?)",
+            [adminUser.username, adminUser.nome, adminUser.role, hash],
+            e => {
+              if (e) console.error("Erro criando admin:", e);
+              else console.log("✔ Usuário admin criado: angelo / @nloFa1107");
             }
-          }
-        );
-      })
-      .catch(err => console.error("Erro ao gerar hash:", err));
-  }
-});
+          );
+        });
+      }
+    });
+  });
+}
+
+// Chamar SE APÓS o DB estar conectado:
+db.once("open", seedAdminUser);
+
 
 // ====================== PART 3 ======================
 // server_digestores.js - Parte 3/6
