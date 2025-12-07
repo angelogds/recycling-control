@@ -1,118 +1,30 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <title>Novo Usuário – Administração</title>
+<%- include('layouts/base_top', { title: "Novo Usuário", usuario: usuario }) %>
 
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+<div class="container premium-box">
+    <h1 class="page-title">➕ Criar Novo Usuário</h1>
 
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: "Inter", sans-serif;
-            background: linear-gradient(135deg, #0a361a,#0f5226);
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
+    <form action="/admin/users/create" method="POST" class="form-premium">
 
-        .card {
-            width: 450px;
-            background: #ffffff15;
-            padding: 30px;
-            border-radius: 14px;
-            backdrop-filter: blur(12px);
-            box-shadow: 0 0 18px rgba(0,0,0,0.35);
-            color: white;
-        }
+        <label>Usuário (login):</label>
+        <input name="username" class="form-control form-control-lg" required />
 
-        h2 {
-            margin-bottom: 20px;
-            text-align: center;
-        }
+        <label>Nome Completo:</label>
+        <input name="nome" class="form-control form-control-lg" required />
 
-        label {
-            margin-top: 12px;
-            display: block;
-            font-weight: 500;
-        }
-
-        input, select {
-            width: 100%;
-            padding: 12px;
-            border-radius: 8px;
-            border: none;
-            background: white;
-            font-size: 15px;
-            margin-top: 4px;
-        }
-
-        button {
-            width: 100%;
-            margin-top: 20px;
-            padding: 12px;
-            border-radius: 8px;
-            border: none;
-            background: #0ac44d;
-            color: white;
-            font-weight: bold;
-            font-size: 16px;
-            cursor: pointer;
-        }
-
-        button:hover {
-            background: #08993d;
-        }
-
-        .alert {
-            background: #ff3e3e;
-            padding: 10px;
-            border-radius: 6px;
-            margin-bottom: 15px;
-            text-align: center;
-        }
-
-    </style>
-</head>
-
-<body>
-
-<div class="card">
-
-    <h2>Criar Novo Usuário</h2>
-
-    <% if (error) { %>
-        <div class="alert"><%= error %></div>
-    <% } %>
-
-    <form action="/admin/users/create" method="POST">
-
-        <label>Nome Completo</label>
-        <input type="text" name="nome" required>
-
-        <label>Usuário</label>
-        <input type="text" name="username" required>
-
-        <label>Senha</label>
-        <input type="password" name="password" required>
-
-        <label>Confirmar Senha</label>
-        <input type="password" name="confirm" required>
-
-        <label>Função</label>
-        <select name="role" required>
+        <label>Função:</label>
+        <select name="role" class="form-control form-control-lg">
             <option value="operador">Operador</option>
             <option value="portaria">Portaria</option>
             <option value="admin">Administrador</option>
         </select>
 
-        <button type="submit">Criar Usuário</button>
+        <label>Senha:</label>
+        <input type="password" name="password" class="form-control form-control-lg" required />
 
+        <button class="btn btn-success btn-lg w-100 mt-3">Salvar Usuário</button>
     </form>
 
+    <a href="/admin/users" class="btn btn-secondary btn-lg w-100 mt-3">Voltar</a>
 </div>
 
-</body>
-</html>
+<%- include('layouts/base_bottom') %>
