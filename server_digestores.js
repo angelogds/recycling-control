@@ -338,7 +338,6 @@ app.get("/api/cycles/:id", (req, res) => {
     if (!row) return res.status(404).json({ error: "Ciclo não encontrado" });
     res.json(row);
   });
-});
 
 /* -------------------------
    PDF REPORT (uses utils/pdf_ciclos if present)
