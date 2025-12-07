@@ -1,235 +1,243 @@
-// ==========================================================
-// operador.js — versão PRO com:
-// • Cronômetros RT
-// • Botões opacos / ativos
-// • Matéria-prima (osso/barrigada)
-// • Integração total com server_digestores.js
-// ==========================================================
+// ===============================================================
+// operador.js — Painel Premium com cronômetros + status realtime
+// ===============================================================
 
 const socket = io();
-let digestores = [];
 
-// ===============================
-// Util — formatar tempo
-// ===============================
-function formatDuration(ms) {
+// Guardar timers por digestor
+const timers = {};
+
+// Util para formatar tempo
+function formatTime(ms) {
     if (!ms || ms < 0) return "00:00:00";
-    const total = Math.floor(ms / 1000);
-    const h = String(Math.floor(total / 3600)).padStart(2, "0");
-    const m = String(Math.floor((total % 3600) / 60)).padStart(2, "0");
-    const s = String(total % 60).padStart(2, "0");
+    let sec = Math.floor(ms / 1000);
+    const h = String(Math.floor(sec / 3600)).padStart(2, "0");
+    sec %= 3600;
+    const m = String(Math.floor(sec / 60)).padStart(2, "0");
+    const s = String(sec % 60).padStart(2, "0");
     return `${h}:${m}:${s}`;
 }
 
-function now() { return new Date().getTime(); }
+// Atualiza o cronômetro na tela
+function startTimer(digestorId, startTime, targetEl) {
+    clearInterval(timers[digestorId]);
+    timers[digestorId] = setInterval(() => {
+        const now = Date.now();
+        const elapsed = now - new Date(startTime).getTime();
+        targetEl.textContent = formatTime(elapsed);
+    }, 1000);
+}
 
-// ===============================
-// Render principal
-// ===============================
-socket.on("digestors:update", data => {
-    digestores = data;
-    renderPainel();
+// ---------------------------------------------------------------
+// Atualização em tempo real via socket
+// ---------------------------------------------------------------
+socket.on("digestors:update", digestores => {
+    digestores.forEach(dg => {
+        const card = document.querySelector(`#digestor-${dg.id}`);
+        if (!card) return;
+
+        // Status
+        const statusEl = card.querySelector(".dg-status");
+
+        if (dg.current_cooking?.status === "started") {
+            statusEl.textContent = "Cozinhando";
+            statusEl.className = "dg-status status-cozinhando";
+        }
+        else if (dg.current_tritura?.status === "started") {
+            statusEl.textContent = "Em Trituração";
+            statusEl.className = "dg-status status-operando";
+        }
+        else if (dg.current_cycle?.status === "in_progress") {
+            statusEl.textContent = "Aguardando descarregar";
+            statusEl.className = "dg-status status-descarregar";
+        }
+        else {
+            statusEl.textContent = "Parado";
+            statusEl.className = "dg-status status-parado";
+        }
+
+        // Cronômetros
+        const tritTimer = card.querySelector(".timer-tritura");
+        const cookTimer = card.querySelector(".timer-cook");
+
+        // Trituração
+        if (dg.current_tritura && dg.current_tritura.start_tritura_at && !dg.current_tritura.end_tritura_at) {
+            startTimer(dg.id + "-trit", dg.current_tritura.start_tritura_at, tritTimer);
+        } else {
+            clearInterval(timers[dg.id + "-trit"]);
+            tritTimer.textContent = dg.current_tritura?.end_tritura_at
+                ? "Finalizada"
+                : "--:--:--";
+        }
+
+        // Cozimento
+        if (dg.current_cooking && dg.current_cooking.start_cook_at && !dg.current_cooking.end_cook_at) {
+            startTimer(dg.id + "-cook", dg.current_cooking.start_cook_at, cookTimer);
+        } else {
+            clearInterval(timers[dg.id + "-cook"]);
+            cookTimer.textContent = dg.current_cooking?.end_cook_at
+                ? "Finalizado"
+                : "--:--:--";
+        }
+
+        updateButtons(dg, card);
+    });
 });
 
-// ===============================
-// Render painel de digestores
-// ===============================
-function renderPainel() {
-    const grid = document.getElementById("digestorGrid");
-    if (!grid) return;
+// ---------------------------------------------------------------
+// Controle de botões (ativo / opaco)
+// ---------------------------------------------------------------
+function updateButtons(dg, card) {
+    const btnStart = card.querySelector(".btn-start");
+    const btnFinishTrit = card.querySelector(".btn-finish-trit");
+    const btnFinishCook = card.querySelector(".btn-finish-cook");
+    const btnDischarge = card.querySelector(".btn-discharge");
 
-    grid.innerHTML = "";
-
-    digestores.forEach(d => {
-        const card = document.createElement("div");
-        card.className = "digestor-card";
-
-        // status PT-BR + cor
-        let statusTxt = "Parado";
-        let statusColor = "red";
-
-        if (d.status === "operating") {
-            statusTxt = "Em Trituração";
-            statusColor = "green";
-        } else if (d.status === "cooking") {
-            statusTxt = "Em Cozimento";
-            statusColor = "green";
-        } else if (d.status === "waiting_discharge") {
-            statusTxt = "Aguardando Descarregar";
-            statusColor = "orange";
-        }
-
-        // cronômetros
-        const trit = d.current_tritura;
-        const cook = d.current_cooking;
-        const cyc = d.current_cycle;
-
-        let tempoTrit = "00:00:00";
-        let tempoCook = "00:00:00";
-
-        const nowMs = now();
-
-        // TRITURAÇÃO — se está rolando
-        if (trit) {
-            const start = trit.start_tritura_at ? new Date(trit.start_tritura_at).getTime() : null;
-            const end = trit.end_tritura_at ? new Date(trit.end_tritura_at).getTime() : null;
-
-            if (start && !end) tempoTrit = formatDuration(nowMs - start);
-            if (start && end) tempoTrit = formatDuration(end - start);
-        }
-
-        // COZIMENTO — se está rolando
-        if (cook) {
-            const start = cook.start_cook_at ? new Date(cook.start_cook_at).getTime() : null;
-            const end = cook.end_cook_at ? new Date(cook.end_cook_at).getTime() : null;
-
-            if (start && !end) tempoCook = formatDuration(nowMs - start);
-            if (start && end) tempoCook = formatDuration(end - start);
-        }
-
-        // BOTÕES — fluxo
-        const canStartTrit = !trit && statusTxt === "Parado";
-        const canFinishTrit = trit && trit.status === "started" && !trit.end_tritura_at;
-
-        const canFinishCook = cook && cook.status === "started" && !cook.end_cook_at;
-
-        const canDischarge = d.status === "waiting_discharge";
-
-        // CARD HTML
-        card.innerHTML = `
-            <div class="dg-header">
-                <h3>${d.nome}</h3>
-                <span class="dg-status" style="color:${statusColor}">${statusTxt}</span>
-            </div>
-
-            <div class="dg-row">
-                <strong>Trituração:</strong> 
-                <span>${tempoTrit}</span>
-            </div>
-
-            <div class="dg-row">
-                <strong>Cozimento:</strong> 
-                <span>${tempoCook}</span>
-            </div>
-
-            <div class="dg-row materia-select">
-                <label>Matéria-prima:</label>
-                <button class="mat-btn" data-mp="osso">🦴 Osso</button>
-                <button class="mat-btn" data-mp="barrigada">🐖 Barrigada</button>
-            </div>
-
-            <div class="dg-actions">
-                <button class="btn-start ${canStartTrit ? "active" : "disabled"}" data-id="${d.id}">
-                    Iniciar Trituração
-                </button>
-
-                <button class="btn-finish-trit ${canFinishTrit ? "active" : "disabled"}" data-trit-id="${trit?.id || ""}">
-                    Finalizar Trituração
-                </button>
-
-                <button class="btn-finish-cook ${canFinishCook ? "active" : "disabled"}" data-cook-id="${cook?.id || ""}">
-                    Finalizar Cozimento
-                </button>
-
-                <button class="btn-discharge ${canDischarge ? "active" : "disabled"}" data-id="${d.id}" data-cook-id="${cook?.id || ""}">
-                    Descarregar
-                </button>
-            </div>
-        `;
-
-        grid.appendChild(card);
+    // Reset
+    [btnStart, btnFinishTrit, btnFinishCook, btnDischarge].forEach(b => {
+        b.classList.remove("active");
+        b.classList.remove("disabled");
     });
 
-    attachEvents();
+    // Lógica
+    if (!dg.current_tritura) {
+        // trituração não começou → só START ativo
+        btnStart.classList.add("active");
+        btnFinishTrit.classList.add("disabled");
+        btnFinishCook.classList.add("disabled");
+        btnDischarge.classList.add("disabled");
+    }
+    else if (dg.current_tritura && !dg.current_tritura.end_tritura_at) {
+        // trituração começou → finalizar trituração
+        btnFinishTrit.classList.add("active");
+        btnStart.classList.add("disabled");
+        btnFinishCook.classList.add("disabled");
+        btnDischarge.classList.add("disabled");
+    }
+    else if (dg.current_cooking && !dg.current_cooking.end_cook_at) {
+        // cozimento ativo → finalizar cozimento
+        btnFinishCook.classList.add("active");
+        btnStart.classList.add("disabled");
+        btnFinishTrit.classList.add("disabled");
+        btnDischarge.classList.add("disabled");
+    }
+    else if (dg.current_cycle && dg.current_cycle.status === "in_progress") {
+        // aguardando descarregar
+        btnDischarge.classList.add("active");
+        btnStart.classList.add("disabled");
+        btnFinishTrit.classList.add("disabled");
+        btnFinishCook.classList.add("disabled");
+    }
+    else {
+        // ciclo finalizado → tudo desativado e o próximo ciclo começa limpo
+        btnStart.classList.add("active");
+    }
 }
 
-// ===============================
-// Trata clique dos botões
-// ===============================
-function attachEvents() {
-    // seleção de matéria-prima
-    document.querySelectorAll(".mat-btn").forEach(btn => {
-        btn.onclick = () => {
-            const parent = btn.closest(".materia-select");
-            parent.dataset.selected = btn.dataset.mp;
-            parent.querySelectorAll(".mat-btn").forEach(b => b.classList.remove("selected"));
-            btn.classList.add("selected");
-        };
+// ---------------------------------------------------------------
+// Seleção de matéria-prima (osso / barrigada)
+// ---------------------------------------------------------------
+document.addEventListener("click", e => {
+    if (!e.target.classList.contains("mat-btn")) return;
+    const parent = e.target.closest(".materia-select");
+    parent.querySelectorAll(".mat-btn").forEach(b => b.classList.remove("selected"));
+    e.target.classList.add("selected");
+});
+
+// ---------------------------------------------------------------
+// AÇÕES DO OPERADOR
+// ---------------------------------------------------------------
+
+// START Trituração
+document.addEventListener("click", async e => {
+    if (!e.target.classList.contains("btn-start")) return;
+
+    const card = e.target.closest(".digestor-card");
+    const id = card.dataset.id;
+
+    // MP selecionada
+    const mp = card.querySelector(".mat-btn.selected")?.dataset.mat || null;
+    if (!mp) return alert("Selecione a matéria-prima: Osso ou Barrigada.");
+
+    const tova = card.querySelector(".select-tova")?.value || 1;
+    const ton = card.querySelector(".input-ton")?.value || 1;
+
+    const resp = await fetch("/api/trituracao/start", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            digestor_id: id,
+            from_tova_id: tova,
+            toneladas_solicitadas: ton,
+            materia_prima: mp
+        })
     });
 
-    // iniciar trituração
-    document.querySelectorAll(".btn-start.active").forEach(btn => {
-        btn.onclick = async () => {
-            const digestor_id = btn.dataset.id;
-            const mp = btn.closest(".digestor-card").querySelector(".materia-select").dataset.selected;
+    const data = await resp.json();
+    if (data.error) return alert(data.error);
+});
 
-            if (!mp) return alert("Selecione a matéria-prima (osso/barrigada).");
+// Finish Trituração
+document.addEventListener("click", async e => {
+    if (!e.target.classList.contains("btn-finish-trit")) return;
 
-            await fetch("/api/trituracao/start", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    digestor_id,
-                    from_tova_id: 1,     // fixo por enquanto — me diga se quer escolher
-                    toneladas_solicitadas: 0,
-                    materia_prima: mp
-                })
-            });
+    const card = e.target.closest(".digestor-card");
+    const id = card.dataset.id;
+    const tritId = card.dataset.tritId;
+    const tonReal = prompt("Toneladas trituradas:");
 
-            btn.classList.remove("active");
-        };
+    const resp = await fetch("/api/trituracao/finish", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            trituration_id: tritId,
+            toneladas_trituradas: tonReal
+        })
     });
 
-    // finalizar trituração
-    document.querySelectorAll(".btn-finish-trit.active").forEach(btn => {
-        btn.onclick = async () => {
-            const trit_id = btn.dataset.tritId;
+    const data = await resp.json();
+    if (data.error) return alert(data.error);
+});
 
-            await fetch("/api/trituracao/finish", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    trituration_id: trit_id,
-                    toneladas_trituradas: 0
-                })
-            });
-        };
+// Finish Cozimento
+document.addEventListener("click", async e => {
+    if (!e.target.classList.contains("btn-finish-cook")) return;
+
+    const card = e.target.closest(".digestor-card");
+    const cookId = card.dataset.cookId;
+
+    const resp = await fetch("/api/cooking/finish", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ cooking_id: cookId })
     });
 
-    // finalizar cozimento
-    document.querySelectorAll(".btn-finish-cook.active").forEach(btn => {
-        btn.onclick = async () => {
-            const cook_id = btn.dataset.cookId;
+    const data = await resp.json();
+    if (data.error) return alert(data.error);
+});
 
-            await fetch("/api/cooking/finish", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ cooking_id: cook_id })
-            });
-        };
+// Descarregar
+document.addEventListener("click", async e => {
+    if (!e.target.classList.contains("btn-discharge")) return;
+
+    const card = e.target.closest(".digestor-card");
+    const id = card.dataset.id;
+    const cookId = card.dataset.cookId;
+
+    const ton = prompt("Toneladas descarregadas:");
+    const obs = prompt("Observações (opcional):");
+
+    const resp = await fetch("/api/digestor/discharge", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            digestor_id: id,
+            cooking_cycle_id: cookId,
+            toneladas_discarded: ton,
+            notes: obs
+        })
     });
 
-    // descarregar
-    document.querySelectorAll(".btn-discharge.active").forEach(btn => {
-        btn.onclick = async () => {
-            const digestor_id = btn.dataset.id;
-            const cook_id = btn.dataset.cookId;
-
-            await fetch("/api/digestor/discharge", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    digestor_id,
-                    cooking_cycle_id: cook_id,
-                    toneladas_discarded: 0,
-                    notes: ""
-                })
-            });
-        };
-    });
-}
-
-// ===============================
-// Timer looping a cada 1 segundo
-// ===============================
-setInterval(() => renderPainel(), 1000);
+    const data = await resp.json();
+    if (data.error) return alert(data.error);
+});
