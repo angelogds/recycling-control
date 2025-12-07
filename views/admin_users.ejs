@@ -1,0 +1,40 @@
+<%- include('layouts/base_top', { title: "Gerenciar Usuários", usuario: usuario }) %>
+
+<div class="container premium-box">
+
+    <h1 class="page-title">👤 Gerenciamento de Usuários</h1>
+
+    <div class="actions-row">
+        <a href="/admin/users/new" class="btn btn-primary btn-lg">➕ Novo Usuário</a>
+    </div>
+
+    <table class="table table-premium mt-4">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Usuário</th>
+                <th>Nome</th>
+                <th>Função</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            <% users.forEach(u => { %>
+                <tr>
+                    <td><%= u.id %></td>
+                    <td><%= u.username %></td>
+                    <td><%= u.nome %></td>
+                    <td><%= u.role %></td>
+                    <td>
+                        <a href="/admin/users/<%= u.id %>/edit" class="btn btn-warning btn-sm">Editar</a>
+                        <a href="/admin/users/<%= u.id %>/delete" class="btn btn-danger btn-sm">Excluir</a>
+                    </td>
+                </tr>
+            <% }) %>
+        </tbody>
+    </table>
+
+</div>
+
+<%- include('layouts/base_bottom') %>
