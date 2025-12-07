@@ -305,7 +305,6 @@ function broadcastState() {
 /* -------------------------
    Sessão / Auth (simples)
    -------------------------*/
-const session = require("express-session");
 const bcrypt = require("bcrypt");
 
 // session middleware (use uma store real em produção)
