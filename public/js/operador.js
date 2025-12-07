@@ -1,118 +1,103 @@
-// =======================================
-// OPERADOR — CONTROLE TOTAL DO DIGESTOR
-// =======================================
+// ============================================
+// operador.js - Painel Premium do Operador
+// ============================================
+
+let digestoresState = {};
+let timers = {};
 
 const socket = io();
 
+// -------------------------------
+// Recebe atualizações do servidor
+// -------------------------------
 socket.on("digestors:update", (digestores) => {
-    renderDigestores(digestores);
+    digestoresState = digestores;
+    renderDigestores();
 });
 
-function renderDigestores(digestores) {
+// -------------------------------
+// Renderiza digestores dinamicamente
+// -------------------------------
+function renderDigestores() {
     const grid = document.getElementById("digestorGrid");
+    grid.innerHTML = "";
 
-    grid.innerHTML = digestores.map(d => `
-        <div class="digestor-card">
-            <h2>${d.nome}</h2>
-            <p class="digestor-status">Status: <b>${statusFormat(d.status)}</b></p>
+    digestoresState.forEach(d => {
+        const card = document.createElement("div");
+        card.className = "digestor-box";
 
-            ${renderTimers(d)}
+        card.innerHTML = `
+            <div class="digestor-name">${d.nome}</div>
+            <div>Status: <span class="status-${d.status}">${d.status}</span></div>
 
-            <div class="actions">
-                ${renderButtons(d)}
+            <!-- Botões -->
+            <div style="margin-top: 12px;">
+                <button class="btn btn-blue btn-full" onclick="startTritura(${d.id})" ${d.status !== "idle" ? "disabled" : ""}>INICIAR TRITURAÇÃO</button>
+                <button class="btn btn-green btn-full" onclick="finishTritura(${d.current_tritura?.id})" ${d.status !== "operating" ? "disabled" : ""}>FINALIZAR TRITURAÇÃO</button>
+                <button class="btn btn-blue btn-full" onclick="finishCooking(${d.current_cooking?.id})" ${d.status !== "cooking" ? "disabled" : ""}>FINALIZAR COZIMENTO</button>
+                <button class="btn btn-red btn-full" onclick="openDischarge(${d.id})" ${d.status !== "waiting_discharge" ? "disabled" : ""}>DESCARGA</button>
             </div>
-        </div>
-    `).join("");
-}
 
-function statusFormat(status) {
-    switch (status) {
-        case "idle": return "🟢 Livre";
-        case "operating": return "🟡 Trituração";
-        case "cooking": return "🔴 Cozimento";
-        case "waiting_discharge": return "⚫ Aguardando Descarga";
-    }
-    return status;
-}
+            <div id="timer-${d.id}" class="digestor-timer"></div>
+        `;
 
-// ============================
-// Cronômetros Automáticos
-// ============================
+        grid.appendChild(card);
 
-function renderTimers(d) {
-    let html = "";
-
-    if (d.current_tritura) {
-        html += `<p>⏱ Trituração: <span data-trit="${d.current_tritura.start_tritura_at}"></span></p>`;
-    }
-
-    if (d.current_cooking) {
-        html += `<p>🔥 Cozimento: <span data-cook="${d.current_cooking.start_cook_at}"></span></p>`;
-    }
-
-    return html;
-}
-
-setInterval(() => {
-    document.querySelectorAll("[data-trit]").forEach(el => {
-        el.innerText = formatTimer(el.dataset.trit);
+        startTimer(d);
     });
-    document.querySelectorAll("[data-cook]").forEach(el => {
-        el.innerText = formatTimer(el.dataset.cook);
-    });
-}, 1000);
-
-function formatTimer(startTime) {
-    const diff = Math.floor((Date.now() - new Date(startTime)) / 1000);
-    const h = String(Math.floor(diff / 3600)).padStart(2, "0");
-    const m = String(Math.floor((diff % 3600) / 60)).padStart(2, "0");
-    const s = String(diff % 60).padStart(2, "0");
-    return `${h}:${m}:${s}`;
 }
 
-// ============================
-// Botões Inteligentes
-// ============================
+// -------------------------------
+// Cronômetro inteligente
+// -------------------------------
+function startTimer(d) {
+    const timerDiv = document.getElementById(`timer-${d.id}`);
 
-function renderButtons(d) {
-    if (d.status === "idle") {
-        return `<button class="btn btn-primary" onclick="startTrit(${d.id})">Iniciar Trituração</button>`;
+    if (!timerDiv) return;
+
+    let startTime = null;
+
+    if (d.current_tritura && d.current_tritura.start_tritura_at) {
+        startTime = new Date(d.current_tritura.start_tritura_at);
+    }
+    if (d.current_cooking && d.current_cooking.start_cook_at) {
+        startTime = new Date(d.current_cooking.start_cook_at);
     }
 
-    if (d.status === "operating" && d.current_tritura) {
-        return `<button class="btn btn-warning" onclick="finishTrit(${d.current_tritura.id})">Finalizar Trituração</button>`;
+    if (!startTime) {
+        timerDiv.innerHTML = "";
+        return;
     }
 
-    if (d.status === "cooking" && d.current_cooking) {
-        return `<button class="btn btn-danger" onclick="finishCook(${d.current_cooking.id})">Finalizar Cozimento</button>`;
-    }
+    clearInterval(timers[d.id]);
 
-    if (d.status === "waiting_discharge") {
-        return `<button class="btn btn-success" onclick="finishDischarge(${d.id}, ${d.current_cooking.id})">Registrar Descarga</button>`;
-    }
+    timers[d.id] = setInterval(() => {
+        const now = new Date();
+        const diff = now - startTime;
 
-    return `<p class="text-muted">Aguardando...</p>`;
+        const h = Math.floor(diff / 3600000);
+        const m = Math.floor((diff % 3600000) / 60000);
+        const s = Math.floor((diff % 60000) / 1000);
+
+        timerDiv.innerHTML = `<b>Tempo:</b> ${h}h ${m}m ${s}s`;
+    }, 1000);
 }
 
-// ============================
-// Chamadas API
-// ============================
-
-function startTrit(id) {
-    const body = {
-        digestor_id: id,
-        from_tova_id: 1,
-        toneladas_solicitadas: 8
-    };
+// -------------------------------
+// API Calls
+// -------------------------------
+function startTritura(digestor_id) {
+    const from_tova_id = prompt("ID da Tova origem?");
+    if (!from_tova_id) return alert("Tova inválida.");
 
     fetch("/api/trituracao/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body)
+        body: JSON.stringify({ digestor_id, from_tova_id })
     });
 }
 
-function finishTrit(id) {
+function finishTritura(id) {
     fetch("/api/trituracao/finish", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -120,7 +105,7 @@ function finishTrit(id) {
     });
 }
 
-function finishCook(id) {
+function finishCooking(id) {
     fetch("/api/cooking/finish", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -128,10 +113,11 @@ function finishCook(id) {
     });
 }
 
-function finishDischarge(digestor_id, cooking_cycle_id) {
+function openDischarge(digestor_id) {
+    const toneladas = prompt("Toneladas descarregadas:");
     fetch("/api/digestor/discharge", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ digestor_id, cooking_cycle_id })
+        body: JSON.stringify({ digestor_id, toneladas_discarded: toneladas })
     });
 }
