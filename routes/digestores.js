@@ -1,72 +1,91 @@
 const express = require("express");
-const router = express.Router();
 
-/**
- * ROTAS PREMIUM DOS DIGESTORES
- * - iniciar trituração
- * - finalizar trituração
- * - iniciar cozimento
- * - finalizar cozimento
- * - descarregar digestor
- *
- * Todas emitindo broadcastState() ao final.
- */
 module.exports = (db, broadcastState) => {
+    const router = express.Router();
 
-    /* =============================================
-       1) INICIAR TRITURAÇÃO
-    ==============================================*/
+    /* ======================================================
+       1) LISTAR DIGESTORES PARA API REALTIME
+    ====================================================== */
+    router.get("/api/list", (req, res) => {
+        db.all(
+            "SELECT id, nome, capacidade_tn, status FROM digestors ORDER BY id",
+            [],
+            (err, rows) => {
+                if (err) return res.status(500).json({ error: err.message });
+                res.json(rows || []);
+            }
+        );
+    });
+
+    /* ======================================================
+       2) TRITURAÇÃO — INICIAR
+    ====================================================== */
     router.post("/trituracao/start", (req, res) => {
-        const { digestor_id, toneladas_solicitadas, materia_prima } = req.body;
+        const { digestor_id, from_tova_id, toneladas_solicitadas, materia_prima } = req.body;
 
-        if (!digestor_id || !toneladas_solicitadas)
-            return res.status(400).json({ error: "Campos incompletos" });
+        if (!digestor_id || !from_tova_id || !toneladas_solicitadas) {
+            return res.status(400).json({ error: "Dados incompletos" });
+        }
 
         const now = new Date().toISOString();
 
-        // 1. cria trituração
+        // 1) criar ciclo de trituração
         db.run(
             `INSERT INTO trituration_cycles 
-            (digestor_id, toneladas_solicitadas, materia_prima, start_tritura_at, status, operator_id)
-            VALUES (?, ?, ?, ?, 'started', ?)`,
-            [digestor_id, toneladas_solicitadas, materia_prima || null, now, req.user.id],
+             (digestor_id, from_tova_id, toneladas_solicitadas, start_tritura_at, status, operator_id)
+             VALUES (?,?,?,?, 'started', ?)`,
+            [digestor_id, from_tova_id, toneladas_solicitadas, now, req.user.id],
             function (err) {
-                if (err) return res.status(500).json({ error: err.message });
+                if (err) {
+                    console.error("Erro ao iniciar trituração:", err);
+                    return res.status(500).json({ error: err.message });
+                }
 
-                const tritID = this.lastID;
+                const tritId = this.lastID;
 
-                // 2. cria ciclo principal
+                // 2) criar ciclo principal
                 db.run(
-                    `INSERT INTO cycles (digestor_id, trituration_id, materia_prima, started_at, status)
+                    `INSERT INTO cycles
+                     (digestor_id, trituration_id, materia_prima, started_at, status)
                      VALUES (?, ?, ?, ?, 'in_progress')`,
-                    [digestor_id, tritID, materia_prima || null, now],
-                    () => {
+                    [digestor_id, tritId, materia_prima || null, now],
+                    function (err2) {
+                        if (err2) console.error("Erro criando cycle:", err2);
+
                         broadcastState();
-                        res.json({ trituration_id: tritID });
+                        res.json({
+                            ok: true,
+                            trituration_id: tritId,
+                            cycle_id: this?.lastID
+                        });
                     }
                 );
             }
         );
     });
 
-    /* =============================================
-       2) FINALIZAR TRITURAÇÃO
-    ==============================================*/
+    /* ======================================================
+       3) TRITURAÇÃO — FINALIZAR
+    ====================================================== */
     router.post("/trituracao/finish", (req, res) => {
         const { trituration_id, toneladas_trituradas } = req.body;
 
-        if (!trituration_id)
-            return res.status(400).json({ error: "ID da trituração ausente" });
+        if (!trituration_id) {
+            return res.status(400).json({ error: "trituration_id é obrigatório" });
+        }
 
         const now = new Date().toISOString();
 
         db.run(
-            `UPDATE trituration_cycles
-             SET end_tritura_at=?, toneladas_trituradas=?, status='finished'
-             WHERE id=?`,
+            `UPDATE trituration_cycles 
+             SET end_tritura_at = ?, toneladas_trituradas = ?, status = 'finished'
+             WHERE id = ?`,
             [now, toneladas_trituradas || 0, trituration_id],
-            err => {
-                if (err) return res.status(500).json({ error: err.message });
+            function (err) {
+                if (err) {
+                    console.error("Erro ao finalizar trituração:", err);
+                    return res.status(500).json({ error: err.message });
+                }
 
                 broadcastState();
                 res.json({ ok: true });
@@ -74,96 +93,113 @@ module.exports = (db, broadcastState) => {
         );
     });
 
-    /* =============================================
-       3) INICIAR COZIMENTO
-    ==============================================*/
-    router.post("/cooking/start", (req, res) => {
+    /* ======================================================
+       4) COZIMENTO — INICIAR
+    ====================================================== */
+    router.post("/cozimento/start", (req, res) => {
         const { digestor_id, trituration_id } = req.body;
 
-        if (!digestor_id || !trituration_id)
+        if (!digestor_id || !trituration_id) {
             return res.status(400).json({ error: "Dados incompletos" });
+        }
 
         const now = new Date().toISOString();
 
         db.run(
-            `INSERT INTO cooking_cycles (digestor_id, trituration_id, start_cook_at, status, operator_id)
+            `INSERT INTO cooking_cycles 
+             (digestor_id, trituration_id, start_cook_at, status, operator_id)
              VALUES (?, ?, ?, 'started', ?)`,
             [digestor_id, trituration_id, now, req.user.id],
             function (err) {
-                if (err) return res.status(500).json({ error: err.message });
+                if (err) {
+                    console.error("Erro ao iniciar cozimento:", err);
+                    return res.status(500).json({ error: err.message });
+                }
 
-                const cookingID = this.lastID;
+                const cookId = this.lastID;
 
-                // vincula ao ciclo ativo
+                // vincula cooking ao ciclo
                 db.run(
-                    "UPDATE cycles SET cooking_id=? WHERE trituration_id=? AND status='in_progress'",
-                    [cookingID, trituration_id],
+                    `UPDATE cycles 
+                     SET cooking_id = ? 
+                     WHERE trituration_id = ? AND status='in_progress'`,
+                    [cookId, trituration_id],
                     () => {
                         broadcastState();
-                        res.json({ cooking_id: cookingID });
+                        res.json({ ok: true, cooking_id: cookId });
                     }
                 );
             }
         );
     });
 
-    /* =============================================
-       4) FINALIZAR COZIMENTO
-    ==============================================*/
-    router.post("/cooking/finish", (req, res) => {
+    /* ======================================================
+       5) COZIMENTO — FINALIZAR
+    ====================================================== */
+    router.post("/cozimento/finish", (req, res) => {
         const { cooking_id } = req.body;
 
-        if (!cooking_id)
-            return res.status(400).json({ error: "cooking_id ausente" });
+        if (!cooking_id) return res.status(400).json({ error: "cooking_id obrigatório" });
 
         const now = new Date().toISOString();
 
         db.run(
-            `UPDATE cooking_cycles
-             SET end_cook_at=?, status='finished'
-             WHERE id=?`,
+            `UPDATE cooking_cycles 
+             SET end_cook_at = ?, status = 'finished'
+             WHERE id = ?`,
             [now, cooking_id],
             function (err) {
-                if (err) return res.status(500).json({ error: err.message });
+                if (err) {
+                    console.error("Erro ao finalizar cozimento:", err);
+                    return res.status(500).json({ error: err.message });
+                }
 
-                // encerra ciclo
+                // Fechar ciclo principal
                 db.get(
                     `SELECT * FROM cycles 
-                     WHERE cooking_id=? OR trituration_id=(SELECT trituration_id FROM cooking_cycles WHERE id=?)`,
+                     WHERE cooking_id = ? 
+                        OR trituration_id = (SELECT trituration_id FROM cooking_cycles WHERE id = ?)`,
                     [cooking_id, cooking_id],
                     (err2, cyc) => {
-                        if (!cyc) {
+                        if (cyc) {
+                            db.run(
+                                `UPDATE cycles SET ended_at = ?, status = 'finished' WHERE id = ?`,
+                                [now, cyc.id],
+                                () => {
+                                    broadcastState();
+                                    res.json({ ok: true });
+                                }
+                            );
+                        } else {
                             broadcastState();
-                            return res.json({ ok: true });
+                            res.json({ ok: true });
                         }
-
-                        db.run(
-                            `UPDATE cycles SET ended_at=?, status='finished' WHERE id=?`,
-                            [now, cyc.id],
-                            () => {
-                                broadcastState();
-                                res.json({ ok: true });
-                            }
-                        );
                     }
                 );
             }
         );
     });
 
-    /* =============================================
-       5) DESCARREGAR DIGESTOR
-    ==============================================*/
-    router.post("/digestor/discharge", (req, res) => {
-        const { digestor_id, trituration_cycle_id, cooking_cycle_id, toneladas_discarded, notes } = req.body;
+    /* ======================================================
+       6) DESCARREGAR DIGESTOR
+    ====================================================== */
+    router.post("/discharge", (req, res) => {
+        const {
+            digestor_id,
+            trituration_cycle_id,
+            cooking_cycle_id,
+            toneladas_discarded,
+            notes
+        } = req.body;
 
-        if (!digestor_id)
-            return res.status(400).json({ error: "digestor_id obrigatório" });
+        if (!digestor_id) {
+            return res.status(400).json({ error: "digestor_id é obrigatório" });
+        }
 
         db.run(
             `INSERT INTO digestor_discharges 
-            (digestor_id, trituration_cycle_id, cooking_cycle_id, toneladas_discarded, operator_id, notes)
-             VALUES (?, ?, ?, ?, ?, ?)`,
+             (digestor_id, trituration_cycle_id, cooking_cycle_id, toneladas_discarded, operator_id, notes)
+             VALUES (?,?,?,?,?,?)`,
             [
                 digestor_id,
                 trituration_cycle_id || null,
@@ -173,15 +209,18 @@ module.exports = (db, broadcastState) => {
                 notes || null
             ],
             function (err) {
-                if (err) return res.status(500).json({ error: err.message });
+                if (err) {
+                    console.error("Erro ao descarregar digestor:", err);
+                    return res.status(500).json({ error: err.message });
+                }
 
-                // retorna digestor ao IDLE
+                // digestor volta ao estado IDLE
                 db.run(
                     "UPDATE digestors SET status='idle' WHERE id=?",
                     [digestor_id],
                     () => {
                         broadcastState();
-                        res.json({ discharge_id: this.lastID });
+                        res.json({ ok: true, discharge_id: this.lastID });
                     }
                 );
             }
