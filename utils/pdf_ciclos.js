@@ -1,66 +1,67 @@
 // utils/pdf_ciclos.js
+// Gera PDF resumido de um ciclo (usado por /reports/cycle/:id)
+// Recebe (ciclo, outputPath) e retorna Promise que resolve quando salvo.
+
 const PDFDocument = require("pdfkit");
-const QRCode = require("qrcode");
+const fs = require("fs");
+const path = require("path");
 
-async function gerarPdfCiclo(cycle, outputPath) {
-    return new Promise(async (resolve, reject) => {
-        try {
-            const doc = new PDFDocument({ margin: 40 });
-            const stream = doc.pipe(require("fs").createWriteStream(outputPath));
+module.exports = async function gerarPDFCiclo(ciclo, outputPath) {
+  return new Promise((resolve, reject) => {
+    try {
+      const doc = new PDFDocument({ size: "A4", margin: 40 });
+      const stream = fs.createWriteStream(outputPath);
+      doc.pipe(stream);
 
-            // ------------------------------
-            // Capa elegante
-            // ------------------------------
-            doc.rect(0, 0, doc.page.width, 120)
-                .fill("#0a5728");
+      // Header
+      doc.fontSize(18).fillColor("#0C69F6").text("Relatório de Ciclo", { align: "left" });
+      doc.moveDown(0.2);
+      doc.fontSize(10).fillColor("#333").text(`Ciclo ID: ${ciclo.id} — Digestor: ${ciclo.digestor_name || ciclo.digestor_id}`, { continued: false });
+      doc.text(`Gerado em: ${new Date().toLocaleString()}`);
+      doc.moveDown();
 
-            doc.fillColor("#ffffff")
-                .fontSize(26)
-                .text("Relatório de Ciclo - Digestores", 40, 40);
+      // Section: TRITURAÇÃO
+      doc.fontSize(14).fillColor("#000").text("Trituração", { underline: true });
+      doc.moveDown(0.2);
+      doc.fontSize(11).fillColor("#333");
+      doc.text(`Início: ${ciclo.start_tritura_at || '—'}`);
+      doc.text(`Término: ${ciclo.end_tritura_at || '—'}`);
+      doc.text(`Toneladas solicitadas: ${ciclo.toneladas_solicitadas || '—'}`);
+      doc.text(`Toneladas trituradas: ${ciclo.toneladas_trituradas || '—'}`);
+      doc.moveDown();
 
-            doc.moveDown(2);
+      // Section: COZIMENTO
+      doc.fontSize(14).fillColor("#000").text("Cozimento", { underline: true });
+      doc.moveDown(0.2);
+      doc.fontSize(11).fillColor("#333");
+      doc.text(`Início: ${ciclo.start_cook_at || '—'}`);
+      doc.text(`Término: ${ciclo.end_cook_at || '—'}`);
+      doc.moveDown();
 
-            // ------------------------------
-            // QRCode para autenticação
-            // ------------------------------
-            const qrData = `Ciclo ID: ${cycle.id} | Digestor: ${cycle.digestor_id} | Início: ${cycle.start_time}`;
-            const qrImage = await QRCode.toDataURL(qrData);
+      // Section: DESCARGA
+      doc.fontSize(14).fillColor("#000").text("Descarga", { underline: true });
+      doc.moveDown(0.2);
+      doc.fontSize(11).fillColor("#333");
+      doc.text(`Toneladas descarregadas: ${ciclo.toneladas_discarded || '—'}`);
+      if (ciclo.notes) {
+        doc.moveDown(0.2);
+        doc.text("Observações:");
+        doc.text(ciclo.notes);
+      }
+      doc.moveDown();
 
-            doc.image(Buffer.from(qrImage.split(",")[1], "base64"), doc.page.width - 160, 30, {
-                fit: [120, 120]
-            });
+      // Footer / metadata
+      doc.fontSize(10).fillColor("#666");
+      doc.text("Dados extraídos do sistema", { align: "left" });
+      doc.moveDown(0.5);
 
-            doc.moveDown(3);
+      // finalize
+      doc.end();
 
-            // ------------------------------
-            // Dados gerais
-            // ------------------------------
-            doc.fillColor("#0a5728")
-                .fontSize(20)
-                .text("Informações do Ciclo", { underline: true });
-
-            doc.moveDown(1);
-
-            doc.fillColor("#000000")
-                .fontSize(12)
-                .text(`ID do Ciclo: ${cycle.id}`)
-                .text(`Digestor: ${cycle.digestor_id}`)
-                .text(`Início: ${cycle.start_time}`)
-                .text(`Término: ${cycle.end_time || "Em aberto"}`)
-                .text(`Status Final: ${cycle.status}`)
-                .moveDown(2);
-doc.fontSize(14).text(`Matéria-prima: ${dados.materia_prima || "—"}`);
-
-            // ------------------------------
-            // Tabela do ciclo
-            // ------------------------------
-            doc.fillColor("#0a5728")
-                .fontSize(18)
-                .text("Etapas do Processo", { underline: true });
-
-            doc.moveDown(1);
-
-            const tableRows = [
-                ["Etapa", "Horário de Início", "Horário de Fim", "Resultado"],
-                ["Carregamento", cycle.load_start || "-", cycle.load_end || "-", cycle.load_result || "-"],
-                ["Trituração", cycle.tritu_start || "-", cycle.tritu_end || "-", cycle.tr]()
+      stream.on("finish", () => resolve(outputPath));
+      stream.on("error", (err) => reject(err));
+    } catch (e) {
+      reject(e);
+    }
+  });
+};
