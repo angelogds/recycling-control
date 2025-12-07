@@ -1,73 +1,84 @@
-<%- include("layouts/base_top", { title: "Painel do Operador", usuario: usuario }) %>
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Painel do Operador</title>
 
-<link rel="stylesheet" href="/css/operador.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
 
-<div class="top-bar">
-    <h1 class="page-title">Painel do Operador</h1>
-    <a href="/operador/historico" class="btn-history">📄 Histórico</a>
+    <style>
+        body {
+            padding: 20px;
+            margin: 0;
+            background: #f2f5f4;
+            font-family: "Inter";
+        }
+
+        h1 {
+            color: #0a361a;
+            margin-bottom: 25px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit,minmax(300px,1fr));
+            gap: 18px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 14px;
+            padding: 20px;
+            box-shadow: 0 0 12px rgba(0,0,0,0.15);
+        }
+
+        .title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .status {
+            font-weight: bold;
+            margin-bottom: 12px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background: #0ac44d;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .btn:hover {
+            background: #08993d;
+        }
+
+        .timer {
+            font-size: 18px;
+            font-weight: bold;
+            color: #0f5226;
+            margin-top: 10px;
+        }
+
+    </style>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/operador.js"></script>
+
+</head>
+<body>
+
+<h1>Painel do Operador</h1>
+
+<div class="grid" id="digestorGrid">
+    <!-- operador.js preencherá automaticamente -->
 </div>
 
-<div id="digestorGrid" class="digestor-grid">
-
-    <% digestores.forEach(d => { %>
-
-    <div class="digestor-card" id="digestor-<%= d.id %>" data-id="<%= d.id %>">
-
-        <div class="dg-header">
-            <div class="dg-title">Digestor <%= d.id %></div>
-            <div class="dg-status status-parado">Parado</div>
-        </div>
-
-        <!-- Materia prima -->
-        <div class="materia-select">
-            <div class="mat-label">Matéria-prima</div>
-            <button class="mat-btn" data-mat="osso">Osso</button>
-            <button class="mat-btn" data-mat="barrigada">Barrigada</button>
-        </div>
-
-        <!-- Inputs de ciclo -->
-        <div class="ciclo-inputs">
-            <div class="input-block">
-                <label>Tova:</label>
-                <select class="select-tova">
-                    <option value="1">Tova 1</option>
-                    <option value="2">Tova 2</option>
-                </select>
-            </div>
-
-            <div class="input-block">
-                <label>Toneladas:</label>
-                <input type="number" step="0.1" class="input-ton" placeholder="0,0" />
-            </div>
-        </div>
-
-        <!-- Timers -->
-        <div class="timer-section">
-            <div>
-                <span class="timer-label">Trituração:</span>
-                <span class="timer-tritura">--:--:--</span>
-            </div>
-            <div>
-                <span class="timer-label">Cozimento:</span>
-                <span class="timer-cook">--:--:--</span>
-            </div>
-        </div>
-
-        <!-- Botões lado a lado -->
-        <div class="action-buttons">
-            <button class="btn-action btn-start">Iniciar Trituração</button>
-            <button class="btn-action btn-finish-trit disabled">Finalizar Trituração</button>
-            <button class="btn-action btn-finish-cook disabled">Finalizar Cozimento</button>
-            <button class="btn-action btn-discharge disabled">Descarregar</button>
-        </div>
-
-    </div>
-
-    <% }) %>
-
-</div>
-
-<script src="/socket.io/socket.io.js"></script>
-<script src="/js/operador.js"></script>
-
-<%- include("layouts/base_bottom") %>
+</body>
+</html>
