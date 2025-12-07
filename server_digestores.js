@@ -240,9 +240,21 @@ app.post("/api/cooking/start", (req, res) => {
   const { digestor_id, trituration_id } = req.body;
   if (!digestor_id || !trituration_id) return res.status(400).json({ error: 'Dados incompletos' });
   const now = new Date().toISOString();
-  db.run("INSERT INTO cooking_cycles (digestor_id, trituration_id, start_cook_at, status, operator_id) VALUES (?, ?, ?, 'started', ?)", [digestor_id, trituration_id, now, req.user.id], function (err) {
-    if (err) { console.error('Err start cook:', err); return res.status(500).json({ error: err.message }); }
-    const cookingId = this.lastID;
+ db.run(`
+  INSERT INTO cycles 
+  (digestor_id, trituration_id, materia_prima, started_at, status) 
+  VALUES (?, ?, ?, ?, 'in_progress')
+`, [
+  digestor_id,
+  this.lastID,
+  req.body.materia_prima || null,
+  now
+], function(cErr) {
+  if (cErr) console.error("Err creating cycle:", cErr);
+  broadcastState();
+  res.json({ trituration_id: tritId });
+});
+
     db.run("UPDATE cycles SET cooking_id = ? WHERE trituration_id = ? AND status = 'in_progress'", [cookingId, trituration_id], function(uErr) {
       if (uErr) console.error("Err linking cooking to cycle:", uErr);
       broadcastState();
