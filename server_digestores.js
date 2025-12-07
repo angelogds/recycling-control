@@ -84,60 +84,112 @@ let db; // will be assigned after initDatabaseIfMissing
 
 // -------------------- BLOCO 2: AUTH helpers & LOGIN (edit here) ==== ////
 
-// middleware ensureAuth and ensureRole (use these for view and API protection)
+// Middleware: garantir autenticação (usa req.session.user)
 function ensureAuth(req, res, next) {
   if (req.session && req.session.user) {
     req.user = req.session.user;
     return next();
   }
-  // API vs View handling
-  if (req.path.startsWith("/api") || req.path.startsWith("/reports") || req.path.startsWith("/pdf")) {
+  // para APIs, preferir 401; para views, redirecionar
+  if (req.path && (req.path.startsWith("/api") || req.path.startsWith("/reports") || req.path.startsWith("/pdf"))) {
     return res.status(401).json({ error: "Unauthorized" });
   }
   return res.redirect("/login");
 }
 
+// Middleware: validar papel (role)
 function ensureRole(role) {
   return (req, res, next) => {
     if (!req.session || !req.session.user) return res.redirect("/login");
-    if (req.session.user.role === "admin" || req.session.user.role === role) return next();
-    return res.status(403).send("Acesso negado");
+    const userRole = req.session.user.role || "operador";
+    if (userRole !== role && userRole !== "admin") return res.status(403).send("Acesso negado");
+    return next();
   };
 }
 
-// render login view (pass both 'erro' and 'error' for compatibility)
+// LOGIN (GET)
 app.get("/login", (req, res) => {
-  res.render("login", { erro: null, error: null, title: "Login" });
+  // mantém compatibilidade com suas views que esperam 'erro'
+  res.render("login", { erro: null, title: "Login" });
 });
 
+// LOGIN (POST)
 app.post("/login", (req, res) => {
   const { username, password } = req.body;
-  if (!username || !password) return res.render("login", { erro: "Usuário e senha são obrigatórios", error: "Usuário e senha são obrigatórios" });
+  if (!username || !password) return res.render("login", { erro: "Usuário e senha são obrigatórios." });
 
-  db.get("SELECT * FROM users WHERE username = ?", [username], async (err, user) => {
-    if (err) {
-      console.error("Err DB login:", err);
-      return res.render("login", { erro: "Erro interno", error: "Server error" });
+  // checar se a tabela users existe (resiliência se DB foi recriado)
+  db.get("SELECT name FROM sqlite_master WHERE type='table' AND name='users'", [], (tblErr, tblRow) => {
+    if (tblErr) {
+      console.error("Err checking users table:", tblErr);
+      return res.render("login", { erro: "Erro interno (tabela users)." });
     }
-    if (!user) return res.render("login", { erro: "Usuário não encontrado", error: "User not found" });
+    if (!tblRow) return res.render("login", { erro: "Sistema não inicializado. Crie a tabela users." });
 
-    try {
-      const match = await bcrypt.compare(password, user.password);
-      if (!match) return res.render("login", { erro: "Senha inválida", error: "Invalid password" });
+    db.get("SELECT * FROM users WHERE username = ?", [username], async (err, user) => {
+      if (err) {
+        console.error("Err DB login:", err);
+        return res.render("login", { erro: "Erro interno." });
+      }
+      if (!user) return res.render("login", { erro: "Usuário não encontrado." });
 
-      // set session
-      req.session.user = { id: user.id, nome: user.nome || user.username, username: user.username, role: user.role || "operador" };
-      return res.redirect("/operador/painel");
-    } catch (e) {
-      console.error("Err bcrypt:", e);
-      return res.render("login", { erro: "Erro interno", error: "Server error" });
-    }
+      try {
+        const match = await bcrypt.compare(password, user.password);
+        if (!match) return res.render("login", { erro: "Senha inválida." });
+
+        // popular sessão
+        req.session.user = {
+          id: user.id,
+          username: user.username,
+          nome: user.nome || user.username,
+          role: user.role || "operador"
+        };
+
+        return res.redirect("/operador/painel");
+      } catch (e) {
+        console.error("Err bcrypt compare:", e);
+        return res.render("login", { erro: "Erro interno." });
+      }
+    });
   });
 });
 
+// LOGOUT
 app.get("/logout", (req, res) => {
-  req.session.destroy(() => res.redirect("/login"));
+  if (req.session) {
+    req.session.destroy(() => {
+      res.redirect("/login");
+    });
+  } else {
+    res.redirect("/login");
+  }
 });
+
+// SEED ADMIN (só roda se tabela users existir e estiver vazia)
+(function seedAdminIfNeeded() {
+  db.get("SELECT name FROM sqlite_master WHERE type='table' AND name='users'", [], (err, tbl) => {
+    if (err) { console.error("Erro checar tabelas (seed):", err); return; }
+    if (!tbl) { console.warn("Tabela 'users' não encontrada. Ignorando seed de admin."); return; }
+
+    db.get("SELECT COUNT(*) AS cnt FROM users", [], (cErr, row) => {
+      if (cErr) { console.error("Erro checking users:", cErr); return; }
+      const cnt = (row && row.cnt) ? row.cnt : 0;
+      if (cnt === 0) {
+        const adminUser = { username: "angelo", nome: "Administrador", role: "admin", passwordPlain: "@nloFa1107" };
+        bcrypt.hash(adminUser.passwordPlain, 10).then(hash => {
+          db.run("INSERT INTO users (username, nome, role, password) VALUES (?, ?, ?, ?)", [adminUser.username, adminUser.nome, adminUser.role, hash], (insErr) => {
+            if (insErr) console.error("Err seed admin:", insErr);
+            else console.log("✔ Usuário admin criado: angelo / @nloFa1107 (troque a senha!)");
+          });
+        }).catch(e => console.error("Err hashing seed admin:", e));
+      } else {
+        // console.log("Users already present, seed skipped.");
+      }
+    });
+  });
+})();
+
+//// ==== END BLOCO 2 ==== ////
 
 // -------------------- BLOCO 3: BROADCAST / SOCKET.IO --------------------
 function broadcastState() {
