@@ -1,77 +1,48 @@
-<!DOCTYPE html>
-<html lang="pt-br">
+<!-- admin_users_list.ejs -->
+<!doctype html>
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Usuários - Administração</title>
-
-    <style>
-        body { background:#eef2f6; margin:0; font-family:Arial; }
-        .top-bar {
-            background:#0C69F6; color:white; padding:18px 25px;
-            font-size:22px; font-weight:bold;
-            display:flex; justify-content:space-between;
-        }
-        .container { padding:25px; }
-        .btn {
-            padding:10px 18px; border-radius:10px; 
-            border:none; cursor:pointer; font-weight:bold;
-        }
-        .btn-add { background:#0C69F6; color:white; }
-        .btn-edit { background:#FFC107; color:#222; }
-        .btn-delete { background:#D9534F; color:white; }
-
-        table {
-            width:100%; border-collapse:collapse; margin-top:20px;
-            background:white; border-radius:12px; overflow:hidden;
-            box-shadow:0 4px 10px #0002;
-        }
-        th, td {
-            padding:14px; text-align:left; border-bottom:1px solid #ddd;
-        }
-        th { background:#0C69F6; color:white; }
-        tr:hover { background:#f4f7ff; }
-    </style>
+  <meta charset="utf-8">
+  <title>Admin — Usuários</title>
+  <link rel="stylesheet" href="/css/style.css">
 </head>
-
 <body>
+  <div class="top-bar">
+    <div>Admin • Usuários</div>
+    <div><a href="/operador/painel">Voltar</a></div>
+  </div>
 
-<div class="top-bar">
-    <span>Gestão de Usuários</span>
-    <a href="/operador/painel" style="color:white;text-decoration:none;">Painel</a>
-</div>
+  <div class="container">
+    <div class="card">
+      <div class="card-title">Lista de Usuários</div>
+      <div style="margin-bottom:12px;">
+        <a class="btn btn-green" href="/admin/users/new">Novo Usuário</a>
+      </div>
 
-<div class="container">
-
-    <button class="btn btn-add" onclick="location.href='/admin/users/new'">+ Novo Usuário</button>
-
-    <table>
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Usuário</th>
-                <th>Nome</th>
-                <th>Papel</th>
-                <th>Ações</th>
-            </tr>
-        </thead>
-
+      <table class="table-premium">
+        <thead><tr><th>#</th><th>Username</th><th>Nome</th><th>Role</th><th>Ações</th></tr></thead>
         <tbody>
-        <% users.forEach(u => { %>
-            <tr>
+          <% if (!users || users.length === 0) { %>
+            <tr><td colspan="5">Nenhum usuário cadastrado</td></tr>
+          <% } else { %>
+            <% users.forEach(u => { %>
+              <tr>
                 <td><%= u.id %></td>
                 <td><%= u.username %></td>
                 <td><%= u.nome %></td>
                 <td><%= u.role %></td>
                 <td>
-                    <button class="btn btn-edit" onclick="location.href='/admin/users/<%= u.id %>/edit'">Editar</button>
-                    <button class="btn btn-delete" onclick="if(confirm('Excluir usuário?')) location.href='/admin/users/<%= u.id %>/delete'">Excluir</button>
+                  <a class="btn btn-gray" href="/admin/users/<%= u.id %>/edit">Editar</a>
+                  <form style="display:inline" action="/admin/users/<%= u.id %>/delete" method="POST" onsubmit="return confirm('Excluir usuário?');">
+                    <button class="btn btn-red" type="submit">Excluir</button>
+                  </form>
                 </td>
-            </tr>
-        <% }) %>
+              </tr>
+            <% }) %>
+          <% } %>
         </tbody>
-    </table>
-
-</div>
-
+      </table>
+    </div>
+  </div>
 </body>
 </html>
