@@ -79,7 +79,6 @@ try {
   console.warn("Aviso: utils/pdf_ciclos.js não encontrado — rotas de PDF ficarão indisponíveis.");
 }
 // ====================== PART 2 ======================
-// server_digestores.js - Parte 2/6
 // Auth helpers, routes login/logout, seed admin user
 // ====================================================
 
@@ -89,70 +88,122 @@ function ensureAuth(req, res, next) {
     req.user = req.session.user;
     return next();
   }
-  // For APIs return 401, for views redirect to login
-  if (req.path.startsWith("/api") || req.path.startsWith("/reports") || req.path.startsWith("/pdf")) {
+
+  // API → retorna 401
+  if (
+    req.path.startsWith("/api") ||
+    req.path.startsWith("/reports") ||
+    req.path.startsWith("/pdf")
+  ) {
     return res.status(401).json({ error: "Unauthorized" });
   }
+
+  // View → redireciona
   return res.redirect("/login");
 }
 
 function ensureRole(role) {
   return (req, res, next) => {
-    if (req.session && req.session.user && (req.session.user.role === role || req.session.user.role === "admin")) return next();
+    if (
+      req.session &&
+      req.session.user &&
+      (req.session.user.role === role ||
+        req.session.user.role === "admin")
+    ) {
+      return next();
+    }
+
     return res.status(403).send("Forbidden");
   };
 }
 
 // ---------- Login / Logout routes ----------
 app.get("/login", (req, res) => {
-  // provide error message key 'erro' to stay compatible with your view
   res.render("login", { erro: null, title: "Login" });
 });
 
 app.post("/login", (req, res) => {
   const { username, password } = req.body;
-  if (!username || !password) return res.render("login", { erro: "Usuário e senha são obrigatórios." });
 
-  db.get("SELECT * FROM users WHERE username = ?", [username], async (err, user) => {
-    if (err) { console.error("Err DB login:", err); return res.render("login", { erro: "Erro interno." }); }
-    if (!user) return res.render("login", { erro: "Usuário não encontrado." });
+  if (!username || !password) {
+    return res.render("login", { erro: "Usuário e senha são obrigatórios." });
+  }
 
-    try {
-      const match = await bcrypt.compare(password, user.password);
-      if (!match) return res.render("login", { erro: "Senha inválida." });
+  db.get(
+    "SELECT * FROM users WHERE username = ?",
+    [username],
+    async (err, user) => {
+      if (err) {
+        console.error("Erro na consulta de login:", err);
+        return res.render("login", { erro: "Erro interno no servidor." });
+      }
 
-      // create session
-      req.session.user = { id: user.id, nome: user.nome || user.username, username: user.username, role: user.role || "operador" };
-      return res.redirect("/operador/painel");
-    } catch (e) {
-      console.error("Err bcrypt:", e);
-      return res.render("login", { erro: "Erro interno." });
+      if (!user) {
+        return res.render("login", { erro: "Usuário não encontrado." });
+      }
+
+      try {
+        const ok = await bcrypt.compare(password, user.password);
+
+        if (!ok) {
+          return res.render("login", { erro: "Senha inválida." });
+        }
+
+        // Criar sessão
+        req.session.user = {
+          id: user.id,
+          nome: user.nome || user.username,
+          username: user.username,
+          role: user.role || "operador"
+        };
+
+        return res.redirect("/operador/painel");
+
+      } catch (e) {
+        console.error("Erro ao validar senha:", e);
+        return res.render("login", { erro: "Erro interno ao validar senha." });
+      }
     }
-  });
+  );
 });
 
 app.get("/logout", (req, res) => {
   req.session.destroy(() => res.redirect("/login"));
 });
 
-// ---------- Seed admin user if none exists ----------
+// ---------- Seed: criar usuário admin se não existir ----------
 db.get("SELECT COUNT(*) AS cnt FROM users", [], (err, row) => {
   if (err) {
-    console.error("Err checking users:", err);
+    console.error("Erro ao verificar usuários:", err);
     return;
   }
-  const cnt = row && row.cnt ? row.cnt : 0;
-  if (cnt === 0) {
-    // create admin: username 'angelo' password '@nloFa1107'
-    const adminUser = { username: "angelo", nome: "Administrador", role: "admin", passwordPlain: "@nloFa1107" };
-    bcrypt.hash(adminUser.passwordPlain, 10).then(hash => {
-      db.run("INSERT INTO users (username, nome, role, password) VALUES (?, ?, ?, ?)", [adminUser.username, adminUser.nome, adminUser.role, hash], (e) => {
-        if (e) console.error("Err seed admin:", e);
-        else console.log("✔ Usuário admin criado: angelo / @nloFa1107 (troque a senha!)");
-      });
-    }).catch(e => console.error("Err hashing seed admin:", e));
+
+  if ((row?.cnt || 0) === 0) {
+    const admin = {
+      username: "angelo",
+      nome: "Administrador",
+      role: "admin",
+      senha: "@nloFa1107"
+    };
+
+    bcrypt.hash(admin.senha, 10)
+      .then(hash => {
+        db.run(
+          "INSERT INTO users (username, nome, role, password) VALUES (?, ?, ?, ?)",
+          [admin.username, admin.nome, admin.role, hash],
+          err => {
+            if (err) {
+              console.error("Erro ao criar admin:", err);
+            } else {
+              console.log("✔ Usuário admin criado: angelo / @nloFa1107");
+            }
+          }
+        );
+      })
+      .catch(err => console.error("Erro ao gerar hash:", err));
   }
 });
+
 // ====================== PART 3 ======================
 // server_digestores.js - Parte 3/6
 // Views: painel operador, historico, portaria, tovas; portaria POST
