@@ -1,0 +1,44 @@
+<!-- views/dashboard.ejs -->
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Dashboard - Produção</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="top-bar">
+    Dashboard - Produção
+    <div>
+      <a href="/operador/painel" style="color:#fff;margin-right:12px">Painel</a>
+      <a href="/logout" style="color:#fff">Sair</a>
+    </div>
+  </div>
+
+  <div class="container" style="max-width:1100px;margin:22px auto;">
+    <div class="card">
+      <div class="card-title">Produção Diária (Últimos 14 dias)</div>
+      <canvas id="chartProdLine" height="120"></canvas>
+    </div>
+
+    <div class="row">
+      <div class="card col-6">
+        <div class="card-title">Eficiência por Digestor (últimos 30 ciclos)</div>
+        <canvas id="chartEffPie" height="220"></canvas>
+      </div>
+
+      <div class="card col-6">
+        <div class="card-title">Tempo médio por etapa (min)</div>
+        <canvas id="chartTimeBar" height="220"></canvas>
+      </div>
+    </div>
+
+    <div style="margin-top:18px" class="card">
+      <button class="btn btn-blue" onclick="refreshAll()">Atualizar</button>
+    </div>
+  </div>
+
+  <script src="/js/dashboard.js"></script>
+</body>
+</html>
