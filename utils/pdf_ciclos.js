@@ -49,6 +49,7 @@ async function gerarPdfCiclo(cycle, outputPath) {
                 .text(`Término: ${cycle.end_time || "Em aberto"}`)
                 .text(`Status Final: ${cycle.status}`)
                 .moveDown(2);
+doc.fontSize(14).text(`Matéria-prima: ${dados.materia_prima || "—"}`);
 
             // ------------------------------
             // Tabela do ciclo
