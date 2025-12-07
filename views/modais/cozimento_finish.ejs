@@ -1,23 +1,18 @@
-<div class="modal fade" id="modalFinalizarCozimento">
+<div class="modal fade" id="modalFinalizarCozimento" tabindex="-1">
   <div class="modal-dialog">
     <div class="modal-content">
-
       <div class="modal-header bg-success text-white">
         <h5 class="modal-title">Finalizar Cozimento</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
-
       <div class="modal-body">
-        <input type="hidden" id="finish_cook_id">
-
-        <p class="text-muted">Confirme que o cozimento do digestor foi concluído.</p>
+        <label>Observações (opcional)</label>
+        <textarea id="modal_cook_notes" class="form-control" rows="3"></textarea>
       </div>
-
       <div class="modal-footer">
         <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-        <button class="btn btn-cook" onclick="finalizarCozimento()">Finalizar</button>
+        <button id="modal_finish_cook_btn" class="btn btn-premium">Finalizar Cozimento</button>
       </div>
-
     </div>
   </div>
 </div>
