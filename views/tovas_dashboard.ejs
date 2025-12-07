@@ -1,6 +1,112 @@
-<%- include('layouts/base_top', { title: "Tovas", usuario: usuario }) %>
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Dashboard Geral</title>
 
-<h3>Tovas</h3>
-<p>Aqui lista e permite editar tovas</p>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
 
-<%- include('layouts/base_bottom') %>
+<style>
+body {
+    padding: 30px;
+    font-family: "Inter";
+    background: #eef5f0;
+}
+
+h1 { color:#0f5226; }
+
+.grid {
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(350px,1fr));
+    gap:25px;
+    margin-top:25px;
+}
+
+.card {
+    background:white;
+    padding:20px;
+    border-radius:14px;
+    box-shadow:0 0 14px rgba(0,0,0,0.15);
+}
+
+canvas { width:100% !important; height:240px !important; }
+</style>
+
+</head>
+<body>
+
+<h1>Dashboard Geral</h1>
+
+<div class="grid">
+
+    <div class="card">
+        <h3>Produção por Digestor</h3>
+        <canvas id="prodChart"></canvas>
+    </div>
+
+    <div class="card">
+        <h3>Tempo Médio – Trituração</h3>
+        <canvas id="tritChart"></canvas>
+    </div>
+
+    <div class="card">
+        <h3>Tempo Médio – Cozimento</h3>
+        <canvas id="cookChart"></canvas>
+    </div>
+
+    <div class="card">
+        <h3>Entradas da Portaria</h3>
+        <canvas id="portariaChart"></canvas>
+    </div>
+
+</div>
+
+<script>
+    const prodChart = new Chart(document.getElementById("prodChart"), {
+        type: "bar",
+        data: {
+            labels: <%- JSON.stringify(stats.digestorNames) %>,
+            datasets: [{
+                label: "Toneladas",
+                data: <%- JSON.stringify(stats.digestorProd) %>
+            }]
+        }
+    });
+
+    const tritChart = new Chart(document.getElementById("tritChart"), {
+        type: "line",
+        data: {
+            labels: <%- JSON.stringify(stats.digestorNames) %>,
+            datasets: [{
+                label: "Minutos",
+                data: <%- JSON.stringify(stats.tritAvg) %>
+            }]
+        }
+    });
+
+    const cookChart = new Chart(document.getElementById("cookChart"), {
+        type: "line",
+        data: {
+            labels: <%- JSON.stringify(stats.digestorNames) %>,
+            datasets: [{
+                label: "Minutos",
+                data: <%- JSON.stringify(stats.cookAvg) %>
+            }]
+        }
+    });
+
+    const portariaChart = new Chart(document.getElementById("portariaChart"), {
+        type: "bar",
+        data: {
+            labels: <%- JSON.stringify(stats.portariaHours) %>,
+            datasets: [{
+                label: "Caminhões",
+                data: <%- JSON.stringify(stats.portariaCount) %>
+            }]
+        }
+    });
+</script>
+
+</body>
+</html>
