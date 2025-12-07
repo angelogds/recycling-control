@@ -1,105 +1,33 @@
-<!DOCTYPE html>
-<html lang="pt-br">
+<!-- portaria_chegada_form.ejs -->
+<!doctype html>
+<html>
 <head>
-    <meta charset="UTF-8" />
-    <title>Registrar Chegada — Portaria</title>
-
-    <link rel="stylesheet" href="/css/style.css" />
-
-    <style>
-        body {
-            background: #eef2f6;
-            padding: 0;
-            margin: 0;
-            font-family: Arial, sans-serif;
-        }
-
-        .top-bar {
-            background: #0C69F6;
-            padding: 18px 25px;
-            color: white;
-            font-size: 20px;
-            font-weight: bold;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .container {
-            padding: 25px;
-        }
-
-        .form-card {
-            background: white;
-            border-radius: 18px;
-            padding: 25px;
-            max-width: 500px;
-            margin: auto;
-            box-shadow: 0 4px 12px #0002;
-        }
-
-        .form-card h2 {
-            margin: 0 0 20px 0;
-            color: #0C69F6;
-        }
-
-        label {
-            font-weight: bold;
-            margin-top: 12px;
-            display: block;
-            color: #222;
-        }
-
-        input {
-            width: 100%;
-            padding: 14px;
-            font-size: 16px;
-            border-radius: 10px;
-            border: 1px solid #bbb;
-            margin-top: 5px;
-        }
-
-        .btn-primary {
-            width: 100%;
-            background: #0C69F6;
-            padding: 14px;
-            margin-top: 22px;
-            color: white;
-            border-radius: 12px;
-            font-size: 18px;
-            text-align: center;
-            font-weight: bold;
-            cursor: pointer;
-            border: none;
-        }
-
-        .btn-primary:hover {
-            background: #0A55C2;
-        }
-    </style>
+  <meta charset="utf-8">
+  <title>Registrar Chegada — Portaria</title>
+  <link rel="stylesheet" href="/css/style.css">
 </head>
-
 <body>
+  <div class="top-bar">
+    <div>Portaria — Registrar Chegada</div>
+    <div><a href="/portaria">Voltar</a></div>
+  </div>
 
-<div class="top-bar">
-    <span>Registrar Chegada</span>
-    <a href="/portaria" style="color:white; text-decoration:none;">Voltar</a>
-</div>
+  <div class="container">
+    <div class="card" style="max-width:600px; margin:auto;">
+      <div class="card-title">Formulário de Chegada</div>
 
-<div class="container">
-    <form action="/portaria/chegada" method="POST" class="form-card">
+      <form method="POST" action="/portaria/chegada">
+        <label>Placa</label>
+        <input name="placa" placeholder="AAA-0000" required>
+        <label>Toneladas</label>
+        <input name="toneladas" type="number" step="0.1" placeholder="0.0" required>
+        <div style="display:flex; gap:10px;">
+          <button class="btn btn-green btn-full" type="submit">Registrar Chegada</button>
+          <a class="btn btn-gray btn-full" href="/portaria">Cancelar</a>
+        </div>
+      </form>
 
-        <h2>Entrada de Caminhão</h2>
-
-        <label for="placa">Placa do Caminhão:</label>
-        <input type="text" name="placa" id="placa" placeholder="ABC-1234" required />
-
-        <label for="ton">Toneladas Declaradas:</label>
-        <input type="number" step="0.01" name="toneladas" id="ton" placeholder="0.00" required />
-
-        <button class="btn-primary" type="submit">Registrar Chegada</button>
-
-    </form>
-</div>
-
+    </div>
+  </div>
 </body>
 </html>
