@@ -1,112 +1,39 @@
-<!DOCTYPE html>
-<html lang="pt-br">
+<!-- tovas_dashboard.ejs -->
+<!doctype html>
+<html>
 <head>
-<meta charset="UTF-8">
-<title>Dashboard Geral</title>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-
-<style>
-body {
-    padding: 30px;
-    font-family: "Inter";
-    background: #eef5f0;
-}
-
-h1 { color:#0f5226; }
-
-.grid {
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(350px,1fr));
-    gap:25px;
-    margin-top:25px;
-}
-
-.card {
-    background:white;
-    padding:20px;
-    border-radius:14px;
-    box-shadow:0 0 14px rgba(0,0,0,0.15);
-}
-
-canvas { width:100% !important; height:240px !important; }
-</style>
-
+  <meta charset="utf-8">
+  <title>Tovas — Dashboard</title>
+  <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
+  <div class="top-bar">
+    <div>Tovas</div>
+    <div><a href="/operador/painel">Voltar</a></div>
+  </div>
 
-<h1>Dashboard Geral</h1>
-
-<div class="grid">
-
+  <div class="container">
     <div class="card">
-        <h3>Produção por Digestor</h3>
-        <canvas id="prodChart"></canvas>
+      <div class="card-title">Tovas Cadastradas</div>
+      <div class="row">
+        <% if (!tovas || tovas.length === 0) { %>
+          <div class="col-12">Nenhuma tova cadastrada.</div>
+        <% } else { %>
+          <% tovas.forEach(t => { %>
+            <div class="col-4">
+              <div class="card digestor-box">
+                <div class="digestor-name"><%= t.nome %></div>
+                <div>Capacidade: <%= t.capacidade_tn %> tn</div>
+                <div>Atual: <%= t.current_tn || 0 %> tn</div>
+                <div style="margin-top:8px;">
+                  <a class="btn btn-gray" href="/tovas/<%= t.id %>/editar">Editar</a>
+                </div>
+              </div>
+            </div>
+          <% }) %>
+        <% } %>
+      </div>
     </div>
-
-    <div class="card">
-        <h3>Tempo Médio – Trituração</h3>
-        <canvas id="tritChart"></canvas>
-    </div>
-
-    <div class="card">
-        <h3>Tempo Médio – Cozimento</h3>
-        <canvas id="cookChart"></canvas>
-    </div>
-
-    <div class="card">
-        <h3>Entradas da Portaria</h3>
-        <canvas id="portariaChart"></canvas>
-    </div>
-
-</div>
-
-<script>
-    const prodChart = new Chart(document.getElementById("prodChart"), {
-        type: "bar",
-        data: {
-            labels: <%- JSON.stringify(stats.digestorNames) %>,
-            datasets: [{
-                label: "Toneladas",
-                data: <%- JSON.stringify(stats.digestorProd) %>
-            }]
-        }
-    });
-
-    const tritChart = new Chart(document.getElementById("tritChart"), {
-        type: "line",
-        data: {
-            labels: <%- JSON.stringify(stats.digestorNames) %>,
-            datasets: [{
-                label: "Minutos",
-                data: <%- JSON.stringify(stats.tritAvg) %>
-            }]
-        }
-    });
-
-    const cookChart = new Chart(document.getElementById("cookChart"), {
-        type: "line",
-        data: {
-            labels: <%- JSON.stringify(stats.digestorNames) %>,
-            datasets: [{
-                label: "Minutos",
-                data: <%- JSON.stringify(stats.cookAvg) %>
-            }]
-        }
-    });
-
-    const portariaChart = new Chart(document.getElementById("portariaChart"), {
-        type: "bar",
-        data: {
-            labels: <%- JSON.stringify(stats.portariaHours) %>,
-            datasets: [{
-                label: "Caminhões",
-                data: <%- JSON.stringify(stats.portariaCount) %>
-            }]
-        }
-    });
-</script>
-
+  </div>
 </body>
 </html>
