@@ -1,103 +1,44 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <title>Portaria – Controle de Chegada</title>
+<%- include('layouts/base_top', { title: "Portaria - Painel", usuario: usuario }) %>
 
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+<div class="container premium-box">
+    <h1 class="page-title">🚛 Controle de Portaria</h1>
 
-    <style>
-        body {
-            margin: 0;
-            padding: 20px;
-            font-family: "Inter";
-            background: #f4f6f5;
-        }
+    <div class="actions-row">
+        <a href="/portaria/chegada" class="btn btn-primary btn-lg">
+            ➕ Registrar Chegada
+        </a>
+        <a href="/logout" class="btn btn-secondary btn-lg">Sair</a>
+    </div>
 
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 25px;
-        }
+    <hr/>
 
-        h1 {
-            color: #0a361a;
-        }
+    <h3>Entradas recentes</h3>
 
-        .btn {
-            padding: 12px 20px;
-            border-radius: 8px;
-            border: none;
-            background: #0ac44d;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-            text-decoration: none;
-        }
-
-        .btn:hover {
-            background: #08993d;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: white;
-            border-radius: 10px;
-            overflow: hidden;
-        }
-
-        th, td {
-            padding: 14px 10px;
-            border-bottom: 1px solid #ccc;
-        }
-
-        th {
-            background: #0f5226;
-            color: white;
-        }
-
-        tr:hover {
-            background: #eef6ee;
-        }
-
-    </style>
-</head>
-
-<body>
-
-<div class="header">
-    <h1>Portaria – Chegadas</h1>
-    <a href="/logout" class="btn">Sair</a>
+    <div id="entriesList" class="entries-grid">
+        <p class="text-muted">Carregando entradas...</p>
+    </div>
 </div>
 
-<a href="/portaria/chegada" class="btn">+ Registrar Chegada</a>
+<script>
+const socket = io();
 
-<h3 style="margin-top:20px;">Últimas entradas</h3>
+// Atualiza lista realtime
+socket.on("entries:update", (rows) => {
+    const div = document.getElementById("entriesList");
+    if (!rows || rows.length === 0) {
+        div.innerHTML = "<p class='text-muted'>Nenhuma entrada registrada.</p>";
+        return;
+    }
 
-<table>
-    <tr>
-        <th>Placa</th>
-        <th>Toneladas</th>
-        <th>Hora</th>
-        <th>Status</th>
-    </tr>
+    div.innerHTML = rows.map(r => `
+        <div class="entry-card">
+            <h4>🚛 Placa: <b>${r.truck_plate}</b></h4>
+            <p><b>Toneladas declaradas:</b> ${r.toneladas_declared} tn</p>
+            <p><b>Status:</b> ${r.status}</p>
+            <p class="small text-muted">Chegada: ${r.arrival_at}</p>
+        </div>
+    `).join("");
+});
+</script>
 
-    <% if (entries && entries.length > 0) { %>
-        <% entries.forEach((e) => { %>
-            <tr>
-                <td><%= e.truck_plate %></td>
-                <td><%= e.toneladas_declared %></td>
-                <td><%= e.arrival_at %></td>
-                <td><%= e.status %></td>
-            </tr>
-        <% }) %>
-    <% } else { %>
-        <tr><td colspan="4" style="text-align:center;">Nenhuma entrada registrada.</td></tr>
-    <% } %>
-
-</table>
-
-</body>
-</html>
+<%- include('layouts/base_bottom') %>
