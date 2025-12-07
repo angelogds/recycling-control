@@ -1,27 +1,46 @@
-<div class="modal fade" id="modalIniciarTritura" tabindex="-1">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header bg-success text-white">
-        <h5 class="modal-title">Iniciar Trituração</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <div class="mb-2">
-          <label>Tova de Origem</label>
-          <select id="modal_tova" class="form-select">
-            <option value="1">Tova 1</option>
-            <option value="2">Tova 2</option>
-          </select>
-        </div>
-        <div class="mb-2">
-          <label>Toneladas solicitadas</label>
-          <input id="modal_ton" class="form-control" placeholder="Ex: 8">
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button data-bs-dismiss="modal" class="btn btn-secondary">Cancelar</button>
-        <button id="modal_iniciar_btn" class="btn btn-premium">Iniciar</button>
-      </div>
-    </div>
-  </div>
-</div>
+app.post("/api/trituracao/start", (req, res) => {
+  const { digestor_id, from_tova_id, toneladas_solicitadas, materia_prima } = req.body;
+
+  if (!digestor_id || !from_tova_id || !toneladas_solicitadas) {
+    return res.status(400).json({ error: "Dados incompletos" });
+  }
+
+  const now = new Date().toISOString();
+
+  db.run(`
+    INSERT INTO trituration_cycles 
+      (digestor_id, from_tova_id, toneladas_solicitadas, start_tritura_at, status, operator_id)
+    VALUES (?, ?, ?, ?, 'started', ?)
+  `, [
+    digestor_id,
+    from_tova_id,
+    toneladas_solicitadas,
+    now,
+    req.user.id
+  ], function(err) {
+
+    if (err) {
+      console.error("Err start trit:", err);
+      return res.status(500).json({ error: err.message });
+    }
+
+    const tritId = this.lastID;
+
+    db.run(`
+      INSERT INTO cycles 
+        (digestor_id, trituration_id, materia_prima, started_at, status)
+      VALUES (?, ?, ?, ?, 'in_progress')
+    `, [
+      digestor_id,
+      tritId,
+      materia_prima || null,
+      now
+    ], function(cErr) {
+      if (cErr) console.error("Err creating cycle:", cErr);
+
+      broadcastState();
+      return res.json({ trituration_id: tritId });
+    });
+
+  });
+});
