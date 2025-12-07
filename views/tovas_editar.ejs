@@ -1,84 +1,103 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-<meta charset="UTF-8">
-<title>Editar Tova</title>
+    <meta charset="UTF-8">
+    <title>Editar Tova</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background: #eef2f6;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
 
-<style>
-    body {
-        margin: 0;
-        padding: 40px;
-        background: #eef5f0;
-        font-family: "Inter";
-    }
+        .top-bar {
+            background: #0C69F6;
+            color: white;
+            padding: 18px 25px;
+            font-size: 22px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+        }
 
-    .card {
-        max-width: 500px;
-        margin: auto;
-        background: white;
-        padding: 30px;
-        border-radius: 14px;
-        box-shadow: 0 0 12px rgba(0,0,0,0.15);
-    }
+        .container {
+            padding: 25px;
+        }
 
-    h2 { margin-bottom: 20px; color: #0f5226; }
+        .card {
+            max-width: 480px;
+            margin: auto;
+            background: white;
+            padding: 28px;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px #0003;
+        }
 
-    label { margin-top: 10px; display: block; }
-    input {
-        width: 100%;
-        padding: 12px;
-        border: 1px solid #ccc;
-        border-radius: 8px;
-        font-size: 16px;
-        margin-top: 4px;
-    }
+        label {
+            font-weight: bold;
+            margin-top: 15px;
+            display: block;
+        }
 
-    .btn {
-        width: 100%;
-        margin-top: 20px;
-        padding: 12px;
-        background: #0ac44d;
-        border: none;
-        color: white;
-        border-radius: 10px;
-        cursor: pointer;
-        font-weight: bold;
-        font-size: 16px;
-    }
+        input {
+            width: 100%;
+            padding: 14px;
+            border-radius: 10px;
+            border: 1px solid #bbb;
+            margin-top: 5px;
+            font-size: 15px;
+        }
 
-    .btn:hover { background: #0e9c3f; }
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border-radius: 10px;
+            margin-top: 20px;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            font-weight: bold;
+        }
 
-    .back {
-        text-align: center;
-        margin-top: 15px;
-        display: block;
-        text-decoration: none;
-        color: #555;
-    }
-</style>
+        .btn-save {
+            background: #0C69F6;
+            color: white;
+        }
+
+        .btn-cancel {
+            background: #999;
+            color: white;
+            margin-top: 10px;
+        }
+    </style>
 
 </head>
+
 <body>
 
-<div class="card">
+<div class="top-bar">
+    <span>Editar Tova</span>
+    <a href="/tovas" style="color:white;text-decoration:none;">Voltar</a>
+</div>
 
-<h2>Editar Tova</h2>
+<div class="container">
 
-<form action="/tovas/<%= tova.id %>/update" method="POST">
+    <form class="card" method="POST" action="/tovas/<%= tova.id %>/update">
 
-    <label>Nome</label>
-    <input type="text" name="nome" value="<%= tova.nome %>" required>
+        <label>Nome da Tova:</label>
+        <input type="text" name="nome" value="<%= tova.nome %>" required>
 
-    <label>Capacidade (Toneladas)</label>
-    <input type="number" step="0.01" name="capacidade_tn" value="<%= tova.capacidade_tn %>" required>
+        <label>Capacidade (Ton):</label>
+        <input type="number" step="0.01" name="capacidade_tn" value="<%= tova.capacidade_tn %>" required>
 
-    <button class="btn">Salvar Alterações</button>
+        <label>Nível Atual (Ton):</label>
+        <input type="number" step="0.01" name="current_tn" value="<%= tova.current_tn %>" required>
 
-</form>
+        <button class="btn btn-save">Salvar Alterações</button>
+        <button type="button" class="btn btn-cancel" onclick="location.href='/tovas'">Cancelar</button>
 
-<a href="/tovas" class="back">Voltar</a>
+    </form>
 
 </div>
 
