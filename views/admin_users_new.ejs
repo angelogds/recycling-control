@@ -1,62 +1,41 @@
-<!DOCTYPE html>
-<html lang="pt-br">
+<!-- admin_users_new.ejs -->
+<!doctype html>
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Novo Usuário</title>
-
-    <style>
-        body { background:#eef2f6; margin:0; font-family:Arial; }
-        .top-bar {
-            background:#0C69F6; color:white; padding:18px 25px;
-            font-size:22px; font-weight:bold;
-            display:flex; justify-content:space-between;
-        }
-        .container { padding:25px; }
-        .card {
-            max-width:450px; margin:auto; background:white;
-            padding:25px; border-radius:15px; box-shadow:0 4px 12px #0003;
-        }
-        label { font-weight:bold; margin-top:15px; display:block; }
-        input, select {
-            width:100%; padding:14px; border-radius:10px;
-            border:1px solid #bbb; margin-top:5px;
-        }
-        .btn {
-            width:100%; padding:14px; border-radius:10px; margin-top:20px;
-            border:none; font-size:18px; cursor:pointer; font-weight:bold;
-        }
-        .btn-save { background:#0C69F6; color:white; }
-    </style>
+  <meta charset="utf-8">
+  <title>Novo Usuário — Admin</title>
+  <link rel="stylesheet" href="/css/style.css">
 </head>
-
 <body>
+  <div class="top-bar">
+    <div>Admin • Novo Usuário</div>
+    <div><a href="/admin/users">Voltar</a></div>
+  </div>
 
-<div class="top-bar">
-    <span>Novo Usuário</span>
-    <a href="/admin/users" style="color:white;text-decoration:none;">Voltar</a>
-</div>
+  <div class="container">
+    <div class="card" style="max-width:600px; margin:auto;">
+      <div class="card-title">Criar Usuário</div>
+      <% if (typeof error !== 'undefined' && error) { %><div class="alert"><%= error %></div><% } %>
 
-<div class="container">
-    <form class="card" method="POST" action="/admin/users/new">
-        <label>Usuário:</label>
-        <input type="text" name="username" required>
-
-        <label>Nome completo:</label>
-        <input type="text" name="nome" required>
-
-        <label>Senha:</label>
-        <input type="password" name="password" required>
-
-        <label>Papel:</label>
-        <select name="role" required>
-            <option value="operador">Operador</option>
-            <option value="portaria">Portaria</option>
-            <option value="admin">Administrador</option>
+      <form method="POST" action="/admin/users">
+        <label>Username</label>
+        <input name="username" required>
+        <label>Nome</label>
+        <input name="nome">
+        <label>Senha</label>
+        <input name="password" type="password" required>
+        <label>Role</label>
+        <select name="role">
+          <option value="operador">Operador</option>
+          <option value="portaria">Portaria</option>
+          <option value="admin">Admin</option>
         </select>
 
-        <button class="btn btn-save" type="submit">Salvar Usuário</button>
-    </form>
-</div>
-
+        <div style="margin-top:12px;">
+          <button class="btn btn-green btn-full" type="submit">Criar</button>
+        </div>
+      </form>
+    </div>
+  </div>
 </body>
 </html>
