@@ -3,17 +3,14 @@
   "version": "1.0.0",
   "description": "Sistema de Controle de Processo - Reciclagem",
   "main": "server_digestores.js",
-
   "scripts": {
     "start": "node server_digestores.js",
     "dev": "nodemon server_digestores.js",
     "init-db": "node init_db.js",
     "seed": "node seed_processo.js"
   },
-
-  "author": "Angêlo - Campo do Gado",
+  "author": "Angelo - Campo do Gado",
   "license": "MIT",
-
   "dependencies": {
     "body-parser": "^1.20.2",
     "ejs": "^3.1.9",
@@ -21,12 +18,11 @@
     "pdfkit": "^0.13.0",
     "socket.io": "^4.7.2",
     "sqlite3": "^5.1.6",
-    "qrcode": "^1.5.3"
+    "qrcode": "^1.5.3",
     "express-session": "^1.17.3",
-  "connect-sqlite3": "^0.9.0",
-  "bcrypt": "^5.1.1"
+    "connect-sqlite3": "^0.9.0",
+    "bcrypt": "^5.1.1"
   },
-
   "devDependencies": {
     "nodemon": "^3.0.2"
   }
