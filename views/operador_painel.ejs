@@ -1,476 +1,140 @@
 <%- include('layouts/base_top', { title: "Painel do Operador", usuario: usuario }) %>
 
-<div class="container mt-4">
-  <div class="app-header card-premium p-2 mb-4">
-    <div class="brand">
-      <img src="/img/logo_menu_256.png" alt="logo">
-      <div>
-        <div style="font-size:18px;color:#fff;font-weight:700">Sistema de Reciclagem</div>
-        <div style="font-size:12px;color:rgba(255,255,255,0.9)"><%= usuario ? usuario.nome : "Operador" %></div>
-      </div>
-    </div>
-    <div class="user"> <a href="/operador/historico" class="text-white btn btn-sm" style="background:transparent;border:1px solid rgba(255,255,255,0.12)">Histórico</a> </div>
-  </div>
+<div class="container">
+  <h1 class="page-title">Painel do Operador</h1>
 
-  <h2 class="page-title">Painel do Operador</h2>
+  <div id="digestorGrid" class="dg-grid"></div>
 
-  <!-- Grid dos digestores -->
-  <div class="row-g" id="digestorGrid">
-    <% if (digestores && digestores.length) { %>
-      <% digestores.forEach(d => { %>
-        <div class="card-premium" id="digestor-card-<%= d.id %>">
-          <div style="display:flex;justify-content:space-between;align-items:center;">
-            <div>
-              <h4><%= d.nome %></h4>
-              <div class="small text-muted">Digestor #<%= d.id %></div>
-            </div>
-            <div id="status-<%= d.id %>">
-              <!-- status pill -->
-              <span id="pill-<%= d.id %>" class="badge-status status-idle status-pill">PARADO</span>
-            </div>
-          </div>
-
-          <div class="mt-2">
-            <!-- Tipo de matéria-prima (rádio) -->
-            <label class="small me-2">Matéria-prima:</label>
-            <div style="display:inline-block">
-              <div class="form-check form-check-inline">
-                <input class="form-check-input materia-radio" type="radio" name="materia-<%= d.id %>" id="materia-osso-<%= d.id %>" value="osso" checked>
-                <label class="form-check-label" for="materia-osso-<%= d.id %>">Osso</label>
-              </div>
-              <div class="form-check form-check-inline">
-                <input class="form-check-input materia-radio" type="radio" name="materia-<%= d.id %>" id="materia-barrigada-<%= d.id %>" value="barrigada">
-                <label class="form-check-label" for="materia-barrigada-<%= d.id %>">Barrigada</label>
-              </div>
-            </div>
-          </div>
-
-          <div class="mt-3 small">
-            <div><strong>Trituração:</strong> <span id="tritura-name-<%= d.id %>">—</span></div>
-            <div><strong>Cozimento:</strong> <span id="cook-name-<%= d.id %>">—</span></div>
-            <div class="mt-2">
-              <div class="status-bar">
-                <div id="progress-<%= d.id %>" class="status-progress idle" style="width:0%">—</div>
-              </div>
-            </div>
-
-            <div class="mt-2">
-              <small>Tempo Trituração: <span id="timer-trit-<%= d.id %>">—</span></small><br>
-              <small>Tempo Cozimento: <span id="timer-cook-<%= d.id %>">—</span></small><br>
-              <small>Último Ciclo: <span id="last-cycle-<%= d.id %>">—</span></small>
-            </div>
-          </div>
-
-          <div class="mt-3 d-flex gap-2">
-            <!-- Botões lado a lado -->
-            <button class="btn btn-op btn-tritura" onclick="openStartCarga(<%= d.id %>)" id="btn-start-<%= d.id %>">Iniciar Carregamento</button>
-
-            <button class="btn btn-op btn-finish-tritura" onclick="openFinishTrit(<%= d.id %>)" id="btn-finish-trit-<%= d.id %>">Finalizar Trituração</button>
-
-            <button class="btn btn-op btn-cook" onclick="openFinishCook(<%= d.id %>)" id="btn-finish-cook-<%= d.id %>">Finalizar Cozimento</button>
-
-            <button class="btn btn-op btn-discharge" onclick="openDischarge(<%= d.id %>)" id="btn-discharge-<%= d.id %>">Descarregar</button>
-          </div>
-        </div>
-      <% }) %>
-    <% } else { %>
-      <div class="card-premium">
-        <h4>Nenhum digestor</h4>
-        <div class="small text-muted">Configure digestores no banco de dados.</div>
-      </div>
-    <% } %>
-  </div>
-
-  <!-- Log do sistema -->
-  <div id="log" class="log-card mt-4">
+  <div class="log-card">
     <strong>Log do sistema:</strong>
-    <div id="logContent" class="mt-2 text-muted small">Aguardando eventos...</div>
+    <div id="logContent" class="mt-2 text-muted">Aguardando eventos...</div>
   </div>
 </div>
 
-<!-- ========== MODAIS ========== -->
-
-<!-- Modal: Iniciar Carregamento -->
-<div class="modal fade" id="modalStartCarga" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog">
-    <form id="formStartCarga" class="modal-content">
-      <div class="modal-header bg-success text-white">
-        <h5 class="modal-title">Iniciar Carregamento</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <input type="hidden" id="mc_digestor_id" name="digestor_id">
-        <div class="mb-2">
-          <label>Escolha a tova de origem</label>
-          <select id="mc_from_tova" class="form-control" name="from_tova_id">
-            <!-- carregado dinamicamente -->
-          </select>
-        </div>
-        <div class="mb-2">
-          <label>Toneladas solicitadas</label>
-          <input type="number" step="0.1" id="mc_ton" class="form-control" name="toneladas_solicitadas" value="5">
-        </div>
-        <div class="mb-2">
-          <small class="text-muted">Matéria-prima selecionada: <span id="mc_materia"></span></small>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
-        <button type="submit" class="btn btn-premium">Iniciar</button>
-      </div>
-    </form>
-  </div>
-</div>
-
-<!-- Modal: Finalizar Trituração -->
-<div class="modal fade" id="modalFinishTrit" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog">
-    <form id="formFinishTrit" class="modal-content">
-      <div class="modal-header bg-success text-white">
-        <h5 class="modal-title">Finalizar Trituração</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <input type="hidden" id="mf_trit_id" name="trituration_id">
-        <div class="mb-2">
-          <label>Toneladas trituradas (real)</label>
-          <input type="number" step="0.1" id="mf_ton" class="form-control" name="toneladas_trituradas">
-        </div>
-        <div class="mb-2">
-          <small class="text-muted">Observação (opcional)</small>
-          <textarea id="mf_notes" class="form-control" rows="2"></textarea>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
-        <button type="submit" class="btn btn-premium">Finalizar Trituração</button>
-      </div>
-    </form>
-  </div>
-</div>
-
-<!-- Modal: Finalizar Cozimento -->
-<div class="modal fade" id="modalFinishCook" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog">
-    <form id="formFinishCook" class="modal-content">
-      <div class="modal-header bg-success text-white">
-        <h5 class="modal-title">Finalizar Cozimento</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <input type="hidden" id="mc_cooking_id" name="cooking_id">
-        <div class="mb-2">
-          <small class="text-muted">Observação (opcional)</small>
-          <textarea id="mc_notes" class="form-control" rows="2"></textarea>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
-        <button type="submit" class="btn btn-premium">Finalizar Cozimento</button>
-      </div>
-    </form>
-  </div>
-</div>
-
-<!-- Modal: Descarregar -->
-<div class="modal fade" id="modalDischarge" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog">
-    <form id="formDischarge" class="modal-content">
-      <div class="modal-header bg-success text-white">
-        <h5 class="modal-title">Descarregar Digestor</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <input type="hidden" id="md_digestor_id" name="digestor_id">
-        <div class="mb-2">
-          <label>Toneladas descarregadas</label>
-          <input type="number" step="0.1" id="md_ton" class="form-control" name="toneladas_discarded">
-        </div>
-        <div class="mb-2">
-          <label>Notas</label>
-          <textarea id="md_notes" class="form-control" rows="3" name="notes"></textarea>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
-        <button type="submit" class="btn btn-yellow">Confirmar Descarregamento</button>
-      </div>
-    </form>
-  </div>
-</div>
-
-<!-- ========== SCRIPTS ========== -->
 <script src="/socket.io/socket.io.js"></script>
-<script>
-  const socket = io();
-  const digestoresState = {}; // local cache for timers etc.
+<script src="/js/operador.js"></script>
 
-  // helpers
-  function log(msg) {
-    const el = document.getElementById('logContent');
-    el.innerHTML = `<div>${new Date().toLocaleString()} → ${msg}</div>` + el.innerHTML;
-  }
+<style>
+/* ========================================================= */
+/* ESTILO PREMIUM DO PAINEL DO OPERADOR                      */
+/* ========================================================= */
 
-  // Render/update digestors UI from data array
-  function renderDigestors(list) {
-    if (!list) return;
+.dg-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 25px;
+}
 
-    list.forEach(d => {
-      // store
-      digestoresState[d.id] = d;
+/* cartão principal */
+.digestor-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 18px 22px;
+    box-shadow: 0px 3px 8px rgba(0,0,0,0.15);
+    border-left: 6px solid #166534;
+}
 
-      // status pill
-      const pill = document.getElementById(`pill-${d.id}`);
-      if (pill) {
-        const active = (d.current_tritura || d.current_cooking || d.current_cycle);
-        pill.textContent = active ? 'OPERANDO' : 'PARADO';
-        pill.classList.toggle('status-idle', !active);
-        pill.classList.toggle('status-cozinhando', !!d.current_cooking);
-        // green when operating: use .status-idle (green) vs .status-error (red) css previously defined
-        if (active) pill.style.backgroundColor = '#1e6d36'; // verde operacional
-        else pill.style.backgroundColor = '#c53030'; // vermelho parado
-      }
+.dg-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
 
-      // progress placeholder (simple)
-      const progress = document.getElementById(`progress-${d.id}`);
-      if (progress) {
-        if (d.current_tritura && !d.current_tritura.end_tritura_at) {
-          progress.style.width = '33%'; progress.className = "status-progress status-triturando"; progress.textContent = 'Trituração';
-        } else if (d.current_cooking && !d.current_cooking.end_cook_at) {
-          progress.style.width = '66%'; progress.className = "status-progress status-cozinhando"; progress.textContent = 'Cozimento';
-        } else progress.style.width = '0%', progress.textContent = 'Parado';
-      }
+.dg-header h3 {
+    margin: 0;
+    font-weight: 700;
+    font-size: 20px;
+}
 
-      // timers: set start times in local state for ticking
-      updateTimerUI(d.id);
-    });
-  }
+.dg-status {
+    font-size: 15px;
+    font-weight: bold;
+}
 
-  // update timers displayed
-  function updateTimerUI(id) {
-    const d = digestoresState[id];
-    if (!d) return;
+.dg-row {
+    margin-top: 10px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 16px;
+}
 
-    // Trituração timer
-    const trEl = document.getElementById(`timer-trit-${id}`);
-    if (d.current_tritura && d.current_tritura.start_tritura_at && !d.current_tritura.end_tritura_at) {
-      // ongoing: show elapsed
-      startTicker(id, 'tritura', d.current_tritura.start_tritura_at);
-    } else if (d.current_tritura && d.current_tritura.start_tritura_at && d.current_tritura.end_tritura_at) {
-      // finished: show total duration
-      const dur = diffHuman(d.current_tritura.start_tritura_at, d.current_tritura.end_tritura_at);
-      if (trEl) trEl.textContent = dur;
-    } else if (trEl) trEl.textContent = '—';
+/* Matéria-prima seletores */
+.materia-select {
+    margin-top: 12px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
 
-    // Cozimento timer
-    const ckEl = document.getElementById(`timer-cook-${id}`);
-    if (d.current_cooking && d.current_cooking.start_cook_at && !d.current_cooking.end_cook_at) {
-      startTicker(id, 'cook', d.current_cooking.start_cook_at);
-    } else if (d.current_cooking && d.current_cooking.start_cook_at && d.current_cooking.end_cook_at) {
-      const dur = diffHuman(d.current_cooking.start_cook_at, d.current_cooking.end_cook_at);
-      if (ckEl) ckEl.textContent = dur;
-    } else if (ckEl) ckEl.textContent = '—';
-  }
+.materia-select label {
+    font-weight: bold;
+}
 
-  // ticker store
-  const tickers = {};
+.mat-btn {
+    padding: 6px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    background: #e5e5e5;
+    border: 1px solid #ccc;
+}
 
-  function startTicker(id, kind, startedAt) {
-    const key = `${id}-${kind}`;
-    if (tickers[key]) return; // already running
+.mat-btn.selected {
+    background: #15803d;
+    color: #fff;
+    border-color: #14532d;
+}
 
-    function tick() {
-      const el = document.getElementById(`timer-${kind === 'tritura' ? 'trit' : 'cook'}-${id}`);
-      if (!el) return;
+/* Botões */
+.dg-actions {
+    margin-top: 18px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
 
-      const now = new Date();
-      const start = new Date(startedAt);
-      const ms = now - start;
-      if (ms < 0) {
-        el.textContent = '0s';
-        return;
-      }
-      el.textContent = msToTime(ms);
-    }
+.dg-actions button {
+    flex: 1;
+    padding: 10px 14px;
+    font-weight: 600;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: 0.2s;
+}
 
-    tick();
-    tickers[key] = setInterval(tick, 1000);
-  }
+/* Inativo */
+.dg-actions button.disabled {
+    opacity: 0.4;
+    background: #cbd5e1;
+    cursor: not-allowed;
+}
 
-  function clearTicker(id, kind) {
-    const key = `${id}-${kind}`;
-    if (tickers[key]) {
-      clearInterval(tickers[key]);
-      delete tickers[key];
-    }
-  }
+/* Ativo */
+.dg-actions button.active {
+    background: #16a34a;
+    color: white;
+}
 
-  // helpers: ms to human (hh:mm:ss or Xm Ys)
-  function msToTime(ms) {
-    const totalSec = Math.floor(ms / 1000);
-    const hrs = Math.floor(totalSec / 3600);
-    const mins = Math.floor((totalSec % 3600) / 60);
-    const secs = totalSec % 60;
-    if (hrs > 0) return `${hrs}h ${mins}m ${secs}s`;
-    if (mins > 0) return `${mins}m ${secs}s`;
-    return `${secs}s`;
-  }
+.dg-actions button.active:hover {
+    background: #15803d;
+}
 
-  function diffHuman(startISO, endISO) {
-    try {
-      const s = new Date(startISO), e = new Date(endISO);
-      return msToTime(e - s);
-    } catch (e) { return '—' }
-  }
+/* Descarregar */
+.btn-discharge.active {
+    background: #eab308 !important;
+    color: black !important;
+}
 
-  // initial render from server-side data (if present)
-  (function initFromServer() {
-    try {
-      const serverDigestors = <%- JSON.stringify(digestores || []) %>;
-      serverDigestors.forEach(d => digestoresState[d.id] = d);
-      renderDigestors(serverDigestors);
-    } catch (e) { console.error(e); }
-  })();
+.btn-discharge.active:hover {
+    background: #ca8a04 !important;
+}
 
-  // socket updates
-  socket.on('digestors:update', (data) => {
-    renderDigestors(data || []);
-    log('Estado dos digestores atualizado (socket).');
-  });
-
-  socket.on('tovas:update', (tovas) => {
-    // populate select for modals
-    const sel = document.getElementById('mc_from_tova');
-    if (!sel) return;
-    sel.innerHTML = '';
-    (tovas || []).forEach(t => {
-      const opt = document.createElement('option');
-      opt.value = t.id;
-      opt.text = `${t.nome} — ${t.current_tn || 0} tn / ${t.capacidade_tn || '—'}`;
-      sel.appendChild(opt);
-    });
-  });
-
-  // =========================
-  // MODAL HANDLERS + APIS
-  // =========================
-
-  // Start carga
-  function openStartCarga(digestorId) {
-    document.getElementById('mc_digestor_id').value = digestorId;
-    // materia-prima chosen from radios
-    const mat = document.querySelector(`input[name="materia-${digestorId}"]:checked`);
-    document.getElementById('mc_materia').innerText = mat ? mat.value : '—';
-    const modal = new bootstrap.Modal(document.getElementById('modalStartCarga'));
-    modal.show();
-  }
-
-  document.getElementById('formStartCarga').addEventListener('submit', async (ev) => {
-    ev.preventDefault();
-    const digestor_id = document.getElementById('mc_digestor_id').value;
-    const from_tova_id = document.getElementById('mc_from_tova').value;
-    const toneladas_solicitadas = parseFloat(document.getElementById('mc_ton').value) || 0;
-
-    const body = { digestor_id, from_tova_id, toneladas_solicitadas };
-
-    try {
-      const res = await fetch('/api/trituracao/start', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
-      const json = await res.json();
-      if (res.ok) {
-        log(`Iniciada trituração no digestor ${digestor_id} (trit id ${json.trituration_id})`);
-        bootstrap.Modal.getInstance(document.getElementById('modalStartCarga')).hide();
-      } else {
-        alert(json.error || 'Erro ao iniciar trituração');
-      }
-    } catch (e) { console.error(e); alert('Erro de comunicação'); }
-  });
-
-  // Finish trituração
-  function openFinishTrit(digestorId) {
-    // try to pick last trit id from digestoresState
-    const d = digestoresState[digestorId];
-    const tr = d && d.current_tritura ? d.current_tritura : null;
-    if (!tr) { alert('Nenhuma trituração ativa encontrada para esse digestor.'); return; }
-    document.getElementById('mf_trit_id').value = tr.id;
-    document.getElementById('mf_ton').value = tr.toneladas_solicitadas || '';
-    const modal = new bootstrap.Modal(document.getElementById('modalFinishTrit'));
-    modal.show();
-  }
-
-  document.getElementById('formFinishTrit').addEventListener('submit', async (ev) => {
-    ev.preventDefault();
-    const trituration_id = document.getElementById('mf_trit_id').value;
-    const toneladas_trituradas = parseFloat(document.getElementById('mf_ton').value) || 0;
-
-    try {
-      const res = await fetch('/api/trituracao/finish', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ trituration_id, toneladas_trituradas }) });
-      const j = await res.json();
-      if (res.ok) {
-        log(`Finalizada trituração ${trituration_id} — ${toneladas_trituradas} tn`);
-        bootstrap.Modal.getInstance(document.getElementById('modalFinishTrit')).hide();
-      } else alert(j.error || 'Erro ao finalizar trituração');
-    } catch (e) { console.error(e); alert('Erro de comunicação'); }
-  });
-
-  // Finalizar cozimento (finish)
-  function openFinishCook(digestorId) {
-    const d = digestoresState[digestorId];
-    const cook = d && d.current_cooking ? d.current_cooking : null;
-    if (!cook) { alert('Nenhum cozimento ativo para esse digestor.'); return; }
-    document.getElementById('mc_cooking_id').value = cook.id;
-    const modal = new bootstrap.Modal(document.getElementById('modalFinishCook'));
-    modal.show();
-  }
-
-  document.getElementById('formFinishCook').addEventListener('submit', async (ev) => {
-    ev.preventDefault();
-    const cooking_id = document.getElementById('mc_cooking_id').value;
-    try {
-      const res = await fetch('/api/cooking/finish', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ cooking_id }) });
-      const j = await res.json();
-      if (res.ok) {
-        log(`Finalizado cozimento ${cooking_id}`);
-        bootstrap.Modal.getInstance(document.getElementById('modalFinishCook')).hide();
-      } else alert(j.error || 'Erro ao finalizar cozimento');
-    } catch (e) { console.error(e); alert('Erro de comunicação'); }
-  });
-
-  // Discharge
-  function openDischarge(digestorId) {
-    document.getElementById('md_digestor_id').value = digestorId;
-    const modal = new bootstrap.Modal(document.getElementById('modalDischarge'));
-    modal.show();
-  }
-
-  document.getElementById('formDischarge').addEventListener('submit', async (ev) => {
-    ev.preventDefault();
-    const digestor_id = document.getElementById('md_digestor_id').value;
-    const toneladas_discarded = parseFloat(document.getElementById('md_ton').value) || 0;
-    const notes = document.getElementById('md_notes').value || '';
-
-    try {
-      const res = await fetch('/api/digestor/discharge', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ digestor_id, toneladas_discarded, notes }) });
-      const j = await res.json();
-      if (res.ok) {
-        log(`Digestor ${digestor_id} descarregado: ${toneladas_discarded} tn`);
-        bootstrap.Modal.getInstance(document.getElementById('modalDischarge')).hide();
-      } else alert(j.error || 'Erro ao descarregar');
-    } catch (e) { console.error(e); alert('Erro de comunicação'); }
-  });
-
-  // cleanup tickers when cycles end: listen to socket updates and clear tickers as appropriate
-  socket.on('digestors:update', (data) => {
-    (data || []).forEach(d => {
-      if (!(d.current_tritura && !d.current_tritura.end_tritura_at)) clearTicker(d.id, 'tritura');
-      if (!(d.current_cooking && !d.current_cooking.end_cook_at)) clearTicker(d.id, 'cook');
-    });
-  });
-
-  // quick poll fallback (in case socket misses)
-  setInterval(() => {
-    fetch('/api/digestors').then(r => r.json()).then(renderDigestors).catch(()=>{});
-  }, 15000);
-
-</script>
-
-<%- include('layouts/base_bottom') %>
+/* Log */
+.log-card {
+    margin-top: 30px;
+    background: #fff;
+    padding: 18px 22px;
+    border-radius: 10px;
+    box-shadow: 0px 2px 5px rgba(0,0,0,0.15);
+}
+</style>
