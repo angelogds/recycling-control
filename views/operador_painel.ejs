@@ -1,153 +1,229 @@
-<!DOCTYPE html>
-<html lang="pt-br">
+<!-- operador_painel.ejs -->
+<!doctype html>
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Painel do Operador — Campo do Gado</title>
-    <link rel="stylesheet" href="/css/style.css">
-
-    <style>
-        body {
-            background: #eef2f6;
-            font-family: Arial, sans-serif;
-        }
-
-        .top-bar {
-            display: flex;
-            justify-content: space-between;
-            padding: 18px 25px;
-            background: #0C69F6;
-            color: #fff;
-            align-items: center;
-        }
-
-        .top-bar h2 {
-            margin: 0;
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-            gap: 22px;
-            padding: 25px;
-        }
-
-        .digestor-card {
-            background: #fff;
-            padding: 20px;
-            border-radius: 16px;
-            box-shadow: 0 4px 12px #0001;
-            border-left: 6px solid #2a2a2a;
-        }
-
-        .digestor-card h3 {
-            margin-top: 0;
-            font-size: 20px;
-            color: #222;
-        }
-
-        .status-pill {
-            display: inline-block;
-            padding: 6px 12px;
-            border-radius: 22px;
-            font-size: 12px;
-            font-weight: bold;
-            color: #fff;
-            margin-bottom: 10px;
-        }
-
-        .idle { background: #777; }
-        .operating { background: #0C69F6; }
-        .cooking { background: #f79600; }
-        .waiting_discharge { background: #d62c2c; }
-
-        .btn {
-            width: 100%;
-            padding: 12px;
-            border-radius: 10px;
-            border: none;
-            margin-top: 10px;
-            font-weight: bold;
-            cursor: pointer;
-            font-size: 15px;
-            transition: .15s;
-        }
-
-        .btn-start { background: #0C69F6; color: #fff; }
-        .btn-end { background: #ff8c00; color: #fff; }
-        .btn-discharge { background: #d62c2c; color: #fff; }
-        .btn-disabled {
-            background: #ccc !important;
-            color: #666 !important;
-            cursor: not-allowed;
-        }
-
-        .timer {
-            font-size: 22px;
-            font-weight: bold;
-            margin-top: 15px;
-            color: #333;
-        }
-
-    </style>
+  <meta charset="utf-8" />
+  <title>Painel do Operador</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/socket.io/socket.io.js"></script>
 </head>
-
 <body>
+  <div class="top-bar">
+    <div>Operador: <%= usuario && usuario.nome ? usuario.nome : 'Usuário' %></div>
+    <div><a href="/logout">Sair</a></div>
+  </div>
 
-    <div class="top-bar">
-        <h2>Operador: <%= usuario.nome %></h2>
-        <a href="/logout" style="color:#fff; font-weight:bold;">Sair</a>
-    </div>
-
-    <div class="grid">
-
-        <% digestores.forEach(d => { %>
-            <div class="digestor-card" id="digestor-<%= d.id %>">
-
-                <h3><%= d.nome %></h3>
-
-                <div class="status-pill <%= d.status %>">
-                    <%= d.status.replace("_", " ").toUpperCase() %>
+  <div class="container">
+    <div class="card">
+      <div class="card-title">Digestores — Estado Atual</div>
+      <div class="row" id="digestorList">
+        <% if (!digestores || digestores.length === 0) { %>
+          <div class="col-12"><div class="alert">Nenhum digestor cadastrado.</div></div>
+        <% } else { %>
+          <% digestores.forEach(d => { %>
+            <div class="col-4">
+              <div class="digestor-box" data-id="<%= d.id %>">
+                <div class="digestor-name"><%= d.nome %></div>
+                <div>Capacidade: <strong><%= d.capacidade_tn %> tn</strong></div>
+                <div>Status: 
+                  <% if (d.status === 'idle') { %>
+                    <span class="status-idle">Idle</span>
+                  <% } else if (d.status === 'operating') { %>
+                    <span class="status-operating">Operating</span>
+                  <% } else if (d.status === 'cooking') { %>
+                    <span class="status-cooking">Cooking</span>
+                  <% } else { %>
+                    <span class="status-waiting"><%= d.status %></span>
+                  <% } %>
                 </div>
 
-                <div class="timer" id="timer-<%= d.id %>">
-                    00:00:00
+                <hr style="border-color: #ffffff22; margin:8px 0;">
+
+                <!-- TRITURAÇÃO -->
+                <div>
+                  <strong>Trituração:</strong>
+                  <% if (d.current_tritura) { %>
+                    <div>Iniciada: <%= d.current_tritura.start_tritura_at || '-' %></div>
+                    <div>Toneladas solicitadas: <%= d.current_tritura.toneladas_solicitadas || 0 %></div>
+                    <div>
+                      <% if (d.current_tritura.status !== 'finished') { %>
+                        <button class="btn btn-green btn-full btn-finish-trit" data-trit-id="<%= d.current_tritura.id %>">Encerrar Trituração</button>
+                      <% } else { %>
+                        <div class="success">Triturado</div>
+                      <% } %>
+                    </div>
+                  <% } else { %>
+                    <div>Sem trituração ativa</div>
+                    <div style="margin-top:8px;">
+                      <select class="select-tova" data-digestor="<%= d.id %>">
+                        <option value="">Selecionar Tova</option>
+                      </select>
+                      <input class="input-ton" data-digestor="<%= d.id %>" placeholder="Toneladas solicitadas">
+                      <input class="input-mp" data-digestor="<%= d.id %>" placeholder="Matéria-prima (ex: osso)">
+                      <button class="btn btn-blue btn-full btn-start-trit" data-digestor-id="<%= d.id %>">Iniciar Trituração</button>
+                    </div>
+                  <% } %>
                 </div>
 
-                <!-- Botões inteligentes controlados por operador.js -->
-                <button 
-                    class="btn btn-start" 
-                    onclick="openStartModal(<%= d.id %>)"
-                    id="btn-start-<%= d.id %>">
-                    Iniciar Trituração
-                </button>
+                <hr style="border-color: #ffffff22; margin:8px 0;">
 
-                <button 
-                    class="btn btn-end" 
-                    onclick="finishTritura(<%= d.id %>)"
-                    id="btn-finish-<%= d.id %>">
-                    Finalizar Trituração
-                </button>
+                <!-- COZIMENTO -->
+                <div>
+                  <strong>Cozimento:</strong>
+                  <% if (d.current_cooking) { %>
+                    <div>Início: <%= d.current_cooking.start_cook_at || '-' %></div>
+                    <% if (d.current_cooking.status !== 'finished') { %>
+                      <button class="btn btn-green btn-full btn-finish-cook" data-cook-id="<%= d.current_cooking.id %>">Encerrar Cozimento</button>
+                    <% } else { %>
+                      <div class="success">Cozimento finalizado</div>
+                    <% } %>
+                  <% } else { %>
+                    <div>Sem cozimento ativo</div>
+                  <% } %>
+                </div>
 
-                <button 
-                    class="btn btn-end" 
-                    onclick="finishCooking(<%= d.id %>)"
-                    id="btn-finish-cook-<%= d.id %>">
-                    Finalizar Cozimento
-                </button>
+                <hr style="border-color: #ffffff22; margin:8px 0;">
 
-                <button 
-                    class="btn btn-discharge" 
-                    onclick="openDischargeModal(<%= d.id %>)"
-                    id="btn-discharge-<%= d.id %>">
-                    Descarregar Digestor
-                </button>
+                <!-- DESCARGA -->
+                <div>
+                  <button class="btn btn-gray btn-full btn-open-discharge" data-digestor-id="<%= d.id %>">Registrar Descarga</button>
+                </div>
+              </div>
             </div>
-        <% }) %>
-
+          <% }); %>
+        <% } %>
+      </div>
     </div>
 
-    <script src="/socket.io/socket.io.js"></script>
-    <script src="/js/operador.js"></script>
+    <!-- Modal simples para descarregar -->
+    <div id="dischargeModal" style="display:none; position:fixed; inset:0; align-items:center; justify-content:center;">
+      <div class="card" style="width:420px;">
+        <div class="card-title">Registrar Descarga</div>
+        <input id="dis_dig_id" type="hidden">
+        <label>Toneladas descartadas</label>
+        <input id="dis_ton" placeholder="0.0">
+        <label>Observações</label>
+        <textarea id="dis_notes" rows="3"></textarea>
+        <div style="display:flex; gap:8px;">
+          <button id="dis_save" class="btn btn-green">Salvar e Finalizar</button>
+          <button id="dis_cancel" class="btn btn-red">Cancelar</button>
+        </div>
+      </div>
+    </div>
 
+  </div>
+
+<script>
+  const socket = io();
+  const digestorListEl = document.getElementById('digestorList');
+
+  socket.on('digestors:update', (list) => {
+    // rebuild page? simple approach: refresh (or update selects)
+    // For minimal changes we'll update select-tova options and statuses
+    updateDigestors(list);
+  });
+
+  socket.on('tovas:update', (tovas) => {
+    populateTovaSelects(tovas);
+  });
+
+  function updateDigestors(list) {
+    // Basic in-place update: for each card, update status/dynamic areas
+    list.forEach(d => {
+      const card = document.querySelector('.digestor-box[data-id="'+d.id+'"]');
+      if (!card) return;
+      // update status text
+      const name = card.querySelector('.digestor-name');
+      if (name) name.textContent = d.nome;
+      // you could update more fields (omitted for brevity)
+    });
+  }
+
+  function populateTovaSelects(tovas) {
+    const selects = document.querySelectorAll('.select-tova');
+    selects.forEach(s => {
+      const currentDigestor = s.getAttribute('data-digestor');
+      s.innerHTML = '<option value="">Selecionar Tova</option>';
+      tovas.forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t.id;
+        opt.textContent = t.nome + ' — ' + (t.current_tn||0) + ' / ' + (t.capacidade_tn||0) + ' tn';
+        s.appendChild(opt);
+      });
+    });
+  }
+
+  // add event listeners (delegation)
+  document.addEventListener('click', async (ev) => {
+    if (ev.target.matches('.btn-start-trit')) {
+      const did = ev.target.getAttribute('data-digestor-id');
+      const tonInput = document.querySelector('.input-ton[data-digestor="'+did+'"]');
+      const tovaSelect = document.querySelector('.select-tova[data-digestor="'+did+'"]');
+      const mpInput = document.querySelector('.input-mp[data-digestor="'+did+'"]');
+      const payload = {
+        digestor_id: Number(did),
+        from_tova_id: Number(tovaSelect.value),
+        toneladas_solicitadas: Number(tonInput.value) || 0,
+        materia_prima: mpInput.value || null
+      };
+      const res = await fetch('/api/trituracao/start', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+      const j = await res.json();
+      if (res.ok) {
+        alert('Trituração iniciada (id: '+j.trituration_id+')');
+      } else {
+        alert('Erro: '+(j.error||''));
+      }
+    }
+
+    if (ev.target.matches('.btn-finish-trit')) {
+      const tritId = ev.target.getAttribute('data-trit-id');
+      const toneladas = prompt('Informe toneladas trituradas (opcional):', '0');
+      const res = await fetch('/api/trituracao/finish', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ trituration_id: Number(tritId), toneladas_trituradas: Number(toneladas)||0 }) });
+      const j = await res.json();
+      if (res.ok) alert('Trituração finalizada.');
+      else alert('Erro: '+(j.error||''));
+    }
+
+    if (ev.target.matches('.btn-finish-cook')) {
+      const cookId = ev.target.getAttribute('data-cook-id');
+      const res = await fetch('/api/cooking/finish', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ cooking_id: Number(cookId) }) });
+      const j = await res.json();
+      if (res.ok) alert('Cozimento finalizado.');
+      else alert('Erro: '+(j.error||''));
+    }
+
+    if (ev.target.matches('.btn-open-discharge')) {
+      const did = ev.target.getAttribute('data-digestor-id');
+      document.getElementById('dis_dig_id').value = did;
+      document.getElementById('dis_ton').value = '';
+      document.getElementById('dis_notes').value = '';
+      document.getElementById('dischargeModal').style.display = 'flex';
+    }
+  });
+
+  document.getElementById('dis_cancel').addEventListener('click', () => {
+    document.getElementById('dischargeModal').style.display = 'none';
+  });
+
+  document.getElementById('dis_save').addEventListener('click', async () => {
+    const digestor_id = Number(document.getElementById('dis_dig_id').value);
+    const toneladas_discarded = Number(document.getElementById('dis_ton').value) || 0;
+    const notes = document.getElementById('dis_notes').value || null;
+    const res = await fetch('/api/digestor/discharge', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ digestor_id, toneladas_discarded, notes })});
+    const j = await res.json();
+    if (res.ok) {
+      alert('Descarga registrada');
+      document.getElementById('dischargeModal').style.display = 'none';
+    } else {
+      alert('Erro: '+(j.error||''));
+    }
+  });
+
+  // init: request current tovas for selects
+  fetch('/api/digestors').then(r=>r.json()).then(dlist => {
+    // don't rebuild here - rely on socket to fill selects (server emits tovas:update)
+  });
+
+</script>
 </body>
 </html>
