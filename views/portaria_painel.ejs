@@ -1,44 +1,133 @@
-<%- include('layouts/base_top', { title: "Portaria - Painel", usuario: usuario }) %>
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Portaria — Campo do Gado</title>
 
-<div class="container premium-box">
-    <h1 class="page-title">🚛 Controle de Portaria</h1>
+    <link rel="stylesheet" href="/css/style.css">
 
-    <div class="actions-row">
-        <a href="/portaria/chegada" class="btn btn-primary btn-lg">
-            ➕ Registrar Chegada
-        </a>
-        <a href="/logout" class="btn btn-secondary btn-lg">Sair</a>
-    </div>
+    <style>
+        body {
+            background: #eef2f6;
+            font-family: Arial, sans-serif;
+        }
 
-    <hr/>
+        .top-bar {
+            background: #0C69F6;
+            padding: 18px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+        }
 
-    <h3>Entradas recentes</h3>
+        .top-bar h2 {
+            margin: 0;
+        }
 
-    <div id="entriesList" class="entries-grid">
-        <p class="text-muted">Carregando entradas...</p>
-    </div>
+        .main {
+            padding: 25px;
+        }
+
+        .btn-primary {
+            background: #0C69F6;
+            padding: 14px 22px;
+            border-radius: 10px;
+            text-decoration: none;
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .truck-card {
+            background: white;
+            padding: 18px;
+            border-radius: 14px;
+            margin-bottom: 14px;
+            box-shadow: 0 4px 10px #0002;
+            border-left: 6px solid #0C69F6;
+        }
+
+        .truck-header {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .status-pill {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            margin-top: 6px;
+            color: white;
+            font-weight: bold;
+        }
+
+        .waiting { background: #777; }
+        .checking { background: #ff8c00; }
+        .reception_finished { background: #0C69F6; }
+
+        .arrival-time {
+            margin-top: 8px;
+            font-size: 14px;
+            color: #333;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="top-bar">
+    <h2>Portaria — <%= usuario.nome %></h2>
+    <a href="/logout" style="color:white;">Sair</a>
 </div>
 
+<div class="main">
+
+    <a href="/portaria/chegada" class="btn-primary">+ Registrar Chegada</a>
+
+    <h3 style="margin-top: 25px;">Caminhões em Processamento</h3>
+
+    <div id="truck-list">
+        <!-- preenchido dinamicamente -->
+    </div>
+
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+
 <script>
-const socket = io();
+    const socket = io();
 
-// Atualiza lista realtime
-socket.on("entries:update", (rows) => {
-    const div = document.getElementById("entriesList");
-    if (!rows || rows.length === 0) {
-        div.innerHTML = "<p class='text-muted'>Nenhuma entrada registrada.</p>";
-        return;
-    }
+    socket.on("entries:update", (entries) => {
+        const container = document.getElementById("truck-list");
+        container.innerHTML = "";
 
-    div.innerHTML = rows.map(r => `
-        <div class="entry-card">
-            <h4>🚛 Placa: <b>${r.truck_plate}</b></h4>
-            <p><b>Toneladas declaradas:</b> ${r.toneladas_declared} tn</p>
-            <p><b>Status:</b> ${r.status}</p>
-            <p class="small text-muted">Chegada: ${r.arrival_at}</p>
-        </div>
-    `).join("");
-});
+        if (!entries || entries.length === 0) {
+            container.innerHTML = "<p>Nenhum caminhão em processamento.</p>";
+            return;
+        }
+
+        entries.forEach(e => {
+            const card = document.createElement("div");
+            card.className = "truck-card";
+
+            card.innerHTML = `
+                <div class="truck-header">Placa: <strong>${e.truck_plate}</strong></div>
+
+                <div class="status-pill ${e.status}">
+                    ${e.status.replace("_", " ").toUpperCase()}
+                </div>
+
+                <div class="arrival-time">
+                    Chegada: ${new Date(e.arrival_at).toLocaleString()}
+                </div>
+            `;
+
+            container.appendChild(card);
+        });
+    });
 </script>
 
-<%- include('layouts/base_bottom') %>
+</body>
+</html>
