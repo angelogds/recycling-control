@@ -17,6 +17,7 @@
             <tr>
                 <th>ID</th>
                 <th>Digestor</th>
+                <th>Matéria-prima</th>
                 <th>Início</th>
                 <th>Fim</th>
                 <th>Status</th>
@@ -60,6 +61,7 @@ async function carregarHistorico() {
             <tr>
                 <td>${c.id}</td>
                 <td>Digestor ${c.digestor_id}</td>
+                <td>${c.materia_prima || "-"}</td>
                 <td>${c.start_time || "-"}</td>
                 <td>${c.end_time || "-"}</td>
                 <td><span class="badge bg-${
