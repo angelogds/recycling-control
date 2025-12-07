@@ -245,3 +245,35 @@ table td {
         flex-direction: column;
     }
 }
+/* LOGIN */
+.login-bg {
+    background: linear-gradient(135deg, #145a32, #0e4022);
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.login-card {
+    width: 360px;
+    background: #fff;
+    padding: 28px;
+    border-radius: 12px;
+    box-shadow: 0px 8px 20px rgba(0,0,0,0.25);
+}
+
+.login-title {
+    text-align: center;
+    color: #145a32;
+    margin-bottom: 20px;
+    font-weight: bold;
+    font-size: 26px;
+}
+
+.form-control {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    margin-bottom: 14px;
+}
