@@ -1,6 +1,6 @@
 /* ===========================================
-   CSS PREMIUM GLOBAL - SISTEMA CAMPO DO GADO
-   Paleta: Azul empresarial moderno (#0C69F6)
+   CSS PREMIUM - CAMPO DO GADO (Tema Verde)
+   Degradê profissional + cartões + botões
    =========================================== */
 
 /* RESET */
@@ -9,41 +9,59 @@
     padding: 0;
     box-sizing: border-box;
 }
+
 html, body {
     font-family: "Segoe UI", Arial, sans-serif;
-    background: #eef2f6;
-    color: #222;
+    background: linear-gradient(135deg, #063f24, #0c7a43);
+    min-height: 100vh;
+    color: #ffffff;
 }
 
 /* -----------------------
    TOP BAR GLOBAL
 -------------------------*/
 .top-bar {
-    background: #0C69F6;
-    color: white;
-    padding: 18px 25px;
-    font-size: 22px;
+    background: rgba(0,0,0,0.25);
+    backdrop-filter: blur(5px);
+    color: #fff;
+    padding: 20px 30px;
+    font-size: 24px;
     font-weight: bold;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    border-bottom: 1px solid #ffffff33;
 }
+
 .top-bar a {
-    color: white;
+    color: #fff;
     text-decoration: none;
     font-size: 16px;
 }
 
 /* -----------------------
-   CARDS
+   CONTAINERS
+-------------------------*/
+.container {
+    width: 92%;
+    max-width: 1250px;
+    margin: auto;
+    padding-top: 25px;
+}
+
+/* -----------------------
+   CARDS PREMIUM
 -------------------------*/
 .card {
-    background: white;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid #ffffff22;
     padding: 22px;
     border-radius: 16px;
-    box-shadow: 0 4px 12px #0003;
-    margin: 15px auto;
+    backdrop-filter: blur(6px);
+    box-shadow: 0 5px 15px #0004;
+    margin-bottom: 18px;
 }
+
 .card-title {
     font-size: 20px;
     font-weight: bold;
@@ -51,79 +69,98 @@ html, body {
 }
 
 /* -----------------------
-   INPUTS
+   INPUTS PREMIUM
 -------------------------*/
 input, select, textarea {
     width: 100%;
     padding: 14px;
     border-radius: 10px;
-    border: 1px solid #bbb;
+    border: none;
+    outline: none;
     margin-top: 5px;
     margin-bottom: 15px;
     font-size: 15px;
+    background: rgba(255,255,255,0.85);
 }
+
 label {
     font-weight: bold;
-    font-size: 15px;
+    color: #fff;
 }
 
 /* -----------------------
-   BOTÕES PREMIUM
+   BOTÕES PREMIUM VERDE
 -------------------------*/
 .btn {
     padding: 14px;
-    border-radius: 10px;
+    border-radius: 12px;
     border: none;
     font-size: 17px;
     cursor: pointer;
     font-weight: bold;
+    text-align: center;
+    transition: 0.2s;
 }
-.btn-blue {
-    background: #0C69F6;
-    color: white;
-}
-.btn-red {
-    background: #d9534f;
-    color: white;
-}
-.btn-gray {
-    background: #9b9b9b;
-    color: white;
-}
+
 .btn-green {
-    background: #28a745;
+    background: #11c15d;
     color: white;
 }
+.btn-green:hover {
+    background: #0da44f;
+}
+
+.btn-red {
+    background: #ff4b4b;
+    color: white;
+}
+.btn-red:hover {
+    background: #d93838;
+}
+
+.btn-gray {
+    background: #b3b3b3;
+    color: white;
+}
+.btn-gray:hover {
+    background: #9c9c9c;
+}
+
 .btn-full {
     width: 100%;
     display: block;
 }
 
 /* -----------------------
-   DIGESTOR BOXES
+   DIGESTORES
 -------------------------*/
 .digestor-box {
     padding: 18px;
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px #0002;
+    background: rgba(255,255,255,0.12);
+    border-radius: 14px;
+    box-shadow: 0 4px 12px #0003;
     margin-bottom: 18px;
+    border: 1px solid #ffffff33;
 }
+
 .digestor-name {
-    font-size: 18px;
+    font-size: 22px;
     font-weight: bold;
+    color: #fff;
+    margin-bottom: 10px;
 }
+
 .status-idle {
-    color: #28a745;
+    color: #8affbb;
 }
 .status-operating {
-    color: #0C69F6;
+    color: #55e0ff;
 }
 .status-cooking {
-    color: #ff9800;
+    color: #ffe275;
 }
 .status-waiting {
-    color: #d9534f;
+    color: #ff6a6a;
 }
 
 /* -----------------------
@@ -134,48 +171,53 @@ label {
     border-collapse: collapse;
     margin-top: 15px;
 }
+
 .table-premium th {
-    background: #0C69F6;
-    color: white;
+    background: rgba(0,0,0,0.45);
+    color: #fff;
     padding: 12px;
 }
+
 .table-premium td {
-    background: white;
+    background: rgba(255,255,255,0.15);
     padding: 12px;
-    border-bottom: 1px solid #ddd;
+    border-bottom: 1px solid #ffffff22;
+    color: #fff;
 }
 
 /* -----------------------
-   ALERTAS & NOTIFICAÇÕES
+   ALERTAS PREMIUM
 -------------------------*/
 .alert {
-    background: #ffdddd;
-    color: #c0392b;
+    background: rgba(255,100,100,0.25);
+    color: #ffb3b3;
     padding: 12px;
     border-radius: 10px;
     margin-bottom: 15px;
+    border-left: 5px solid #ff6a6a;
 }
+
 .success {
-    background: #d4edda;
-    color: #155724;
+    background: rgba(50,255,120,0.25);
+    color: #b6ffcf;
     padding: 12px;
+    border-left: 5px solid #11c15d;
     border-radius: 10px;
 }
 
 /* -----------------------
-   GRID FLEX
+   RESPONSIVIDADE
 -------------------------*/
 .row {
     display: flex;
     flex-wrap: wrap;
     gap: 18px;
 }
-.col-4 {
-    width: 31%;
-}
-.col-6 {
-    width: 48%;
-}
-.col-12 {
-    width: 100%;
+
+.col-4 { width: 31%; }
+.col-6 { width: 48%; }
+.col-12 { width: 100%; }
+
+@media(max-width: 780px) {
+    .col-4, .col-6 { width: 100%; }
 }
