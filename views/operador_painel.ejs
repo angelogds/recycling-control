@@ -1,129 +1,37 @@
-<%- include("layouts/base_top", { title: "Painel do Operador" }) %>
+<%- include('layouts/base_top', { title: "Painel do Operador" }) %>
 
 <div class="container mt-4">
+  <h1 class="page-title"><i class="bi bi-speedometer2 me-2"></i> Painel do Operador</h1>
 
-    <h1 class="page-title mb-4">
-        <i class="bi bi-speedometer2 me-2"></i>
-        Painel do Operador
-    </h1>
+  <table class="table table-striped digestor-table shadow-sm">
+    <thead>
+      <tr>
+        <th>Digestor</th>
+        <th>Matéria-prima</th>
+        <th>Status</th>
+        <th>Tempo (Trit. / Coz.)</th>
+        <th>Últimos Tempos</th>
+        <th class="text-center">Ações</th>
+      </tr>
+    </thead>
+    <tbody id="digestoresTableBody">
+      <!-- Rows serão renderizadas via JS -->
+    </tbody>
+  </table>
 
-    <table class="table table-striped shadow-sm digestor-table">
-        <thead class="table-success">
-            <tr>
-                <th>Digestor</th>
-                <th>Capacidade</th>
-                <th>Status</th>
-                <th>Barra de Progresso</th>
-                <th>Trituração</th>
-                <th>Cozimento</th>
-                <th>Ciclo</th>
-                <th>Ações</th>
-            </tr>
-        </thead>
-
-        <tbody id="digestoresTableBody">
-            <% digestores.forEach(d => { %>
-
-                <% // lógica de status & progresso %>
-                <% 
-                    let pct = 0;
-                    let label = "IDLE";
-                    let barClass = "idle";
-
-                    if (d.current_tritura) { pct = 40; label = "TRITURANDO"; barClass = "triturando"; }
-                    if (d.current_cooking) { pct = 75; label = "COZINHANDO"; barClass = "cozinhando"; }
-                    if (d.current_cycle) { pct = 100; label = "FINALIZADO"; }
-                %>
-
-                <tr id="row-<%= d.id %>">
-
-                    <!-- Nome -->
-                    <td><strong><%= d.nome %></strong></td>
-
-                    <!-- Capacidade -->
-                    <td><%= d.capacidade_tn %> tn</td>
-
-                    <!-- Status -->
-                    <td>
-                        <span class="status-pill status-<%= barClass %>">
-                            <%= label %>
-                        </span>
-                    </td>
-
-                    <!-- Barra -->
-                    <td style="width: 240px;">
-                        <div class="progress" style="height:12px;">
-                            <div 
-                                id="bar-<%= d.id %>"
-                                class="progress-bar <%= barClass %>"
-                                style="width:<%= pct %>%;">
-                                <%= pct %>%
-                            </div>
-                        </div>
-                    </td>
-
-                    <!-- Trituração -->
-                    <td><%= d.current_tritura ? ("#" + d.current_tritura.id) : "Nenhuma" %></td>
-
-                    <!-- Cozimento -->
-                    <td><%= d.current_cooking ? ("#" + d.current_cooking.id) : "Nenhuma" %></td>
-
-                    <!-- Ciclo -->
-                    <td><%= d.current_cycle ? ("#" + d.current_cycle.id) : "Nenhum" %></td>
-
-                    <!-- BOTÕES -->
-                    <td style="width: 320px;" class="text-center">
-
-                        <!-- INICIAR -->
-                        <button 
-                            class="btn-op btn-tritura"
-                            onclick="openStartModal(<%= d.id %>)">
-                            ▶ Iniciar
-                        </button>
-
-                        <!-- FINALIZAR TRITURA -->
-                        <button 
-                            class="btn-op btn-finish-tritura"
-                            onclick="openFinishTrituracao(<%= d.id %>)">
-                            Finalizar Tritura
-                        </button>
-
-                        <!-- FINALIZAR COZIMENTO -->
-                        <button 
-                            class="btn-op btn-cook"
-                            onclick="openFinishCozimento(<%= d.id %>)">
-                            Finalizar Cozimento
-                        </button>
-
-                        <!-- DESCARREGAR -->
-                        <button 
-                            class="btn-op btn-discharge"
-                            onclick="openDischarge(<%= d.id %>)">
-                            Descarregar
-                        </button>
-                    </td>
-                </tr>
-
-            <% }) %>
-        </tbody>
-    </table>
-
-
-    <!-- LOG -->
-    <div class="log-card mt-3">
-        <strong>Log do sistema:</strong>
-        <div id="logText" class="text-muted mt-2">Aguardando eventos...</div>
-    </div>
-
+  <div class="log-card">
+    <strong>Log do sistema:</strong>
+    <div id="logContent" class="mt-2 text-muted">Aguardando eventos...</div>
+  </div>
 </div>
 
-<!-- Importa modais -->
-<%- include("modais/trituracao_start") %>
-<%- include("modais/trituracao_finish") %>
-<%- include("modais/cozimento_finish") %>
-<%- include("modais/discharge") %>
+<!-- Modais (4 premium) -->
+<%- include('modais/trituracao_start') %>
+<%- include('modais/trituracao_finish') %>
+<%- include('modais/cozimento_finish') %>
+<%- include('modais/discharge') %>
 
 <script src="/socket.io/socket.io.js"></script>
 <script src="/js/operador.js"></script>
 
-<%- include("layouts/base_bottom") %>
+<%- include('layouts/base_bottom') %>
