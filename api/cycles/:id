@@ -1,0 +1,4 @@
+SELECT 
+  cy.*,
+  d.nome AS digestor_name,
+  ...
