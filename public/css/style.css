@@ -277,3 +277,97 @@ table td {
     border-radius: 6px;
     margin-bottom: 14px;
 }
+/* ===============================
+   ESTILO PREMIUM — CAMPO DO GADO
+   =============================== */
+
+body {
+    background: #f4f6f9;
+    font-family: 'Segoe UI', sans-serif;
+    color: #222;
+}
+
+.container {
+    max-width: 1100px;
+    margin: auto;
+}
+
+.premium-box {
+    background: #fff;
+    padding: 25px;
+    border-radius: 14px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.1);
+    margin-top: 25px;
+}
+
+.page-title {
+    font-size: 32px;
+    font-weight: bold;
+    color: #0a6b2d;
+    margin-bottom: 20px;
+}
+
+/* Botões */
+.btn-primary {
+    background: #0a6b2d !important;
+    border: none;
+}
+
+.btn-primary:hover {
+    background: #0d8c3d !important;
+}
+
+.btn-success {
+    background: #1e9b4a !important;
+    border: none;
+}
+
+.btn-warning {
+    background: #e7a000 !important;
+}
+
+/* Grade de digestores */
+.digestor-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 18px;
+}
+
+.digestor-card {
+    background: #fff;
+    padding: 18px;
+    border-radius: 12px;
+    border-left: 6px solid #0a6b2d;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+}
+
+.digestor-status {
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+/* Entradas Portaria */
+.entries-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 15px;
+}
+
+.entry-card {
+    padding: 16px;
+    background: #fff;
+    border-radius: 12px;
+    border-left: 5px solid #0a6b2d;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+}
+
+/* Form Premium */
+.form-premium label {
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+.form-premium input,
+.form-premium select {
+    margin-bottom: 12px;
+}
