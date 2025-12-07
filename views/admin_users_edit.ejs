@@ -1,0 +1,30 @@
+<%- include('layouts/base_top', { title: "Editar Usuário", usuario: usuario }) %>
+
+<div class="container premium-box">
+    <h1 class="page-title">✏️ Editar Usuário</h1>
+
+    <form action="/admin/users/<%= user.id %>/update" method="POST" class="form-premium">
+
+        <label>Usuário (login):</label>
+        <input name="username" class="form-control form-control-lg" value="<%= user.username %>" required />
+
+        <label>Nome Completo:</label>
+        <input name="nome" class="form-control form-control-lg" value="<%= user.nome %>" required />
+
+        <label>Função:</label>
+        <select name="role" class="form-control form-control-lg">
+            <option value="operador" <%= user.role === 'operador' ? 'selected' : '' %>>Operador</option>
+            <option value="portaria" <%= user.role === 'portaria' ? 'selected' : '' %>>Portaria</option>
+            <option value="admin" <%= user.role === 'admin' ? 'selected' : '' %>>Administrador</option>
+        </select>
+
+        <label>Nova Senha (opcional):</label>
+        <input type="password" name="password" class="form-control form-control-lg" placeholder="Deixe vazio para manter a atual"/>
+
+        <button class="btn btn-warning btn-lg w-100 mt-3">Salvar Alterações</button>
+    </form>
+
+    <a href="/admin/users" class="btn btn-secondary btn-lg w-100 mt-3">Voltar</a>
+</div>
+
+<%- include('layouts/base_bottom') %>
