@@ -397,15 +397,34 @@ app.get("/reports/cycle/:id", ensureAuth, (req, res) => {
   });
 });
 
-// -------------------- Seed default admin (if no users) --------------------
-db.get("SELECT COUNT(*) as cnt FROM users", [], (err, row) => {
-  if (err) return console.error("Err checking users:", err);
+//------------------------------------------------------------
+// CRIA USUÁRIO ADMINISTRADOR PADRÃO (angelo / @nloFa1107)
+//------------------------------------------------------------
+db.get("SELECT COUNT(*) AS cnt FROM users WHERE username = 'angelo'", [], (err, row) => {
+  if (err) {
+    console.error("Erro ao verificar usuário admin:", err);
+    return;
+  }
+
   if (row && row.cnt === 0) {
-    bcrypt.hash("admin123", 10).then(hash => {
-      db.run("INSERT INTO users (username, nome, role, password) VALUES (?, ?, ?, ?)", ["admin", "Administrador", "admin", hash], (e) => {
-        if (e) console.error("Err create admin:", e); else console.log("✔ Usuário admin criado: admin / admin123 (troque a senha!)");
-      });
-    }).catch(e => console.error("Err hashing admin:", e));
+    console.log("📌 Criando usuário administrador padrão: angelo");
+
+    const adminUser = "angelo";
+    const adminPassword = "@nloFa1107"; // senha fornecida
+    const adminName = "Administrador Angelo";
+
+    bcrypt.hash(adminPassword, 10).then(hash => {
+      db.run(
+        "INSERT INTO users (username, nome, role, password) VALUES (?, ?, ?, ?)",
+        [adminUser, adminName, "admin", hash],
+        (e) => {
+          if (e) console.error("Erro ao criar admin:", e);
+          else console.log("✔ Usuário admin criado: angelo / @nloFa1107");
+        }
+      );
+    });
+  } else {
+    console.log("✔ Usuário admin já existe.");
   }
 });
 
