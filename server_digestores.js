@@ -1,7 +1,8 @@
 // server_digestores.js
 // Versão final unificada — Digestores + Portaria + Tovas + Histórico + PDF (opcional) + Socket.IO
 // Replace existing file with this. Uses SQLite file at /app/data/database.sqlite by default.
-
+const session = require("express-session");
+const bcrypt = require("bcrypt");
 const express = require("express");
 const path = require("path");
 const fs = require("fs");
