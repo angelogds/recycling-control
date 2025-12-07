@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Novo Usuário – Administração</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: "Inter", sans-serif;
+            background: linear-gradient(135deg, #0a361a,#0f5226);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .card {
+            width: 450px;
+            background: #ffffff15;
+            padding: 30px;
+            border-radius: 14px;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 0 18px rgba(0,0,0,0.35);
+            color: white;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        label {
+            margin-top: 12px;
+            display: block;
+            font-weight: 500;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: none;
+            background: white;
+            font-size: 15px;
+            margin-top: 4px;
+        }
+
+        button {
+            width: 100%;
+            margin-top: 20px;
+            padding: 12px;
+            border-radius: 8px;
+            border: none;
+            background: #0ac44d;
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #08993d;
+        }
+
+        .alert {
+            background: #ff3e3e;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+    </style>
+</head>
+
+<body>
+
+<div class="card">
+
+    <h2>Criar Novo Usuário</h2>
+
+    <% if (error) { %>
+        <div class="alert"><%= error %></div>
+    <% } %>
+
+    <form action="/admin/users/create" method="POST">
+
+        <label>Nome Completo</label>
+        <input type="text" name="nome" required>
+
+        <label>Usuário</label>
+        <input type="text" name="username" required>
+
+        <label>Senha</label>
+        <input type="password" name="password" required>
+
+        <label>Confirmar Senha</label>
+        <input type="password" name="confirm" required>
+
+        <label>Função</label>
+        <select name="role" required>
+            <option value="operador">Operador</option>
+            <option value="portaria">Portaria</option>
+            <option value="admin">Administrador</option>
+        </select>
+
+        <button type="submit">Criar Usuário</button>
+
+    </form>
+
+</div>
+
+</body>
+</html>
