@@ -1,138 +1,98 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login – Campo do Gado</title>
+    <title>Login — Sistema Campo do Gado</title>
+    <link rel="stylesheet" href="/css/style.css">
 
     <style>
         body {
-            margin: 0;
-            padding: 0;
-            background: #0a1d0a; /* verde escuro premium */
-            font-family: "Segoe UI", sans-serif;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            color: #fff;
+            background: #f5f7fa;
+            font-family: Arial, sans-serif;
         }
-
         .login-container {
-            background: rgba(255, 255, 255, 0.06);
-            padding: 35px 40px;
+            max-width: 420px;
+            margin: 80px auto;
+            background: #fff;
+            padding: 35px;
             border-radius: 14px;
-            width: 360px;
-            backdrop-filter: blur(8px);
-            box-shadow: 0 0 25px rgba(0,0,0,0.5);
-            border: 1px solid rgba(255,255,255,0.15);
+            box-shadow: 0 4px 12px #0002;
         }
-
-        .login-header {
-            text-align: center;
+        .login-container h2 {
+            font-weight: 700;
             margin-bottom: 25px;
-        }
-
-        .login-header h2 {
-            margin: 0;
-            font-size: 26px;
-            font-weight: 600;
-        }
-
-        .input-group {
-            margin-bottom: 18px;
-        }
-
-        .input-group label {
-            display: block;
-            font-size: 14px;
-            color: #c7ffc7;
-            margin-bottom: 5px;
-        }
-
-        .input-group input {
-            width: 100%;
-            padding: 12px;
-            border-radius: 8px;
-            border: 1px solid #1e3d1e;
-            background: #102610;
-            color: #dfffe0;
-            font-size: 15px;
-        }
-
-        .input-group input:focus {
-            outline: none;
-            border-color: #3cff76;
-            box-shadow: 0 0 8px #3cff76;
-        }
-
-        .alert {
-            background: rgba(255, 0, 0, 0.2);
-            padding: 10px;
-            border-radius: 6px;
-            margin-bottom: 18px;
-            border-left: 3px solid #ff6060;
-            color: #ffb3b3;
-        }
-
-        .btn-login {
-            width: 100%;
-            padding: 13px;
-            background: #28c352;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: bold;
-            color: #fff;
-            cursor: pointer;
-            transition: 0.25s;
-        }
-
-        .btn-login:hover {
-            background: #2ee05c;
-        }
-
-        .footer-text {
             text-align: center;
-            margin-top: 15px;
+            color: #2a2a2a;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        input {
+            width: 100%;
+            padding: 14px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            border-radius: 8px;
+            background: #0C69F6;
+            border: none;
+            color: #fff;
+            font-size: 17px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: .2s;
+        }
+        button:hover {
+            background: #0854c9;
+        }
+        .alert {
+            background: #ffdddd;
+            padding: 12px;
+            color: #a30000;
+            border-left: 4px solid #d60000;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .footer-info {
+            margin-top: 18px;
+            text-align: center;
             font-size: 13px;
-            color: #b2ffb9;
+            color: #777;
         }
     </style>
 </head>
+
 <body>
-
     <div class="login-container">
-        
-        <div class="login-header">
-            <h2>Acesso ao Sistema</h2>
-        </div>
 
-        <% if (erro) { %>
-            <div class="alert">
-                <%= erro %>
-            </div>
+        <h2>Acesso ao Sistema</h2>
+
+        <% if (erro || error) { %>
+            <div class="alert"><%= erro || error %></div>
         <% } %>
 
-        <form method="POST" action="/login">
-            
+        <form action="/login" method="POST">
+
             <div class="input-group">
-                <label>Usuário</label>
-                <input type="text" name="username" placeholder="Digite seu usuário" required>
+                <input type="text" name="username" placeholder="Usuário" required>
             </div>
 
             <div class="input-group">
-                <label>Senha</label>
-                <input type="password" name="password" placeholder="Digite sua senha" required>
+                <input type="password" name="password" placeholder="Senha" required>
             </div>
 
-            <button class="btn-login" type="submit">Entrar</button>
+            <button type="submit">Entrar</button>
+
         </form>
 
-        <div class="footer-text">
-            Campo do Gado • Sistema Industrial
+        <div class="footer-info">
+            Campo do Gado © <%= new Date().getFullYear() %>
         </div>
-
     </div>
 
 </body>
