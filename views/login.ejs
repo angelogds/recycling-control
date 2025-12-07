@@ -1,29 +1,125 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
-    <meta charset="UTF-8" />
-    <title>Login - Sistema Campo do Gado</title>
-    <link rel="stylesheet" href="/css/style.css" />
+    <meta charset="UTF-8">
+    <title>Login – Sistema Campo do Gado</title>
+
+    <!-- Fonte e estilo básico -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: "Inter", sans-serif;
+            background: linear-gradient(135deg, #0a361a, #0f5226);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #fff;
+        }
+
+        .login-box {
+            width: 380px;
+            background: #ffffff15;
+            backdrop-filter: blur(12px);
+            padding: 30px;
+            border-radius: 14px;
+            box-shadow: 0 0 18px rgba(0,0,0,0.35);
+            text-align: center;
+        }
+
+        .logo {
+            width: 90px;
+            margin-bottom: 10px;
+        }
+
+        h2 {
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #ffffffee;
+        }
+
+        .alert {
+            background: #ff3e3e;
+            padding: 10px;
+            margin-bottom: 18px;
+            border-radius: 8px;
+            font-size: 15px;
+        }
+
+        label {
+            display: block;
+            text-align: left;
+            margin-bottom: 6px;
+            font-weight: 500;
+            color: #ffffffcc;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: none;
+            outline: none;
+            margin-bottom: 15px;
+            font-size: 15px;
+            background: #ffffffdd;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            background: #0ac44d;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        button:hover {
+            background: #08993d;
+        }
+
+        .footer {
+            margin-top: 15px;
+            font-size: 13px;
+            opacity: 0.7;
+        }
+    </style>
 </head>
 
-<body class="login-bg">
+<body>
 
-<div class="login-card">
-    <h2 class="login-title">Acesso ao Sistema</h2>
+<div class="login-box">
 
-    <% if (erro) { %>
-        <div class="alert alert-danger"><%= erro %></div>
+    <!-- LOGO opcional -->
+    <!-- <img src="/img/logo_menu_256.png" class="logo"> -->
+
+    <h2>Login do Sistema</h2>
+
+    <% if (error) { %>
+        <div class="alert"><%= error %></div>
     <% } %>
 
-    <form method="POST" action="/login">
+    <form action="/login" method="POST">
         <label>Usuário</label>
-        <input type="text" name="username" class="form-control" required>
+        <input type="text" name="username" placeholder="Digite seu usuário" required>
 
         <label>Senha</label>
-        <input type="password" name="password" class="form-control" required>
+        <input type="password" name="password" placeholder="Digite sua senha" required>
 
-        <button class="btn-premium w-100 mt-3">Entrar</button>
+        <button type="submit">Entrar</button>
     </form>
+
+    <div class="footer">
+        Campo do Gado • Sistema de Controle de Processo
+    </div>
+
 </div>
 
 </body>
