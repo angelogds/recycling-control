@@ -1,266 +1,247 @@
-/* ======================================================
-   STYLE.CSS — PREMIUM CORPORATIVO VERDE
-   Otimizado / Sem duplicações / Responsivo
-====================================================== */
+/* ============================================================
+   STYLE.CSS — Tema Premium Verde Industrial
+   Compatível com Painel do Operador + Portaria + Histórico
+   ============================================================ */
 
-/* VARIÁVEIS PRINCIPAIS */
-:root{
-  --green-700: #1f6f3d;
-  --green-600: #2b7a44;
-  --green-500: #2f8f4a;
-  --accent-yellow: #ffc107;
-  --muted: #6b6b6b;
-  --page-bg: #f6f7f8;
-  --card-bg: #ffffff;
-}
-
-/* RESET + BASE */
-body{
-  font-family: Inter, "Segoe UI", Roboto, Helvetica, Arial;
-  background: var(--page-bg);
-  margin:0;
-  color:#222;
-  -webkit-font-smoothing: antialiased;
+/* Paleta principal */
+:root {
+    --green-dark: #14532d;
+    --green-main: #15803d;
+    --green-light: #22c55e;
+    --yellow: #eab308;
+    --gray: #6b7280;
+    --gray-light: #e5e7eb;
+    --white: #ffffff;
+    --bg-soft: #f3f4f6;
 }
 
-/* ======================================================
-   HEADER PREMIUM
-====================================================== */
-.app-header{
-  height:64px;
-  display:flex;
-  align-items:center;
-  padding:0 22px;
-  color:#fff;
-  background: linear-gradient(90deg, #153d28 0%, #1f6f3d 40%, #2b7a44 100%);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+/* Reset */
+body {
+    font-family: "Inter", Arial, sans-serif;
+    margin: 0;
+    background: var(--bg-soft);
+    color: #1f2937;
 }
 
-.app-header .brand{
-  display:flex;
-  align-items:center;
-  gap:14px;
+/* HEADER */
+.app-header {
+    height: 64px;
+    display: flex;
+    align-items: center;
+    padding: 0 22px;
+    color: #fff;
+    background: linear-gradient(90deg, #14532d 0%, #15803d 50%, #166534 100%);
+    box-shadow: 0px 2px 5px rgba(0,0,0,0.25);
 }
 
-.app-header .brand img{
-  height:44px;
-  padding:4px;
-  background:#fff;
-  border-radius:6px;
+.app-header .brand {
+    display: flex;
+    gap: 12px;
+    align-items: center;
 }
 
-.app-header .user{
-  margin-left:auto;
-  font-weight:600;
+.app-header .brand img {
+    width: 44px;
+    height: 44px;
+    background: #fff;
+    border-radius: 6px;
+    padding: 4px;
 }
 
-/* ======================================================
-   CONTAINERS & TITULOS
-====================================================== */
-.container{
-  max-width:1200px;
-  margin:28px auto;
-  padding:0 20px;
+.app-header .user {
+    margin-left: auto;
+    font-weight: 600;
 }
 
-.page-title{
-  font-size:48px;
-  font-weight:700;
-  color: var(--green-700);
-  margin-bottom:20px;
+/* CONTAINER */
+.container {
+    max-width: 1200px;
+    margin: 30px auto;
+    padding: 0 20px;
 }
 
-.text-premium{
-  color: var(--green-700) !important;
-  font-weight:600;
+/* TITULOS */
+.page-title {
+    font-size: 42px;
+    font-weight: 700;
+    margin-bottom: 25px;
+    color: var(--green-dark);
 }
 
-/* ======================================================
-   CARDS PREMIUM
-====================================================== */
-.card-premium{
-  background: var(--card-bg);
-  border-radius:16px;
-  padding:20px;
-  border:1px solid #e5e5e5;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.06);
-  transition:0.25s;
+/* GRID DOS DIGESTORES */
+.dg-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+    gap: 22px;
 }
 
-.card-premium:hover{
-  transform: scale(1.02);
-  box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+/* CARD */
+.digestor-card {
+    background: var(--white);
+    border-radius: 14px;
+    padding: 18px 20px;
+    border-left: 6px solid var(--green-main);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+    transition: 0.2s;
 }
 
-/* ======================================================
-   BADGES E STATUS
-====================================================== */
-.badge-status{
-  display:inline-block;
-  padding:6px 10px;
-  border-radius:10px;
-  font-size:12px;
-  font-weight:700;
-  color:#fff;
+.digestor-card:hover {
+    transform: translateY(-3px);
 }
 
-.status-idle{ background: var(--green-600); }
-.status-triturando{ background:#f39c12; }
-.status-cozinhando{ background:#0d6efd; }
-.status-discharging{ background: var(--accent-yellow); color:#000 !important; }
-.status-error{ background:#c53030; }
-
-/* STATUS INDICADOR */
-.status-indicator{
-  height:8px;
-  width:100%;
-  border-radius:6px;
-  margin-top:10px;
-  transition:0.35s ease-in-out;
+/* HEADER DO CARD */
+.dg-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
-/* ======================================================
-   BARRA DE PROGRESSO PREMIUM
-====================================================== */
-.progress{
-  height:14px;
-  border-radius:10px;
+.dg-header h3 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 700;
 }
 
-.progress-bar{
-  border-radius:10px;
-  font-size:13px;
-  font-weight:bold;
-  transition: width 0.5s ease;
+.dg-status {
+    font-weight: bold;
+    padding: 4px 10px;
+    border-radius: 8px;
 }
 
-.progress-bar.idle{
-  background: var(--green-700) !important;
+/* STATUS CORES */
+.status-operando {
+    background: var(--green-main);
+    color: white;
 }
 
-.progress-bar.triturando{
-  background:#f39c12 !important;
+.status-parado {
+    background: #dc2626;
+    color: white;
 }
 
-.progress-bar.cozinhando{
-  background:#d32f2f !important;
+.status-cozinhando {
+    background: #6d28d9;
+    color: white;
 }
 
-/* ======================================================
-   TABELA PREMIUM
-====================================================== */
-.table-success th{
-  background: var(--green-700) !important;
-  color:white !important;
-  font-size:18px;
+.status-descarregar {
+    background: var(--yellow);
+    color: black;
 }
 
-.table td,
-.table th{
-  vertical-align:middle !important;
+/* TEXTO INTERNO */
+.dg-row {
+    margin-top: 10px;
+    font-size: 16px;
+    display: flex;
+    justify-content: space-between;
 }
 
-/* ======================================================
-   BOTÕES PREMIUM
-====================================================== */
-.btn-op{
-  font-weight: bold;
-  padding: 6px 14px;
-  border-radius:6px;
-  margin:3px;
-  transition:0.25s ease-in-out;
+/* MATERIA PRIMA */
+.materia-select {
+    display: flex;
+    gap: 10px;
+    margin-top: 12px;
 }
 
-.btn-op.disabled{
-  opacity:0.35;
-  pointer-events:none;
+.mat-btn {
+    padding: 6px 14px;
+    border-radius: 7px;
+    background: var(--gray-light);
+    border: 1px solid #ccc;
+    cursor: pointer;
+    font-weight: 600;
+    transition: 0.2s;
 }
 
-.btn-tritura{
-  background:#027a39;
-  color:white;
-}
-.btn-tritura:hover{ background:#025f2d; }
-
-.btn-finish-tritura{
-  background:#0d6efd;
-  color:white;
-}
-.btn-finish-tritura:hover{ background:#0a58ca; }
-
-.btn-cook{
-  background:#6f42c1;
-  color:white;
-}
-.btn-cook:hover{ background:#59359d; }
-
-.btn-discharge{
-  background: var(--accent-yellow);
-  color:#333;
-  font-weight:bold;
-}
-.btn-discharge:hover{
-  background:#e0a800;
+.mat-btn.selected {
+    background: var(--green-main);
+    border-color: var(--green-dark);
+    color: white;
 }
 
-/* BOTÕES GERAIS PREMIUM */
-.btn-premium{
-  background: linear-gradient(135deg, #2a8d48, #1e6d36);
-  color:white;
-  border:none;
-  padding:8px 18px;
-  border-radius:8px;
-  font-weight:600;
-  transition:0.25s ease;
-}
-.btn-premium:hover{
-  transform: translateY(-3px);
-  box-shadow:0 4px 10px rgba(0,0,0,0.25);
-  filter:brightness(1.15);
+/* AÇÕES */
+.dg-actions {
+    margin-top: 16px;
+    display: flex;
+    gap: 8px;
 }
 
-/* AMARELO */
-.btn-yellow{
-  background:#ffc107;
-  color:#000;
-  font-weight:600;
-  border-radius:8px;
-  padding:8px 16px;
-  transition:0.25s;
-}
-.btn-yellow:hover{
-  background:#ffca2c;
-  transform: translateY(-3px);
+.dg-actions button {
+    flex: 1;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    transition: 0.25s;
 }
 
-/* ======================================================
-   LOG CARD
-====================================================== */
-.log-card{
-  margin-top:20px;
-  padding:18px;
-  border-radius:12px;
-  background:#fff;
-  border:1px solid rgba(20,80,40,0.03);
-  box-shadow:0 6px 18px rgba(0,0,0,0.04);
+/* Botão desabilitado */
+.dg-actions .disabled {
+    background: #cbd5e1;
+    opacity: 0.55;
+    cursor: not-allowed;
 }
 
-/* ======================================================
-   ANIMAÇÕES
-====================================================== */
-.pulse{
-  animation: pulseGlow 1.8s infinite;
+/* Botão ativo */
+.dg-actions .active {
+    background: var(--green-main);
+    color: white;
 }
 
-@keyframes pulseGlow{
-  0%{ box-shadow:0 0 0 0 rgba(47,143,74,0.25); }
-  70%{ box-shadow:0 0 0 14px rgba(47,143,74,0); }
-  100%{ box-shadow:0 0 0 0 rgba(47,143,74,0); }
+.dg-actions .active:hover {
+    background: var(--green-dark);
 }
 
-/* ======================================================
-   RESPONSIVO
-====================================================== */
-@media (max-width:920px){
-  .page-title{ font-size:36px; }
+/* Descarregar */
+.btn-discharge.active {
+    background: var(--yellow) !important;
+    color: black !important;
+}
+
+.btn-discharge.active:hover {
+    background: #ca8a04 !important;
+}
+
+/* LOG */
+.log-card {
+    background: white;
+    padding: 18px 20px;
+    border-radius: 12px;
+    margin-top: 30px;
+    box-shadow: 0px 2px 5px rgba(0,0,0,0.12);
+}
+
+/* TABELAS PREMIUM */
+table thead {
+    background: var(--green-dark) !important;
+    color: white !important;
+}
+
+table th,
+table td {
+    vertical-align: middle !important;
+    font-size: 15px;
+}
+
+/* MODAIS */
+.modal-header.bg-success {
+    background: var(--green-main) !important;
+}
+
+/* PORTARIA */
+.portaria-box {
+    background: white;
+    padding: 22px;
+    border-radius: 14px;
+    box-shadow: 0px 3px 8px rgba(0,0,0,0.12);
+    border-left: 6px solid var(--green-main);
+}
+
+/* RESPONSIVO */
+@media (max-width: 600px) {
+    .dg-actions {
+        flex-direction: column;
+    }
 }
