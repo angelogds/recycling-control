@@ -1,84 +1,15 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <title>Painel do Operador</title>
+<%- include('layouts/base_top', { title: "Painel do Operador", usuario: usuario }) %>
 
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+<div class="container premium-box">
 
-    <style>
-        body {
-            padding: 20px;
-            margin: 0;
-            background: #f2f5f4;
-            font-family: "Inter";
-        }
+    <h1 class="page-title">⚙️ Painel do Operador</h1>
 
-        h1 {
-            color: #0a361a;
-            margin-bottom: 25px;
-        }
+    <div id="digestorGrid" class="digestor-grid">
+        <p class="text-muted">Carregando digestores...</p>
+    </div>
 
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit,minmax(300px,1fr));
-            gap: 18px;
-        }
-
-        .card {
-            background: white;
-            border-radius: 14px;
-            padding: 20px;
-            box-shadow: 0 0 12px rgba(0,0,0,0.15);
-        }
-
-        .title {
-            font-size: 20px;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-
-        .status {
-            font-weight: bold;
-            margin-bottom: 12px;
-        }
-
-        .btn {
-            width: 100%;
-            padding: 12px;
-            background: #0ac44d;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 10px;
-        }
-
-        .btn:hover {
-            background: #08993d;
-        }
-
-        .timer {
-            font-size: 18px;
-            font-weight: bold;
-            color: #0f5226;
-            margin-top: 10px;
-        }
-
-    </style>
-
-    <script src="/socket.io/socket.io.js"></script>
-    <script src="/js/operador.js"></script>
-
-</head>
-<body>
-
-<h1>Painel do Operador</h1>
-
-<div class="grid" id="digestorGrid">
-    <!-- operador.js preencherá automaticamente -->
 </div>
 
-</body>
-</html>
+<script src="/js/operador.js"></script>
+
+<%- include('layouts/base_bottom') %>
