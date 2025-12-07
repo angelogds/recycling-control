@@ -309,14 +309,12 @@
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                digestor_id: id,
-                trituration_cycle_id: tritId,
-                cooking_cycle_id: cookId,
-                toneladas_discarded: tons || 0,
-                notes
-            })
-        });
-
+    digestor_id: id,
+    from_tova_id: tova,
+    toneladas_solicitadas: toneladas,
+    materia_prima: mat  // << NEW
+})
+           
         if (!res.ok) return alert("Erro ao descarregar");
 
         log(`Digestor ${id}: Descarregado com sucesso.`);
