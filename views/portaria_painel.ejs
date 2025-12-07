@@ -1,133 +1,54 @@
-<!DOCTYPE html>
-<html lang="pt-br">
+<!-- portaria_painel.ejs -->
+<!doctype html>
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Portaria — Campo do Gado</title>
-
-    <link rel="stylesheet" href="/css/style.css">
-
-    <style>
-        body {
-            background: #eef2f6;
-            font-family: Arial, sans-serif;
-        }
-
-        .top-bar {
-            background: #0C69F6;
-            padding: 18px 25px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            color: white;
-        }
-
-        .top-bar h2 {
-            margin: 0;
-        }
-
-        .main {
-            padding: 25px;
-        }
-
-        .btn-primary {
-            background: #0C69F6;
-            padding: 14px 22px;
-            border-radius: 10px;
-            text-decoration: none;
-            color: white;
-            font-weight: bold;
-            font-size: 16px;
-        }
-
-        .truck-card {
-            background: white;
-            padding: 18px;
-            border-radius: 14px;
-            margin-bottom: 14px;
-            box-shadow: 0 4px 10px #0002;
-            border-left: 6px solid #0C69F6;
-        }
-
-        .truck-header {
-            font-size: 18px;
-            font-weight: bold;
-        }
-
-        .status-pill {
-            display: inline-block;
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            margin-top: 6px;
-            color: white;
-            font-weight: bold;
-        }
-
-        .waiting { background: #777; }
-        .checking { background: #ff8c00; }
-        .reception_finished { background: #0C69F6; }
-
-        .arrival-time {
-            margin-top: 8px;
-            font-size: 14px;
-            color: #333;
-        }
-    </style>
+  <meta charset="utf-8">
+  <title>Portaria — Campo do Gado</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/socket.io/socket.io.js"></script>
 </head>
-
 <body>
+  <div class="top-bar">
+    <div>Portaria • <%= usuario && usuario.nome ? usuario.nome : 'Portaria' %></div>
+    <div><a href="/logout">Sair</a></div>
+  </div>
 
-<div class="top-bar">
-    <h2>Portaria — <%= usuario.nome %></h2>
-    <a href="/logout" style="color:white;">Sair</a>
-</div>
+  <div class="container">
+    <div class="card">
+      <div class="card-title">Chegadas de Caminhões</div>
+      <div style="margin-bottom:12px;">
+        <a class="btn btn-green" href="/portaria/chegada">Registrar Chegada</a>
+      </div>
 
-<div class="main">
-
-    <a href="/portaria/chegada" class="btn-primary">+ Registrar Chegada</a>
-
-    <h3 style="margin-top: 25px;">Caminhões em Processamento</h3>
-
-    <div id="truck-list">
-        <!-- preenchido dinamicamente -->
+      <table class="table-premium">
+        <thead>
+          <tr><th>Placa</th><th>Toneladas declaradas</th><th>Chegada</th><th>Status</th></tr>
+        </thead>
+        <tbody id="entriesBody">
+          <tr><td colspan="4">Aguardando registros...</td></tr>
+        </tbody>
+      </table>
     </div>
-
-</div>
-
-<script src="/socket.io/socket.io.js"></script>
+  </div>
 
 <script>
-    const socket = io();
+  const socket = io();
+  const entriesBody = document.getElementById('entriesBody');
 
-    socket.on("entries:update", (entries) => {
-        const container = document.getElementById("truck-list");
-        container.innerHTML = "";
-
-        if (!entries || entries.length === 0) {
-            container.innerHTML = "<p>Nenhum caminhão em processamento.</p>";
-            return;
-        }
-
-        entries.forEach(e => {
-            const card = document.createElement("div");
-            card.className = "truck-card";
-
-            card.innerHTML = `
-                <div class="truck-header">Placa: <strong>${e.truck_plate}</strong></div>
-
-                <div class="status-pill ${e.status}">
-                    ${e.status.replace("_", " ").toUpperCase()}
-                </div>
-
-                <div class="arrival-time">
-                    Chegada: ${new Date(e.arrival_at).toLocaleString()}
-                </div>
-            `;
-
-            container.appendChild(card);
-        });
+  socket.on('entries:update', (rows) => {
+    entriesBody.innerHTML = '';
+    if (!rows || rows.length === 0) {
+      entriesBody.innerHTML = '<tr><td colspan="4">Nenhuma entrada pendente</td></tr>';
+      return;
+    }
+    rows.forEach(r => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${r.truck_plate}</td><td>${r.toneladas_declared||0}</td><td>${r.arrival_at||''}</td><td>${r.status||''}</td>`;
+      entriesBody.appendChild(tr);
     });
-</script>
+  });
 
+  // request initial state via socket by connecting (server broadcasts on connect)
+</script>
 </body>
 </html>
