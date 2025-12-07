@@ -1,140 +1,73 @@
-<%- include('layouts/base_top', { title: "Painel do Operador", usuario: usuario }) %>
+<%- include("layouts/base_top", { title: "Painel do Operador", usuario: usuario }) %>
 
-<div class="container">
-  <h1 class="page-title">Painel do Operador</h1>
+<link rel="stylesheet" href="/css/operador.css">
 
-  <div id="digestorGrid" class="dg-grid"></div>
+<div class="top-bar">
+    <h1 class="page-title">Painel do Operador</h1>
+    <a href="/operador/historico" class="btn-history">📄 Histórico</a>
+</div>
 
-  <div class="log-card">
-    <strong>Log do sistema:</strong>
-    <div id="logContent" class="mt-2 text-muted">Aguardando eventos...</div>
-  </div>
+<div id="digestorGrid" class="digestor-grid">
+
+    <% digestores.forEach(d => { %>
+
+    <div class="digestor-card" id="digestor-<%= d.id %>" data-id="<%= d.id %>">
+
+        <div class="dg-header">
+            <div class="dg-title">Digestor <%= d.id %></div>
+            <div class="dg-status status-parado">Parado</div>
+        </div>
+
+        <!-- Materia prima -->
+        <div class="materia-select">
+            <div class="mat-label">Matéria-prima</div>
+            <button class="mat-btn" data-mat="osso">Osso</button>
+            <button class="mat-btn" data-mat="barrigada">Barrigada</button>
+        </div>
+
+        <!-- Inputs de ciclo -->
+        <div class="ciclo-inputs">
+            <div class="input-block">
+                <label>Tova:</label>
+                <select class="select-tova">
+                    <option value="1">Tova 1</option>
+                    <option value="2">Tova 2</option>
+                </select>
+            </div>
+
+            <div class="input-block">
+                <label>Toneladas:</label>
+                <input type="number" step="0.1" class="input-ton" placeholder="0,0" />
+            </div>
+        </div>
+
+        <!-- Timers -->
+        <div class="timer-section">
+            <div>
+                <span class="timer-label">Trituração:</span>
+                <span class="timer-tritura">--:--:--</span>
+            </div>
+            <div>
+                <span class="timer-label">Cozimento:</span>
+                <span class="timer-cook">--:--:--</span>
+            </div>
+        </div>
+
+        <!-- Botões lado a lado -->
+        <div class="action-buttons">
+            <button class="btn-action btn-start">Iniciar Trituração</button>
+            <button class="btn-action btn-finish-trit disabled">Finalizar Trituração</button>
+            <button class="btn-action btn-finish-cook disabled">Finalizar Cozimento</button>
+            <button class="btn-action btn-discharge disabled">Descarregar</button>
+        </div>
+
+    </div>
+
+    <% }) %>
+
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
 <script src="/js/operador.js"></script>
 
-<style>
-/* ========================================================= */
-/* ESTILO PREMIUM DO PAINEL DO OPERADOR                      */
-/* ========================================================= */
-
-.dg-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 25px;
-}
-
-/* cartão principal */
-.digestor-card {
-    background: #fff;
-    border-radius: 12px;
-    padding: 18px 22px;
-    box-shadow: 0px 3px 8px rgba(0,0,0,0.15);
-    border-left: 6px solid #166534;
-}
-
-.dg-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.dg-header h3 {
-    margin: 0;
-    font-weight: 700;
-    font-size: 20px;
-}
-
-.dg-status {
-    font-size: 15px;
-    font-weight: bold;
-}
-
-.dg-row {
-    margin-top: 10px;
-    display: flex;
-    justify-content: space-between;
-    font-size: 16px;
-}
-
-/* Matéria-prima seletores */
-.materia-select {
-    margin-top: 12px;
-    display: flex;
-    gap: 10px;
-    align-items: center;
-}
-
-.materia-select label {
-    font-weight: bold;
-}
-
-.mat-btn {
-    padding: 6px 14px;
-    border-radius: 8px;
-    cursor: pointer;
-    background: #e5e5e5;
-    border: 1px solid #ccc;
-}
-
-.mat-btn.selected {
-    background: #15803d;
-    color: #fff;
-    border-color: #14532d;
-}
-
-/* Botões */
-.dg-actions {
-    margin-top: 18px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-}
-
-.dg-actions button {
-    flex: 1;
-    padding: 10px 14px;
-    font-weight: 600;
-    border-radius: 8px;
-    border: none;
-    cursor: pointer;
-    transition: 0.2s;
-}
-
-/* Inativo */
-.dg-actions button.disabled {
-    opacity: 0.4;
-    background: #cbd5e1;
-    cursor: not-allowed;
-}
-
-/* Ativo */
-.dg-actions button.active {
-    background: #16a34a;
-    color: white;
-}
-
-.dg-actions button.active:hover {
-    background: #15803d;
-}
-
-/* Descarregar */
-.btn-discharge.active {
-    background: #eab308 !important;
-    color: black !important;
-}
-
-.btn-discharge.active:hover {
-    background: #ca8a04 !important;
-}
-
-/* Log */
-.log-card {
-    margin-top: 30px;
-    background: #fff;
-    padding: 18px 22px;
-    border-radius: 10px;
-    box-shadow: 0px 2px 5px rgba(0,0,0,0.15);
-}
-</style>
+<%- include("layouts/base_bottom") %>
