@@ -1,9 +1,103 @@
-<%- include('layouts/base_top', { title: title, usuario: usuario }) %>
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Portaria – Controle de Chegada</title>
 
-<h1 class="display-6"><%= title %></h1>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
 
-<p><a class="btn btn-primary" href="/portaria/chegada">Registrar Chegada</a></p>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: "Inter";
+            background: #f4f6f5;
+        }
 
-<div class="mt-4" id="entriesList"></div>
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
 
-<%- include('layouts/base_bottom') %>
+        h1 {
+            color: #0a361a;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border-radius: 8px;
+            border: none;
+            background: #0ac44d;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .btn:hover {
+            background: #08993d;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 14px 10px;
+            border-bottom: 1px solid #ccc;
+        }
+
+        th {
+            background: #0f5226;
+            color: white;
+        }
+
+        tr:hover {
+            background: #eef6ee;
+        }
+
+    </style>
+</head>
+
+<body>
+
+<div class="header">
+    <h1>Portaria – Chegadas</h1>
+    <a href="/logout" class="btn">Sair</a>
+</div>
+
+<a href="/portaria/chegada" class="btn">+ Registrar Chegada</a>
+
+<h3 style="margin-top:20px;">Últimas entradas</h3>
+
+<table>
+    <tr>
+        <th>Placa</th>
+        <th>Toneladas</th>
+        <th>Hora</th>
+        <th>Status</th>
+    </tr>
+
+    <% if (entries && entries.length > 0) { %>
+        <% entries.forEach((e) => { %>
+            <tr>
+                <td><%= e.truck_plate %></td>
+                <td><%= e.toneladas_declared %></td>
+                <td><%= e.arrival_at %></td>
+                <td><%= e.status %></td>
+            </tr>
+        <% }) %>
+    <% } else { %>
+        <tr><td colspan="4" style="text-align:center;">Nenhuma entrada registrada.</td></tr>
+    <% } %>
+
+</table>
+
+</body>
+</html>
