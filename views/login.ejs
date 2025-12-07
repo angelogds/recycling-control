@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <title>Login - Sistema Campo do Gado</title>
+    <link rel="stylesheet" href="/css/style.css" />
+</head>
+
+<body class="login-bg">
+
+<div class="login-card">
+    <h2 class="login-title">Acesso ao Sistema</h2>
+
+    <% if (erro) { %>
+        <div class="alert alert-danger"><%= erro %></div>
+    <% } %>
+
+    <form method="POST" action="/login">
+        <label>Usuário</label>
+        <input type="text" name="username" class="form-control" required>
+
+        <label>Senha</label>
+        <input type="password" name="password" class="form-control" required>
+
+        <button class="btn-premium w-100 mt-3">Entrar</button>
+    </form>
+</div>
+
+</body>
+</html>
