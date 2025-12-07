@@ -217,6 +217,68 @@ function seedAdminUser() {
 
 // Chamar SE APÓS o DB estar conectado:
 db.once("open", seedAdminUser);
+// ============================
+// ADMIN — LISTAR USUÁRIOS
+// ============================
+app.get("/admin/users", ensureAuth, ensureRole("admin"), (req, res) => {
+    db.all("SELECT id, username, nome, role FROM users ORDER BY id", [], (err, users) => {
+        if (err) return res.status(500).send("Erro ao carregar usuários");
+        res.render("admin_users_list", { usuario: req.user, users });
+    });
+});
+app.get("/admin/users/new", ensureAuth, ensureRole("admin"), (req, res) => {
+    res.render("admin_users_new", { usuario: req.user });
+});
+app.post("/admin/users/create", ensureAuth, ensureRole("admin"), async (req, res) => {
+    const { username, nome, password, role } = req.body;
+
+    if (!username || !password)
+        return res.status(400).send("Campos obrigatórios faltando.");
+
+    const hash = await bcrypt.hash(password, 10);
+
+    db.run(
+        "INSERT INTO users (username, nome, role, password) VALUES (?, ?, ?, ?)",
+        [username, nome, role, hash],
+        err => {
+            if (err) return res.status(500).send("Usuário já existe");
+            res.redirect("/admin/users");
+        }
+    );
+});
+app.get("/admin/users/:id/edit", ensureAuth, ensureRole("admin"), (req, res) => {
+    db.get("SELECT * FROM users WHERE id=?", [req.params.id], (err, user) => {
+        if (!user) return res.status(404).send("Usuário não encontrado");
+        res.render("admin_users_edit", { usuario: req.user, user });
+    });
+});
+app.post("/admin/users/:id/update", ensureAuth, ensureRole("admin"), async (req, res) => {
+    const { username, nome, role, password } = req.body;
+    const id = req.params.id;
+
+    const params = [username, nome, role];
+    let sql = "UPDATE users SET username=?, nome=?, role=?";
+
+    if (password && password.trim() !== "") {
+        const hash = await bcrypt.hash(password, 10);
+        sql += ", password=?";
+        params.push(hash);
+    }
+
+    sql += " WHERE id=?";
+    params.push(id);
+
+    db.run(sql, params, err => {
+        if (err) return res.status(500).send("Erro ao atualizar usuário");
+        res.redirect("/admin/users");
+    });
+});
+app.post("/admin/users/:id/delete", ensureAuth, ensureRole("admin"), (req, res) => {
+    db.run("DELETE FROM users WHERE id=?", [req.params.id], err => {
+        if (err) return res.status(500).send("Erro ao excluir usuário");
+        res.redirect("/admin/users");
+    });
+});
 
 
 // ====================== PART 3 ======================
