@@ -3,3 +3,7 @@ node_modules/
 database.sqlite
 public/reports/
 
+-e 
+# Environment files
+*.env
+*.env.*
