@@ -165,30 +165,6 @@ app.get("/logout", (req, res) => {
   }
 });
 
-// SEED ADMIN (só roda se tabela users existir e estiver vazia)
-(function seedAdminIfNeeded() {
-  db.get("SELECT name FROM sqlite_master WHERE type='table' AND name='users'", [], (err, tbl) => {
-    if (err) { console.error("Erro checar tabelas (seed):", err); return; }
-    if (!tbl) { console.warn("Tabela 'users' não encontrada. Ignorando seed de admin."); return; }
-
-    db.get("SELECT COUNT(*) AS cnt FROM users", [], (cErr, row) => {
-      if (cErr) { console.error("Erro checking users:", cErr); return; }
-      const cnt = (row && row.cnt) ? row.cnt : 0;
-      if (cnt === 0) {
-        const adminUser = { username: "angelo", nome: "Administrador", role: "admin", passwordPlain: "@nloFa1107" };
-        bcrypt.hash(adminUser.passwordPlain, 10).then(hash => {
-          db.run("INSERT INTO users (username, nome, role, password) VALUES (?, ?, ?, ?)", [adminUser.username, adminUser.nome, adminUser.role, hash], (insErr) => {
-            if (insErr) console.error("Err seed admin:", insErr);
-            else console.log("✔ Usuário admin criado: angelo / @nloFa1107 (troque a senha!)");
-          });
-        }).catch(e => console.error("Err hashing seed admin:", e));
-      } else {
-        // console.log("Users already present, seed skipped.");
-      }
-    });
-  });
-})();
-
 //// ==== END BLOCO 2 ==== ////
 
 // -------------------- BLOCO 3: BROADCAST / SOCKET.IO --------------------
