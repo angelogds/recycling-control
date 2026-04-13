@@ -82,6 +82,17 @@ app.use(session({
 // -------------------- BLOCO 1: DB (após init) --------------------
 let db; // will be assigned after initDatabaseIfMissing
 
+function openDatabase() {
+  return new Promise((resolve, reject) => {
+    const conn = new sqlite3.Database(DB_FILE, (err) => {
+      if (err) return reject(err);
+      db = conn;
+      console.log("🔌 Banco SQLite conectado em:", DB_FILE);
+      resolve(conn);
+    });
+  });
+}
+
 // -------------------- BLOCO 2: AUTH helpers & LOGIN (edit here) ==== ////
 
 // Middleware: garantir autenticação (usa req.session.user)
@@ -117,6 +128,7 @@ app.get("/login", (req, res) => {
 app.post("/login", (req, res) => {
   const { username, password } = req.body;
   if (!username || !password) return res.render("login", { erro: "Usuário e senha são obrigatórios." });
+  if (!db || typeof db.get !== "function") return res.render("login", { erro: "Banco de dados ainda não está pronto. Tente novamente." });
 
   // checar se a tabela users existe (resiliência se DB foi recriado)
   db.get("SELECT name FROM sqlite_master WHERE type='table' AND name='users'", [], (tblErr, tblRow) => {
@@ -517,22 +529,15 @@ app.use((err, req, res, next) => {
 });
 
 // -------------------- BOOTSTRAP: init DB, open, seed admin --------------------
-(async function bootstrap() {
-  try {
-    await initDatabaseIfMissing();
-  } catch (e) {
-    console.error("Erro ao init DB:", e);
+function seedAdminIfNeeded() {
+  if (!db || typeof db.get !== "function") {
+    console.error("DB não inicializado: seed de admin ignorado para evitar crash.");
+    return;
   }
-
-  // open DB
-  db = new sqlite3.Database(DB_FILE, (err) => {
-    if (err) console.error("SQLite open error:", err);
-    else console.log("🔌 Banco SQLite conectado em:", DB_FILE);
-  });
 
   // ensure tables exist before seeding users
   db.get("SELECT name FROM sqlite_master WHERE type='table' AND name='users'", [], (err, tbl) => {
-    if (err) { console.error("Erro checar tabelas:", err); }
+    if (err) { console.error("Erro checar tabelas:", err); return; }
     if (!tbl) {
       console.warn("Tabela 'users' não encontrada. Verifique init_db.sql. Seed de usuários ignorado.");
       return;
@@ -554,6 +559,21 @@ app.use((err, req, res, next) => {
       }
     });
   });
+}
+
+(async function bootstrap() {
+  try {
+    await initDatabaseIfMissing();
+  } catch (e) {
+    console.error("Erro ao init DB:", e);
+  }
+
+  try {
+    await openDatabase();
+    seedAdminIfNeeded();
+  } catch (err) {
+    console.error("SQLite open error:", err);
+  }
 
   // start server
   const PORT = process.env.PORT || process.env.APP_PORT || 3002;
