@@ -564,11 +564,15 @@ function seedAdminIfNeeded() {
 (async function bootstrap() {
   try {
     await initDatabaseIfMissing();
+  } catch (e) {
+    console.error("Erro ao init DB:", e);
+  }
+
+  try {
     await openDatabase();
     seedAdminIfNeeded();
   } catch (err) {
-    console.error("Falha crítica ao inicializar SQLite. Encerrando processo:", err);
-    process.exit(1);
+    console.error("SQLite open error:", err);
   }
 
   // start server
