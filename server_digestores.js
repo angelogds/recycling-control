@@ -529,34 +529,41 @@ app.use((err, req, res, next) => {
 });
 
 // -------------------- BOOTSTRAP: init DB, open, seed admin --------------------
-function seedAdminIfNeeded() {
-  if (!db || typeof db.get !== "function") {
+function seedAdminIfNeeded(conn = db) {
+  if (!conn || typeof conn.get !== "function") {
     console.error("DB não inicializado: seed de admin ignorado para evitar crash.");
-    return;
+    return Promise.resolve(false);
   }
 
-  // ensure tables exist before seeding users
-  db.get("SELECT name FROM sqlite_master WHERE type='table' AND name='users'", [], (err, tbl) => {
-    if (err) { console.error("Erro checar tabelas:", err); return; }
-    if (!tbl) {
-      console.warn("Tabela 'users' não encontrada. Verifique init_db.sql. Seed de usuários ignorado.");
-      return;
-    }
-
-    db.get("SELECT COUNT(*) AS cnt FROM users", [], (err2, row) => {
-      if (err2) { console.error("Erro checking users:", err2); return; }
-      const cnt = (row && row.cnt) ? row.cnt : 0;
-      if (cnt === 0) {
-        const adminUser = { username: "angelo", nome: "Administrador", role: "admin", passwordPlain: "@nloFa1107" };
-        bcrypt.hash(adminUser.passwordPlain, 10).then(hash => {
-          db.run("INSERT INTO users (username, nome, role, password) VALUES (?, ?, ?, ?)", [adminUser.username, adminUser.nome, adminUser.role, hash], (e) => {
-            if (e) console.error("Err seed admin:", e);
-            else console.log("✔ Usuário admin criado: angelo / @nloFa1107 (troque a senha!)");
-          });
-        }).catch(e => console.error("Err hashing seed admin:", e));
-      } else {
-        console.log("Users already exist (count:", cnt, ")");
+  return new Promise((resolve) => {
+    // ensure tables exist before seeding users
+    conn.get("SELECT name FROM sqlite_master WHERE type='table' AND name='users'", [], (err, tbl) => {
+      if (err) { console.error("Erro checar tabelas:", err); return resolve(false); }
+      if (!tbl) {
+        console.warn("Tabela 'users' não encontrada. Verifique init_db.sql. Seed de usuários ignorado.");
+        return resolve(false);
       }
+
+      conn.get("SELECT COUNT(*) AS cnt FROM users", [], (err2, row) => {
+        if (err2) { console.error("Erro checking users:", err2); return resolve(false); }
+        const cnt = (row && row.cnt) ? row.cnt : 0;
+        if (cnt === 0) {
+          const adminUser = { username: "angelo", nome: "Administrador", role: "admin", passwordPlain: "@nloFa1107" };
+          bcrypt.hash(adminUser.passwordPlain, 10).then(hash => {
+            conn.run("INSERT INTO users (username, nome, role, password) VALUES (?, ?, ?, ?)", [adminUser.username, adminUser.nome, adminUser.role, hash], (e) => {
+              if (e) console.error("Err seed admin:", e);
+              else console.log("✔ Usuário admin criado: angelo / @nloFa1107 (troque a senha!)");
+              resolve(!e);
+            });
+          }).catch(e => {
+            console.error("Err hashing seed admin:", e);
+            resolve(false);
+          });
+        } else {
+          console.log("Users already exist (count:", cnt, ")");
+          resolve(true);
+        }
+      });
     });
   });
 }
@@ -566,13 +573,15 @@ function seedAdminIfNeeded() {
     await initDatabaseIfMissing();
   } catch (e) {
     console.error("Erro ao init DB:", e);
+    process.exit(1);
   }
 
   try {
-    await openDatabase();
-    seedAdminIfNeeded();
+    const conn = await openDatabase();
+    await seedAdminIfNeeded(conn);
   } catch (err) {
     console.error("SQLite open error:", err);
+    process.exit(1);
   }
 
   // start server
