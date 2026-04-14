@@ -7,83 +7,80 @@
   <link rel="stylesheet" href="/css/style.css">
   <script src="/socket.io/socket.io.js"></script>
 </head>
-<body>
-  <div class="top-bar">
-    <div>Operador: <%= usuario && usuario.nome ? usuario.nome : 'Usuário' %></div>
-    <div style="display:flex; gap:12px;">
-      <a href="/operador/historico">Histórico</a>
-      <a href="/tovas">Tovas</a>
-      <a href="/dashboard">Dashboard</a>
-      <% if (usuario && usuario.role === 'admin') { %>
-        <a href="/admin/reports">Relatórios</a>
-        <a href="/admin/users">Configurações</a>
-      <% } %>
-      <a href="/logout">Sair</a>
-    </div>
-  </div>
+<body class="operador-body">
+  <div class="operador-shell">
+    <aside class="painel-sidebar" aria-hidden="true"></aside>
 
-  <div class="container">
-    <div class="card">
-      <div class="card-title">Digestores — Estado Atual</div>
-
-      <div class="row" id="digestorGrid">
-        <% if (!digestores || digestores.length === 0) { %>
-          <div class="col-12"><div class="alert">Nenhum digestor cadastrado.</div></div>
-        <% } else { %>
-          <% digestores.forEach(d => { %>
-            <div class="col-4">
-              <div class="digestor-box" data-id="<%= d.id %>">
-                <h2 class="digestor-name"><%= d.nome %></h2>
-                <p>Capacidade: <strong><%= d.capacidade_tn %> tn</strong></p>
-                <p>Status: <span class="status-<%= d.status === 'waiting_discharge' ? 'waiting' : d.status %>"><%= d.status %></span></p>
-
-                <% if (d.status === 'idle') { %>
-                  <hr style="border-color:#ffffff22; margin:8px 0;">
-                  <select class="select-tova" data-digestor="<%= d.id %>">
-                    <option value="">Selecionar Tova</option>
-                  </select>
-                  <input class="input-ton" data-digestor="<%= d.id %>" placeholder="Toneladas solicitadas" type="number" step="0.1">
-                  <input class="input-mp" data-digestor="<%= d.id %>" placeholder="Matéria-prima (ex: osso)">
-                  <button class="btn btn-blue btn-full btn-start-trit" data-digestor-id="<%= d.id %>">Iniciar Trituração</button>
-                <% } %>
-
-                <% if (d.status === 'operating') { %>
-                  <hr style="border-color:#ffffff22; margin:8px 0;">
-                  <p><strong>Trituração ativa</strong></p>
-                  <button class="btn btn-green btn-full btn-finish-trit" data-trit-id="">Encerrar Trituração</button>
-                <% } %>
-
-                <% if (d.status === 'cooking') { %>
-                  <hr style="border-color:#ffffff22; margin:8px 0;">
-                  <button class="btn btn-blue btn-full btn-finish-cook" data-cook-id="">Encerrar Cozimento</button>
-                <% } %>
-
-                <% if (d.status === 'waiting_discharge') { %>
-                  <hr style="border-color:#ffffff22; margin:8px 0;">
-                  <button class="btn btn-gray btn-full btn-open-discharge" data-digestor-id="<%= d.id %>">Registrar Descarga</button>
-                <% } %>
-              </div>
-            </div>
-          <% }) %>
-        <% } %>
-      </div>
-    </div>
-
-    <div id="dischargeModal" style="display:none; position:fixed; inset:0; align-items:center; justify-content:center; background:rgba(0,0,0,0.45); z-index:999;">
-      <div class="card" style="width:420px; margin-bottom:0;">
-        <div class="card-title">Registrar Descarga</div>
-        <input id="dis_dig_id" type="hidden">
-        <label>Toneladas descartadas</label>
-        <input id="dis_ton" placeholder="0.0" type="number" step="0.1">
-        <label>Observações</label>
-        <textarea id="dis_notes" rows="3"></textarea>
-        <div style="display:flex; gap:8px;">
-          <button id="dis_save" class="btn btn-green btn-full">Salvar e Finalizar</button>
-          <button id="dis_cancel" class="btn btn-red btn-full">Cancelar</button>
+    <main class="operador-main">
+      <header class="operador-header glass-surface">
+        <div class="brand-wrap">
+          <img src="/img/logo_menu_256.png" alt="Campo do Gado" class="brand-logo" />
+          <div>
+            <h1>Operador de Produção</h1>
+            <p>Olá, Operador <%= usuario && usuario.nome ? usuario.nome : 'Carlos' %> • <strong>3 veículo(s)</strong> no pátio</p>
+          </div>
         </div>
+
+        <div class="header-actions">
+          <button class="icon-btn" data-theme-toggle data-theme-icon aria-label="Alternar tema"></button>
+          <a class="icon-btn" href="/logout" aria-label="Sair do sistema">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M14 8l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M18 12H9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M11 5H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </a>
+        </div>
+      </header>
+
+      <section class="vehicles-section">
+        <h2>Veículos no Pátio</h2>
+        <p class="section-meta"><strong>3 veículo(s)</strong> • 80,0 toneladas</p>
+        <div class="vehicles-grid">
+          <article class="vehicle-card glass-surface">
+            <span class="vehicle-number">1</span>
+            <h3>F20</h3>
+            <p class="vehicle-weight">⚖ 60t</p>
+            <button class="vehicle-action" type="button">Descarregar</button>
+          </article>
+          <article class="vehicle-card glass-surface">
+            <span class="vehicle-number">2</span>
+            <h3>FROTA-002</h3>
+            <p class="vehicle-weight">⚖ 10t</p>
+            <button class="vehicle-action" type="button">Descarregar</button>
+          </article>
+          <article class="vehicle-card glass-surface">
+            <span class="vehicle-number">3</span>
+            <h3>FROTA-001</h3>
+            <p class="vehicle-weight">⚖ 10t</p>
+            <button class="vehicle-action" type="button">Descarregar</button>
+          </article>
+        </div>
+      </section>
+
+      <section class="digestores-section">
+        <h2>Gestão dos Digestores</h2>
+        <div class="digestores-grid" id="digestorGrid"></div>
+      </section>
+    </main>
+  </div>
+
+  <div id="dischargeModal" class="modal-wrap" style="display:none;">
+    <div class="card modal-card">
+      <div class="card-title">Registrar Descarga</div>
+      <input id="dis_dig_id" type="hidden">
+      <label>Toneladas descartadas</label>
+      <input id="dis_ton" placeholder="0.0" type="number" step="0.1">
+      <label>Observações</label>
+      <textarea id="dis_notes" rows="3"></textarea>
+      <div style="display:flex; gap:8px;">
+        <button id="dis_save" class="btn btn-green btn-full">Salvar e Finalizar</button>
+        <button id="dis_cancel" class="btn btn-red btn-full">Cancelar</button>
       </div>
     </div>
   </div>
+
+  <div class="emergent-seal">Feito com Emergent</div>
 
   <script>
     window.__OPERADOR_DATA__ = {
@@ -91,6 +88,7 @@
       digestores: <%- JSON.stringify(digestores || []) %>
     };
   </script>
+  <script src="/js/theme.js"></script>
   <script src="/js/operador.js"></script>
 </body>
 </html>

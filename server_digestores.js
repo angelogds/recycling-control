@@ -914,6 +914,71 @@ function seedAdminIfNeeded() {
   });
 }
 
+function seedFactoryDefaultsIfNeeded() {
+  return new Promise((resolve) => {
+    if (!db || typeof db.get !== "function") {
+      console.error("DB não inicializado: seed de fábrica ignorado.");
+      return resolve("ignored_db_not_ready");
+    }
+
+    db.get("SELECT COUNT(*) AS cnt FROM digestors", [], (digErr, digRow) => {
+      if (digErr) {
+        console.error("Erro ao contar digestores:", digErr);
+        return resolve("error_count_digestors");
+      }
+
+      const digestorCount = Number(digRow?.cnt || 0);
+      if (digestorCount === 0) {
+        db.run(
+          `INSERT INTO digestors (id, nome, capacidade_tn, status)
+           VALUES
+             (1, 'Digestor 1', 20, 'idle'),
+             (2, 'Digestor 2', 20, 'idle'),
+             (3, 'Digestor 3', 25, 'idle'),
+             (4, 'Digestor 4', 25, 'idle')`,
+          [],
+          (insertErr) => {
+            if (insertErr) {
+              console.error("Erro ao inserir digestores padrão:", insertErr);
+              return resolve("error_insert_digestors");
+            }
+            console.log("✅ Digestores padrão criados (1 a 4).");
+          }
+        );
+      }
+
+      db.get("SELECT COUNT(*) AS cnt FROM tovas", [], (tovaErr, tovaRow) => {
+        if (tovaErr) {
+          console.error("Erro ao contar tovas:", tovaErr);
+          return resolve(digestorCount === 0 ? "created_digestors_only" : "error_count_tovas");
+        }
+
+        const tovaCount = Number(tovaRow?.cnt || 0);
+        if (tovaCount > 0) {
+          return resolve(digestorCount === 0 ? "created_digestors" : "already_seeded");
+        }
+
+        db.run(
+          `INSERT INTO tovas (id, nome, capacidade_tn, current_tn)
+           VALUES
+             (1, 'Tova A', 15, 8),
+             (2, 'Tova B', 20, 15),
+             (3, 'Tova C', 18, 12)`,
+          [],
+          (insertTovaErr) => {
+            if (insertTovaErr) {
+              console.error("Erro ao inserir tovas padrão:", insertTovaErr);
+              return resolve(digestorCount === 0 ? "created_digestors_error_tovas" : "error_insert_tovas");
+            }
+            console.log("✅ Tovas padrão criadas (A, B e C).");
+            return resolve(digestorCount === 0 ? "created_digestors_and_tovas" : "created_tovas");
+          }
+        );
+      });
+    });
+  });
+}
+
 (async function bootstrap() {
   console.log("🟦 Boot do recycling-control iniciado");
   console.log(`🌎 Ambiente: ${NODE_ENV}`);
@@ -929,10 +994,12 @@ function seedAdminIfNeeded() {
   }
 
   let adminSeedStatus = "not_started";
+  let factorySeedStatus = "not_started";
   try {
     await openDatabase();
     await ensureUsersColumns();
     adminSeedStatus = await seedAdminIfNeeded();
+    factorySeedStatus = await seedFactoryDefaultsIfNeeded();
   } catch (err) {
     console.error("❌ Erro ao conectar no SQLite:", err);
   }
@@ -942,5 +1009,6 @@ function seedAdminIfNeeded() {
     console.log(`🚀 Servidor iniciado na porta ${PORT}`);
     console.log(`❤️ Healthcheck disponível em /health`);
     console.log(`👤 Seed admin status: ${adminSeedStatus}`);
+    console.log(`🏭 Seed fábrica status: ${factorySeedStatus}`);
   });
 })();
