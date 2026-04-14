@@ -9,7 +9,10 @@
 <body>
   <div class="top-bar">
     <div>Admin • Editar Usuário</div>
-    <div><a href="/admin/users">Voltar</a></div>
+    <div style="display:flex; gap:10px; align-items:center;">
+      <button class="theme-toggle" type="button" data-theme-toggle>🌙 Escuro</button>
+      <a href="/admin/users">Voltar</a>
+    </div>
   </div>
 
   <div class="container">
@@ -19,11 +22,13 @@
       <form method="POST" action="/admin/users/<%= user.id %>/update">
         <label>Nome</label>
         <input name="nome" value="<%= user.nome %>">
+        <label>E-mail</label>
+        <input name="email" type="email" value="<%= user.email || '' %>">
         <label>Role</label>
         <select name="role">
           <option value="operador" <%= user.role==='operador'?'selected':'' %>>Operador</option>
           <option value="portaria" <%= user.role==='portaria'?'selected':'' %>>Portaria</option>
-          <option value="admin" <%= user.role==='admin'?'selected':'' %>>Admin</option>
+          <option value="admin" <%= user.role==='admin'?'selected':'' %>>Administrativo</option>
         </select>
         <label>Nova senha (deixe em branco para manter)</label>
         <input name="password" type="password">
@@ -34,5 +39,6 @@
       </form>
     </div>
   </div>
+  <script src="/js/theme.js"></script>
 </body>
 </html>

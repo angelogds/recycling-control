@@ -15,7 +15,10 @@
   </style>
 </head>
 <body>
-  <div class="top-bar"><div>Campo do Gado — Sistema</div><div></div></div>
+  <div class="top-bar">
+    <div>Controle Industrial de Reciclagem</div>
+    <div><button class="theme-toggle" type="button" data-theme-toggle>🌙 Escuro</button></div>
+  </div>
   <div class="container login-wrap">
     <div class="login-card">
       <div class="login-title">Acesso ao Sistema</div>
@@ -25,8 +28,8 @@
       <% } %>
 
       <form method="POST" action="/login">
-        <label>Usuário</label>
-        <input name="username" placeholder="Digite seu usuário" required>
+        <label>Usuário ou e-mail</label>
+        <input name="identifier" placeholder="Digite usuário ou e-mail" required>
         <label>Senha</label>
         <input name="password" type="password" placeholder="Digite sua senha" required>
         <div style="margin-top:12px;">
@@ -34,8 +37,9 @@
         </div>
       </form>
 
-      <div style="margin-top:12px; color:#e9f7ee; font-size:13px;">Campo do Gado • Sistema de Controle de Processo</div>
+      <div style="margin-top:12px; color:#e9f7ee; font-size:13px;">Layout industrial corporativo • idioma PT-BR</div>
     </div>
   </div>
+  <script src="/js/theme.js"></script>
 </body>
 </html>

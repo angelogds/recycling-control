@@ -4,6 +4,24 @@
    =========================================== */
 
 /* RESET */
+:root {
+    --bg-main: linear-gradient(135deg, #063f24, #0c7a43);
+    --text-main: #ffffff;
+    --card-bg: rgba(255,255,255,0.1);
+    --card-border: #ffffff22;
+    --input-bg: rgba(255,255,255,0.85);
+    --input-text: #222;
+}
+
+[data-theme="light"] {
+    --bg-main: linear-gradient(135deg, #dfe8f0, #f6f8fb);
+    --text-main: #1f2d3d;
+    --card-bg: rgba(255,255,255,0.9);
+    --card-border: #d6dee8;
+    --input-bg: #ffffff;
+    --input-text: #1f2d3d;
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -12,9 +30,9 @@
 
 html, body {
     font-family: "Segoe UI", Arial, sans-serif;
-    background: linear-gradient(135deg, #063f24, #0c7a43);
+    background: var(--bg-main);
     min-height: 100vh;
-    color: #ffffff;
+    color: var(--text-main);
 }
 
 /* -----------------------
@@ -53,8 +71,8 @@ html, body {
    CARDS PREMIUM
 -------------------------*/
 .card {
-    background: rgba(255,255,255,0.1);
-    border: 1px solid #ffffff22;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
     padding: 22px;
     border-radius: 16px;
     backdrop-filter: blur(6px);
@@ -80,12 +98,13 @@ input, select, textarea {
     margin-top: 5px;
     margin-bottom: 15px;
     font-size: 15px;
-    background: rgba(255,255,255,0.85);
+    background: var(--input-bg);
+    color: var(--input-text);
 }
 
 label {
     font-weight: bold;
-    color: #fff;
+    color: var(--text-main);
 }
 
 /* -----------------------
@@ -256,6 +275,16 @@ label {
 .metric-grid strong {
     display: block;
     font-size: 24px;
+}
+
+.theme-toggle {
+    border: 1px solid #ffffff55;
+    border-radius: 999px;
+    background: transparent;
+    color: inherit;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 13px;
 }
 
 .metric-grid span,

@@ -116,6 +116,20 @@ function openDatabase() {
   });
 }
 
+function ensureUsersColumns() {
+  return new Promise((resolve, reject) => {
+    db.all("PRAGMA table_info(users)", [], (err, columns) => {
+      if (err) return reject(err);
+      const names = new Set((columns || []).map((c) => c.name));
+      if (names.has("email")) return resolve();
+      db.run("ALTER TABLE users ADD COLUMN email TEXT", [], (alterErr) => {
+        if (alterErr) return reject(alterErr);
+        resolve();
+      });
+    });
+  });
+}
+
 // -------------------- BLOCO 2: AUTH helpers & LOGIN (edit here) ==== ////
 
 // Middleware: garantir autenticação (usa req.session.user)
@@ -149,8 +163,9 @@ app.get("/login", (req, res) => {
 
 // LOGIN (POST)
 app.post("/login", (req, res) => {
-  const { username, password } = req.body;
-  if (!username || !password) return res.render("login", { erro: "Usuário e senha são obrigatórios." });
+  const identifier = (req.body.identifier || req.body.username || "").trim();
+  const { password } = req.body;
+  if (!identifier || !password) return res.render("login", { erro: "Usuário/e-mail e senha são obrigatórios." });
   if (!db || typeof db.get !== "function") return res.render("login", { erro: "Banco de dados ainda não está pronto. Tente novamente." });
 
   // checar se a tabela users existe (resiliência se DB foi recriado)
@@ -161,7 +176,8 @@ app.post("/login", (req, res) => {
     }
     if (!tblRow) return res.render("login", { erro: "Sistema não inicializado. Crie a tabela users." });
 
-    db.get("SELECT * FROM users WHERE username = ?", [username], async (err, user) => {
+    const loginField = identifier.includes("@") ? "email" : "username";
+    db.get(`SELECT * FROM users WHERE ${loginField} = ?`, [identifier], async (err, user) => {
       if (err) {
         console.error("Err DB login:", err);
         return res.render("login", { erro: "Erro interno." });
@@ -619,9 +635,20 @@ app.get("/reports/cycle/:id", ensureAuth, (req, res) => {
 
 // list
 app.get("/admin/users", ensureAuth, ensureRole("admin"), (req, res) => {
-  db.all("SELECT id, username, nome, role FROM users ORDER BY id", [], (err, rows) => {
+  db.all("SELECT id, username, nome, email, role FROM users ORDER BY id", [], (err, rows) => {
     if (err) return res.status(500).send("Erro DB");
-    res.render("admin_users_list", { usuario: req.session.user, users: rows || [] });
+    db.get("SELECT COUNT(*) AS total_gestores FROM users WHERE role = 'admin'", [], (countErr, countRow) => {
+      if (countErr) return res.status(500).send("Erro DB");
+      db.get("SELECT COUNT(*) AS total_digestores FROM digestors", [], (digErr, digRow) => {
+        if (digErr) return res.status(500).send("Erro DB");
+        res.render("admin_users_list", {
+          usuario: req.session.user,
+          users: rows || [],
+          totalGestores: Number(countRow?.total_gestores || 0),
+          totalDigestores: Number(digRow?.total_digestores || 0)
+        });
+      });
+    });
   });
 });
 
@@ -632,14 +659,18 @@ app.get("/admin/users/new", ensureAuth, ensureRole("admin"), (req, res) => {
 
 // create
 app.post("/admin/users", ensureAuth, ensureRole("admin"), async (req, res) => {
-  const { username, nome, password, role } = req.body;
+  const { username, nome, email, password, role } = req.body;
   if (!username || !password) return res.render("admin_users_new", { usuario: req.session.user, error: "Usuário e senha obrigatórios" });
   try {
     const hash = await bcrypt.hash(password, 10);
-    db.run("INSERT INTO users (username, nome, role, password) VALUES (?, ?, ?, ?)", [username, nome || username, role || "operador", hash], (err) => {
-      if (err) { console.error("Err create user:", err); return res.render("admin_users_new", { usuario: req.session.user, error: "Erro ao criar usuário" }); }
-      res.redirect("/admin/users");
-    });
+    db.run(
+      "INSERT INTO users (username, nome, email, role, password) VALUES (?, ?, ?, ?, ?)",
+      [username, nome || username, email || null, role || "operador", hash],
+      (err) => {
+        if (err) { console.error("Err create user:", err); return res.render("admin_users_new", { usuario: req.session.user, error: "Erro ao criar usuário" }); }
+        res.redirect("/admin/users");
+      }
+    );
   } catch (e) {
     console.error("Err bcrypt create:", e);
     res.render("admin_users_new", { usuario: req.session.user, error: "Erro interno" });
@@ -649,7 +680,7 @@ app.post("/admin/users", ensureAuth, ensureRole("admin"), async (req, res) => {
 // edit form
 app.get("/admin/users/:id/edit", ensureAuth, ensureRole("admin"), (req, res) => {
   const id = req.params.id;
-  db.get("SELECT id, username, nome, role FROM users WHERE id = ?", [id], (err, row) => {
+  db.get("SELECT id, username, nome, email, role FROM users WHERE id = ?", [id], (err, row) => {
     if (err) return res.status(500).send("Erro DB");
     if (!row) return res.status(404).send("Usuário não encontrado");
     res.render("admin_users_edit", { usuario: req.session.user, user: row, error: null });
@@ -659,11 +690,11 @@ app.get("/admin/users/:id/edit", ensureAuth, ensureRole("admin"), (req, res) => 
 // update
 app.post("/admin/users/:id/update", ensureAuth, ensureRole("admin"), async (req, res) => {
   const id = req.params.id;
-  const { nome, role, password } = req.body;
+  const { nome, email, role, password } = req.body;
   if (password && password.length > 0) {
     try {
       const hash = await bcrypt.hash(password, 10);
-      db.run("UPDATE users SET nome = ?, role = ?, password = ? WHERE id = ?", [nome, role, hash, id], (err) => {
+      db.run("UPDATE users SET nome = ?, email = ?, role = ?, password = ? WHERE id = ?", [nome, email || null, role, hash, id], (err) => {
         if (err) { console.error("Err update user:", err); return res.status(500).send("Erro ao atualizar"); }
         res.redirect("/admin/users");
       });
@@ -671,7 +702,7 @@ app.post("/admin/users/:id/update", ensureAuth, ensureRole("admin"), async (req,
       console.error("Err bcrypt update:", e); return res.status(500).send("Erro interno");
     }
   } else {
-    db.run("UPDATE users SET nome = ?, role = ? WHERE id = ?", [nome, role, id], (err) => {
+    db.run("UPDATE users SET nome = ?, email = ?, role = ? WHERE id = ?", [nome, email || null, role, id], (err) => {
       if (err) { console.error("Err update user:", err); return res.status(500).send("Erro ao atualizar"); }
       res.redirect("/admin/users");
     });
@@ -900,6 +931,7 @@ function seedAdminIfNeeded() {
   let adminSeedStatus = "not_started";
   try {
     await openDatabase();
+    await ensureUsersColumns();
     adminSeedStatus = await seedAdminIfNeeded();
   } catch (err) {
     console.error("❌ Erro ao conectar no SQLite:", err);
