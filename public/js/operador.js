@@ -155,6 +155,18 @@ document.addEventListener("click", async (ev) => {
     if (!res.ok) alert(`Erro: ${j.error || "Falha ao finalizar cozimento"}`);
   }
 
+  if (ev.target.matches(".btn-start-cook")) {
+    const digestorId = Number(ev.target.dataset.digestorId);
+    const tritId = Number(ev.target.dataset.tritId);
+    const res = await fetch("/api/cooking/start", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ digestor_id: digestorId, trituration_id: tritId })
+    });
+    const j = await res.json();
+    if (!res.ok) alert(`Erro: ${j.error || "Falha ao iniciar cozimento"}`);
+  }
+
   if (ev.target.matches(".btn-open-discharge")) {
     disDigIdInput.value = ev.target.dataset.digestorId;
     disTonInput.value = "";

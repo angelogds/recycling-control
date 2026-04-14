@@ -14,7 +14,10 @@
       <a href="/operador/historico">Histórico</a>
       <a href="/tovas">Tovas</a>
       <a href="/dashboard">Dashboard</a>
-      <% if (usuario && usuario.role === 'admin') { %><a href="/admin/users">Usuários</a><% } %>
+      <% if (usuario && usuario.role === 'admin') { %>
+        <a href="/admin/reports">Relatórios</a>
+        <a href="/admin/users">Configurações</a>
+      <% } %>
       <a href="/logout">Sair</a>
     </div>
   </div>

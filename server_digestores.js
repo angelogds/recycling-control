@@ -11,6 +11,7 @@ const sqlite3 = require("sqlite3").verbose();
 const session = require("express-session");
 const SQLiteStore = require("connect-sqlite3")(session);
 const bcrypt = require("bcrypt");
+const PDFDocument = require("pdfkit");
 const { Server } = require("socket.io");
 const crypto = require("crypto");
 
@@ -236,6 +237,11 @@ function broadcastState() {
     if (err) { console.error("DB error (entries):", err); io.emit("entries:update", []); }
     else io.emit("entries:update", rows || []);
   });
+
+  db.all("SELECT id, truck_plate, toneladas_declared, arrival_at FROM entries WHERE status = 'reception_finished' ORDER BY arrival_at DESC LIMIT 50", [], (err, rows) => {
+    if (err) { console.error("DB error (entries finished):", err); io.emit("entries:finished:update", []); }
+    else io.emit("entries:finished:update", rows || []);
+  });
 }
 
 // socket events
@@ -287,12 +293,23 @@ app.get("/portaria/chegada", ensureAuth, ensureRole("portaria"), (req, res) => {
 });
 
 app.post("/portaria/chegada", ensureAuth, ensureRole("portaria"), (req, res) => {
-  const { placa, toneladas } = req.body;
-  if (!placa || !toneladas) return res.status(400).send("Placa e toneladas são obrigatórios.");
-  db.run("INSERT INTO entries (truck_plate, toneladas_declared, portaria_user_id) VALUES (?, ?, ?)", [placa, toneladas, req.session.user.id], function (err) {
+  const frota = (req.body.frota || req.body.placa || "").trim();
+  const toneladas = req.body.toneladas;
+  if (!frota || !toneladas) return res.status(400).send("Frota e toneladas são obrigatórios.");
+  db.run("INSERT INTO entries (truck_plate, toneladas_declared, portaria_user_id) VALUES (?, ?, ?)", [frota, toneladas, req.session.user.id], function (err) {
     if (err) { console.error("Erro ao inserir entrada:", err); return res.status(500).send("Erro ao registrar chegada."); }
     broadcastState();
     res.redirect("/portaria");
+  });
+});
+
+app.post("/api/entries/:id/finish", ensureAuth, ensureRole("portaria"), (req, res) => {
+  const id = Number(req.params.id);
+  if (!id) return res.status(400).json({ error: "ID inválido" });
+  db.run("UPDATE entries SET status = 'reception_finished' WHERE id = ?", [id], function (err) {
+    if (err) return res.status(500).json({ error: err.message });
+    broadcastState();
+    return res.json({ ok: true });
   });
 });
 
@@ -360,7 +377,7 @@ app.post("/api/trituracao/start", ensureAuth, (req, res) => {
   });
 });
 
-// Trituração FINISH -> start cooking automatically
+// Trituração FINISH
 app.post("/api/trituracao/finish", ensureAuth, (req, res) => {
   const { trituration_id, toneladas_trituradas } = req.body;
   if (!trituration_id) return res.status(400).json({ error: 'Dados incompletos' });
@@ -368,14 +385,12 @@ app.post("/api/trituracao/finish", ensureAuth, (req, res) => {
   const now = new Date().toISOString();
   db.run(`UPDATE trituration_cycles SET end_tritura_at = ?, toneladas_trituradas = ?, status = 'finished' WHERE id = ?`, [now, toneladas_trituradas || 0, trituration_id], function (err) {
     if (err) { console.error('Err finish trit:', err); return res.status(500).json({ error: err.message }); }
-    db.get("SELECT digestor_id FROM trituration_cycles WHERE id = ?", [trituration_id], (e, row) => {
-      if (e || !row) { broadcastState(); return res.json({ ok: true }); }
-      startCooking(row.digestor_id, trituration_id, req.session.user, res);
-    });
+    broadcastState();
+    return res.json({ ok: true, finished_at: now });
   });
 });
 
-// helper to start cooking automatically
+// helper to start cooking
 function startCooking(digestor_id, trituration_id, operatorUser = { id: 1 }, res = null) {
   const now = new Date().toISOString();
   db.run(`INSERT INTO cooking_cycles (digestor_id, trituration_id, start_cook_at, status, operator_id) VALUES (?, ?, ?, 'started', ?)`, [digestor_id, trituration_id, now, operatorUser.id], function (err) {
@@ -394,6 +409,16 @@ function startCooking(digestor_id, trituration_id, operatorUser = { id: 1 }, res
     });
   });
 }
+
+app.post("/api/cooking/start", ensureAuth, (req, res) => {
+  const { digestor_id, trituration_id } = req.body;
+  if (!digestor_id || !trituration_id) return res.status(400).json({ error: "digestor_id e trituration_id são obrigatórios" });
+  db.get("SELECT id FROM cooking_cycles WHERE trituration_id = ? AND status IN ('created','started') LIMIT 1", [trituration_id], (e, row) => {
+    if (e) return res.status(500).json({ error: e.message });
+    if (row) return res.status(409).json({ error: "Já existe cozimento ativo para esta trituração." });
+    return startCooking(digestor_id, trituration_id, req.session.user, res);
+  });
+});
 
 // Cooking FINISH
 app.post("/api/cooking/finish", ensureAuth, (req, res) => {
@@ -562,6 +587,133 @@ app.post("/admin/users/:id/delete", ensureAuth, ensureRole("admin"), (req, res) 
   db.run("DELETE FROM users WHERE id = ?", [id], (err) => {
     if (err) { console.error("Err delete user:", err); return res.status(500).send("Erro ao excluir"); }
     res.redirect("/admin/users");
+  });
+});
+
+function parseReportDateInput(inputDate) {
+  const d = inputDate && /^\d{4}-\d{2}-\d{2}$/.test(inputDate) ? inputDate : new Date().toISOString().slice(0, 10);
+  const start = new Date(`${d}T00:00:00.000Z`).toISOString();
+  const end = new Date(`${d}T23:59:59.999Z`).toISOString();
+  return { date: d, start, end };
+}
+
+function getDailyReportData(inputDate, callback) {
+  const { date, start, end } = parseReportDateInput(inputDate);
+  const report = { date, toneladas_processadas_dia: 0, frotas_utilizadas: [], digestores: [] };
+  db.get(
+    `SELECT COALESCE(SUM(toneladas_trituradas), 0) AS total
+     FROM trituration_cycles
+     WHERE end_tritura_at BETWEEN ? AND ?`,
+    [start, end],
+    (errT, tonRow) => {
+      if (errT) return callback(errT);
+      report.toneladas_processadas_dia = Number(tonRow?.total || 0);
+      db.all(
+        `SELECT DISTINCT truck_plate AS frota
+         FROM entries
+         WHERE arrival_at BETWEEN ? AND ?
+         ORDER BY truck_plate`,
+        [start, end],
+        (errF, frotaRows) => {
+          if (errF) return callback(errF);
+          report.frotas_utilizadas = (frotaRows || []).map((r) => r.frota).filter(Boolean);
+          const sqlDigestores = `
+            SELECT
+              d.id,
+              d.nome,
+              COALESCE(SUM(tc.toneladas_trituradas), 0) AS toneladas_processadas,
+              COALESCE(SUM((julianday(cy.ended_at) - julianday(cy.started_at)) * 24 * 60), 0) AS tempo_total_min,
+              COUNT(cy.id) AS ciclos_total
+            FROM digestors d
+            LEFT JOIN cycles cy
+              ON cy.digestor_id = d.id
+              AND cy.started_at BETWEEN ? AND ?
+              AND cy.status = 'finished'
+            LEFT JOIN trituration_cycles tc ON tc.id = cy.trituration_id
+            GROUP BY d.id, d.nome
+            ORDER BY d.id
+          `;
+          db.all(sqlDigestores, [start, end], (errD, digRows) => {
+            if (errD) return callback(errD);
+            const digestores = (digRows || []).map((d) => ({
+              id: d.id,
+              nome: d.nome,
+              toneladas_processadas: Number(d.toneladas_processadas || 0),
+              tempo_total_min: Math.round(Number(d.tempo_total_min || 0)),
+              ciclos_total: Number(d.ciclos_total || 0),
+              ciclos: []
+            }));
+            const cycleSql = `
+              SELECT
+                cy.id AS cycle_id,
+                cy.digestor_id,
+                cy.started_at,
+                cy.ended_at,
+                ROUND((julianday(cy.ended_at) - julianday(cy.started_at)) * 24 * 60) AS tempo_ciclo_min
+              FROM cycles cy
+              WHERE cy.started_at BETWEEN ? AND ?
+                AND cy.status = 'finished'
+              ORDER BY cy.digestor_id, cy.id
+            `;
+            db.all(cycleSql, [start, end], (errC, cycleRows) => {
+              if (errC) return callback(errC);
+              const byDigestor = new Map(digestores.map((d) => [d.id, d]));
+              (cycleRows || []).forEach((c) => {
+                const group = byDigestor.get(c.digestor_id);
+                if (!group) return;
+                group.ciclos.push({
+                  cycle_id: c.cycle_id,
+                  started_at: c.started_at,
+                  ended_at: c.ended_at,
+                  tempo_ciclo_min: Number(c.tempo_ciclo_min || 0)
+                });
+              });
+              report.digestores = digestores;
+              return callback(null, report);
+            });
+          });
+        }
+      );
+    }
+  );
+}
+
+app.get("/admin/reports", ensureAuth, ensureRole("admin"), (req, res) => {
+  res.render("admin_reports", { usuario: req.session.user, defaultDate: new Date().toISOString().slice(0, 10) });
+});
+
+app.get("/api/admin/reports/daily", ensureAuth, ensureRole("admin"), (req, res) => {
+  getDailyReportData(req.query.date, (err, report) => {
+    if (err) return res.status(500).json({ error: err.message });
+    return res.json(report);
+  });
+});
+
+app.get("/admin/reports/daily/pdf", ensureAuth, ensureRole("admin"), (req, res) => {
+  const { date } = parseReportDateInput(req.query.date);
+  getDailyReportData(date, (err, report) => {
+    if (err) return res.status(500).send("Erro ao gerar relatório diário");
+    const doc = new PDFDocument({ size: "A4", margin: 36 });
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `inline; filename=relatorio_diario_${date}.pdf`);
+    doc.pipe(res);
+
+    doc.fontSize(18).text("Relatório Diário de Produção");
+    doc.moveDown(0.5);
+    doc.fontSize(12).text(`Data: ${report.date}`);
+    doc.text(`Toneladas processadas no dia: ${report.toneladas_processadas_dia}`);
+    doc.text(`Frotas utilizadas: ${report.frotas_utilizadas.join(", ") || "Nenhuma"}`);
+    doc.moveDown();
+
+    report.digestores.forEach((d) => {
+      doc.fontSize(13).text(`${d.nome}`, { underline: true });
+      doc.fontSize(11).text(`Toneladas: ${d.toneladas_processadas}`);
+      doc.text(`Tempo total de processamento: ${d.tempo_total_min} min`);
+      doc.text(`Ciclos do dia: ${d.ciclos_total}`);
+      d.ciclos.forEach((c) => doc.text(`• Ciclo ${c.cycle_id}: ${c.tempo_ciclo_min} min (${c.started_at} → ${c.ended_at})`));
+      doc.moveDown(0.6);
+    });
+    doc.end();
   });
 });
 
