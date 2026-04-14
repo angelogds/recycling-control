@@ -12,11 +12,18 @@ const session = require("express-session");
 const SQLiteStore = require("connect-sqlite3")(session);
 const bcrypt = require("bcrypt");
 const { Server } = require("socket.io");
+const crypto = require("crypto");
 
 // -------------------- PATHS --------------------
 const ROOT = __dirname;
-const DEFAULT_DB_PATH = path.join("/app/data", "database.sqlite");
+const NODE_ENV = process.env.NODE_ENV || "development";
+const IS_PRODUCTION = NODE_ENV === "production";
+const DEFAULT_DB_PATH = IS_PRODUCTION
+  ? path.join("/data", "database.sqlite")
+  : path.join(ROOT, "database.sqlite");
 const DB_FILE = process.env.DB_FILE || DEFAULT_DB_PATH;
+const DB_DIR = path.dirname(DB_FILE);
+const SESSION_DB_FILE = process.env.SESSION_DB_FILE || "sessions.sqlite";
 const SQL_INIT_FILE = path.join(ROOT, "init_db.sql");
 
 const PUBLIC_DIR = path.join(ROOT, "public");
@@ -24,7 +31,7 @@ const VIEWS_DIR = path.join(ROOT, "views");
 const REPORTS_DIR = path.join(PUBLIC_DIR, "reports");
 
 // ensure directories
-if (!fs.existsSync(path.dirname(DB_FILE))) fs.mkdirSync(path.dirname(DB_FILE), { recursive: true });
+if (!fs.existsSync(DB_DIR)) fs.mkdirSync(DB_DIR, { recursive: true });
 if (!fs.existsSync(PUBLIC_DIR)) fs.mkdirSync(PUBLIC_DIR, { recursive: true });
 if (!fs.existsSync(REPORTS_DIR)) fs.mkdirSync(REPORTS_DIR, { recursive: true });
 
@@ -71,12 +78,27 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // sessions
+const sessionSecret = process.env.SESSION_SECRET;
+if (!sessionSecret && IS_PRODUCTION) {
+  console.error("❌ SESSION_SECRET não definido em produção. Defina uma chave forte no Railway.");
+}
+if (!sessionSecret && !IS_PRODUCTION) {
+  console.warn("⚠️ SESSION_SECRET não definido. Usando segredo efêmero apenas para ambiente local.");
+}
+const effectiveSessionSecret = sessionSecret || crypto.randomBytes(32).toString("hex");
+
+app.set("trust proxy", 1);
 app.use(session({
-  store: new SQLiteStore({ db: "sessions.sqlite", dir: path.dirname(DB_FILE) }),
-  secret: process.env.SESSION_SECRET || "troque_essa_chave_em_producao",
+  store: new SQLiteStore({ db: SESSION_DB_FILE, dir: DB_DIR }),
+  secret: effectiveSessionSecret,
   resave: false,
   saveUninitialized: false,
-  cookie: { maxAge: 1000 * 60 * 60 * 8 } // 8 horas
+  cookie: {
+    maxAge: 1000 * 60 * 60 * 8,
+    secure: IS_PRODUCTION,
+    httpOnly: true,
+    sameSite: "lax"
+  } // 8 horas
 }));
 
 // -------------------- BLOCO 1: DB (após init) --------------------
@@ -227,6 +249,15 @@ io.on("connection", socket => {
 
 // root redirect
 app.get("/", (req, res) => res.redirect("/operador/painel"));
+
+// healthcheck (sem autenticação)
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    ok: true,
+    service: "recycling-control",
+    timestamp: new Date().toISOString()
+  });
+});
 
 // operador painel
 app.get("/operador/painel", ensureAuth, (req, res) => {
@@ -530,54 +561,93 @@ app.use((err, req, res, next) => {
 
 // -------------------- BOOTSTRAP: init DB, open, seed admin --------------------
 function seedAdminIfNeeded() {
-  if (!db || typeof db.get !== "function") {
-    console.error("DB não inicializado: seed de admin ignorado para evitar crash.");
-    return;
-  }
-
-  // ensure tables exist before seeding users
-  db.get("SELECT name FROM sqlite_master WHERE type='table' AND name='users'", [], (err, tbl) => {
-    if (err) { console.error("Erro checar tabelas:", err); return; }
-    if (!tbl) {
-      console.warn("Tabela 'users' não encontrada. Verifique init_db.sql. Seed de usuários ignorado.");
-      return;
+  return new Promise((resolve) => {
+    if (!db || typeof db.get !== "function") {
+      console.error("DB não inicializado: seed de admin ignorado para evitar crash.");
+      return resolve("ignored_db_not_ready");
     }
 
-    db.get("SELECT COUNT(*) AS cnt FROM users", [], (err2, row) => {
-      if (err2) { console.error("Erro checking users:", err2); return; }
-      const cnt = (row && row.cnt) ? row.cnt : 0;
-      if (cnt === 0) {
-        const adminUser = { username: "angelo", nome: "Administrador", role: "admin", passwordPlain: "@nloFa1107" };
-        bcrypt.hash(adminUser.passwordPlain, 10).then(hash => {
-          db.run("INSERT INTO users (username, nome, role, password) VALUES (?, ?, ?, ?)", [adminUser.username, adminUser.nome, adminUser.role, hash], (e) => {
-            if (e) console.error("Err seed admin:", e);
-            else console.log("✔ Usuário admin criado: angelo / @nloFa1107 (troque a senha!)");
-          });
-        }).catch(e => console.error("Err hashing seed admin:", e));
-      } else {
-        console.log("Users already exist (count:", cnt, ")");
+    db.get("SELECT name FROM sqlite_master WHERE type='table' AND name='users'", [], (err, tbl) => {
+      if (err) {
+        console.error("Erro ao verificar tabela users:", err);
+        return resolve("ignored_users_table_check_error");
       }
+      if (!tbl) {
+        console.warn("⚠️ Tabela 'users' não encontrada. Seed de admin ignorado.");
+        return resolve("ignored_users_table_missing");
+      }
+
+      db.get("SELECT COUNT(*) AS cnt FROM users", [], (err2, row) => {
+        if (err2) {
+          console.error("Erro ao contar usuários:", err2);
+          return resolve("ignored_users_count_error");
+        }
+
+        const cnt = row?.cnt || 0;
+        if (cnt > 0) {
+          console.log(`ℹ️ Seed admin ignorado: já existem ${cnt} usuário(s) cadastrados.`);
+          return resolve("ignored_users_exist");
+        }
+
+        const adminUsername = process.env.ADMIN_USERNAME;
+        const adminNome = process.env.ADMIN_NOME || "Administrador";
+        const adminPassword = process.env.ADMIN_PASSWORD;
+
+        if (!adminUsername || !adminPassword) {
+          console.warn("⚠️ Seed admin ignorado: defina ADMIN_USERNAME e ADMIN_PASSWORD para criação automática do primeiro usuário.");
+          return resolve("ignored_missing_env");
+        }
+
+        bcrypt.hash(adminPassword, 10)
+          .then((hash) => {
+            db.run(
+              "INSERT INTO users (username, nome, role, password) VALUES (?, ?, ?, ?)",
+              [adminUsername, adminNome, "admin", hash],
+              (e) => {
+                if (e) {
+                  console.error("Erro ao criar admin automático:", e);
+                  return resolve("error_insert_admin");
+                }
+                console.log(`✅ Usuário admin inicial criado: ${adminUsername}`);
+                return resolve("created_admin");
+              }
+            );
+          })
+          .catch((e) => {
+            console.error("Erro ao gerar hash do admin automático:", e);
+            return resolve("error_hash_admin");
+          });
+      });
     });
   });
 }
 
 (async function bootstrap() {
+  console.log("🟦 Boot do recycling-control iniciado");
+  console.log(`🌎 Ambiente: ${NODE_ENV}`);
+  console.log(`🗄️ Banco SQLite: ${DB_FILE}`);
+  console.log(`🧾 Sessões SQLite: ${path.join(DB_DIR, SESSION_DB_FILE)}`);
+
   try {
+    const databaseExisted = fs.existsSync(DB_FILE);
     await initDatabaseIfMissing();
+    console.log(databaseExisted ? "ℹ️ Banco existente reutilizado." : "✅ Banco criado automaticamente a partir do init_db.sql.");
   } catch (e) {
-    console.error("Erro ao init DB:", e);
+    console.error("❌ Erro ao inicializar banco:", e);
   }
 
+  let adminSeedStatus = "not_started";
   try {
     await openDatabase();
-    seedAdminIfNeeded();
+    adminSeedStatus = await seedAdminIfNeeded();
   } catch (err) {
-    console.error("SQLite open error:", err);
+    console.error("❌ Erro ao conectar no SQLite:", err);
   }
 
-  // start server
-  const PORT = process.env.PORT || process.env.APP_PORT || 3002;
+  const PORT = process.env.PORT || 3002;
   server.listen(PORT, () => {
-    console.log("🚀 Servidor rodando na porta", PORT);
+    console.log(`🚀 Servidor iniciado na porta ${PORT}`);
+    console.log(`❤️ Healthcheck disponível em /health`);
+    console.log(`👤 Seed admin status: ${adminSeedStatus}`);
   });
 })();
