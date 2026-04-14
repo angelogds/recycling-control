@@ -110,6 +110,14 @@ label {
     background: #0da44f;
 }
 
+.btn-blue {
+    background: #2c8cff;
+    color: white;
+}
+.btn-blue:hover {
+    background: #1f74da;
+}
+
 .btn-red {
     background: #ff4b4b;
     color: white;
