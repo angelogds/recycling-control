@@ -1,5 +1,5 @@
 <!doctype html>
-<html>
+<html lang="pt-BR">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -25,6 +25,7 @@
   <div class="container">
     <div class="card">
       <div class="card-title">Digestores — Estado Atual</div>
+
       <div class="row" id="digestorGrid">
         <% if (!digestores || digestores.length === 0) { %>
           <div class="col-12"><div class="alert">Nenhum digestor cadastrado.</div></div>
@@ -32,18 +33,38 @@
           <% digestores.forEach(d => { %>
             <div class="col-4">
               <div class="digestor-box" data-id="<%= d.id %>">
-                <div class="digestor-name"><%= d.nome %></div>
-                <div>Capacidade: <strong><%= d.capacidade_tn %> tn</strong></div>
-                <div>Status: <span class="status-<%= d.status === 'waiting_discharge' ? 'waiting' : d.status %>"><%= d.status %></span></div>
-                <hr style="border-color:#ffffff22; margin:8px 0;">
-                <div><strong>Trituração:</strong><div>Carregando...</div></div>
-                <hr style="border-color:#ffffff22; margin:8px 0;">
-                <div><strong>Cozimento:</strong><div>Carregando...</div></div>
-                <hr style="border-color:#ffffff22; margin:8px 0;">
-                <button class="btn btn-gray btn-full btn-open-discharge" data-digestor-id="<%= d.id %>">Registrar Descarga</button>
+                <h2 class="digestor-name"><%= d.nome %></h2>
+                <p>Capacidade: <strong><%= d.capacidade_tn %> tn</strong></p>
+                <p>Status: <span class="status-<%= d.status === 'waiting_discharge' ? 'waiting' : d.status %>"><%= d.status %></span></p>
+
+                <% if (d.status === 'idle') { %>
+                  <hr style="border-color:#ffffff22; margin:8px 0;">
+                  <select class="select-tova" data-digestor="<%= d.id %>">
+                    <option value="">Selecionar Tova</option>
+                  </select>
+                  <input class="input-ton" data-digestor="<%= d.id %>" placeholder="Toneladas solicitadas" type="number" step="0.1">
+                  <input class="input-mp" data-digestor="<%= d.id %>" placeholder="Matéria-prima (ex: osso)">
+                  <button class="btn btn-blue btn-full btn-start-trit" data-digestor-id="<%= d.id %>">Iniciar Trituração</button>
+                <% } %>
+
+                <% if (d.status === 'operating') { %>
+                  <hr style="border-color:#ffffff22; margin:8px 0;">
+                  <p><strong>Trituração ativa</strong></p>
+                  <button class="btn btn-green btn-full btn-finish-trit" data-trit-id="">Encerrar Trituração</button>
+                <% } %>
+
+                <% if (d.status === 'cooking') { %>
+                  <hr style="border-color:#ffffff22; margin:8px 0;">
+                  <button class="btn btn-blue btn-full btn-finish-cook" data-cook-id="">Encerrar Cozimento</button>
+                <% } %>
+
+                <% if (d.status === 'waiting_discharge') { %>
+                  <hr style="border-color:#ffffff22; margin:8px 0;">
+                  <button class="btn btn-gray btn-full btn-open-discharge" data-digestor-id="<%= d.id %>">Registrar Descarga</button>
+                <% } %>
               </div>
             </div>
-          <% }); %>
+          <% }) %>
         <% } %>
       </div>
     </div>
@@ -64,6 +85,12 @@
     </div>
   </div>
 
+  <script>
+    window.__OPERADOR_DATA__ = {
+      usuario: <%- JSON.stringify(usuario || null) %>,
+      digestores: <%- JSON.stringify(digestores || []) %>
+    };
+  </script>
   <script src="/js/operador.js"></script>
 </body>
 </html>
