@@ -1,27 +1,19 @@
-<!-- login.ejs -->
 <!doctype html>
 <html>
 <head>
   <meta charset="utf-8" />
   <title>Login — Campo do Gado</title>
   <link rel="stylesheet" href="/css/style.css">
-  <style>
-    /* pequeno style override para login card (centrar) */
-    .login-wrap { display:flex; align-items:center; justify-content:center; min-height:80vh; }
-    .login-card { width:420px; padding:28px; border-radius:14px; text-align:center; background: rgba(255,255,255,0.06); border:1px solid #ffffff22; }
-    .login-card input { background:#fff; color:#222; border-radius:8px; padding:12px; }
-    .login-title { font-size:22px; margin-bottom:18px; color:#fff; }
-    .alert { margin-bottom:12px; }
-  </style>
 </head>
 <body>
   <div class="top-bar">
     <div>Controle Industrial de Reciclagem</div>
     <div><button class="theme-toggle" type="button" data-theme-toggle>🌙 Escuro</button></div>
   </div>
-  <div class="container login-wrap">
-    <div class="login-card">
-      <div class="login-title">Acesso ao Sistema</div>
+
+  <div class="container auth-wrap">
+    <div class="card auth-card">
+      <div class="auth-title">Acesso ao Sistema</div>
 
       <% if (typeof erro !== 'undefined' && erro) { %>
         <div class="alert"><%= erro %></div>
@@ -30,16 +22,19 @@
       <form method="POST" action="/login">
         <label>Usuário ou e-mail</label>
         <input name="identifier" placeholder="Digite usuário ou e-mail" required>
+
         <label>Senha</label>
         <input name="password" type="password" placeholder="Digite sua senha" required>
-        <div style="margin-top:12px;">
+
+        <div class="auth-actions">
           <button class="btn btn-green btn-full" type="submit">Entrar</button>
         </div>
       </form>
 
-      <div style="margin-top:12px; color:#e9f7ee; font-size:13px;">Layout industrial corporativo • idioma PT-BR</div>
+      <div class="auth-footer">Layout industrial corporativo • idioma PT-BR</div>
     </div>
   </div>
+
   <script src="/js/theme.js"></script>
 </body>
 </html>

@@ -1,19 +1,34 @@
-<div class="col-md-4 mx-auto">
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Login Operador — Campo do Gado</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="top-bar">
+    <div>Controle Industrial de Reciclagem</div>
+    <div><button class="theme-toggle" type="button" data-theme-toggle>🌙 Escuro</button></div>
+  </div>
 
-<h3 class="mb-3 text-center">Login Operador</h3>
+  <div class="container auth-wrap">
+    <div class="card auth-card">
+      <div class="auth-title">Login Operador</div>
 
-<form method="POST" action="/login/operador">
-    <div class="mb-3">
-        <label class="form-label">E-mail</label>
-        <input type="email" class="form-control" name="email">
+      <form method="POST" action="/login/operador">
+        <label>E-mail</label>
+        <input type="email" name="email" placeholder="Digite seu e-mail" required>
+
+        <label>Senha</label>
+        <input type="password" name="senha" placeholder="Digite sua senha" required>
+
+        <div class="auth-actions">
+          <button class="btn btn-green btn-full" type="submit">Entrar</button>
+        </div>
+      </form>
     </div>
+  </div>
 
-    <div class="mb-3">
-        <label class="form-label">Senha</label>
-        <input type="password" class="form-control" name="senha">
-    </div>
-
-    <button class="btn btn-primary w-100">Entrar</button>
-</form>
-
-</div>
+  <script src="/js/theme.js"></script>
+</body>
+</html>

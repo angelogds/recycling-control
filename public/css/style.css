@@ -323,3 +323,35 @@ label {
         grid-template-columns: 1fr;
     }
 }
+
+/* -----------------------
+   AUTENTICAÇÃO (LOGIN)
+-------------------------*/
+.auth-wrap {
+    min-height: calc(100vh - 110px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 420px;
+    text-align: center;
+}
+
+.auth-title {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 18px;
+}
+
+.auth-actions {
+    margin-top: 12px;
+}
+
+.auth-footer {
+    margin-top: 12px;
+    color: #e9f7ee;
+    font-size: 13px;
+}
