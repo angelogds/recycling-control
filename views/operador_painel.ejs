@@ -35,27 +35,8 @@
 
       <section class="vehicles-section">
         <h2>Veículos no Pátio</h2>
-        <p class="section-meta"><strong>3 veículo(s)</strong> • 80,0 toneladas</p>
-        <div class="vehicles-grid">
-          <article class="vehicle-card glass-surface">
-            <span class="vehicle-number">1</span>
-            <h3>F20</h3>
-            <p class="vehicle-weight">⚖ 60t</p>
-            <button class="vehicle-action" type="button">Descarregar</button>
-          </article>
-          <article class="vehicle-card glass-surface">
-            <span class="vehicle-number">2</span>
-            <h3>FROTA-002</h3>
-            <p class="vehicle-weight">⚖ 10t</p>
-            <button class="vehicle-action" type="button">Descarregar</button>
-          </article>
-          <article class="vehicle-card glass-surface">
-            <span class="vehicle-number">3</span>
-            <h3>FROTA-001</h3>
-            <p class="vehicle-weight">⚖ 10t</p>
-            <button class="vehicle-action" type="button">Descarregar</button>
-          </article>
-        </div>
+        <p class="section-meta" id="vehiclesMeta"><strong>0 veículo(s)</strong> • 0,0 toneladas</p>
+        <div class="vehicles-grid" id="vehiclesGrid"></div>
       </section>
 
       <section class="digestores-section">
@@ -89,7 +70,8 @@
   <script>
     window.__OPERADOR_DATA__ = {
       usuario: <%- JSON.stringify(usuario || null) %>,
-      digestores: <%- JSON.stringify(digestores || []) %>
+      digestores: <%- JSON.stringify(digestores || []) %>,
+      entries: []
     };
   </script>
   <script src="/js/theme.js"></script>
