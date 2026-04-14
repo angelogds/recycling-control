@@ -60,7 +60,11 @@
 
       <section class="digestores-section">
         <h2>Gestão dos Digestores</h2>
-        <div class="digestores-grid" id="digestorGrid"></div>
+        <div class="digestores-grid" id="digestorGrid">
+          <% if (!digestores || digestores.length === 0) { %>
+            <div class="alert">Nenhum digestor cadastrado.</div>
+          <% } %>
+        </div>
       </section>
     </main>
   </div>

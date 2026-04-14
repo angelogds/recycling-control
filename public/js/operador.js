@@ -4,12 +4,6 @@
 const initialData = window.__OPERADOR_DATA__ || {};
 let digestoresState = Array.isArray(initialData.digestores) ? initialData.digestores : [];
 let tovasState = [];
-const fallbackDigestores = [
-  { id: 1, nome: "Digestor 1", capacidade_tn: 20, status: "waiting_discharge" },
-  { id: 2, nome: "Digestor 2", capacidade_tn: 20, status: "waiting_discharge" },
-  { id: 3, nome: "Digestor 3", capacidade_tn: 25, status: "waiting_discharge" },
-  { id: 4, nome: "Digestor 4", capacidade_tn: 25, status: "waiting_discharge" }
-];
 
 const digestorGrid = document.getElementById("digestorGrid");
 const dischargeModal = document.getElementById("dischargeModal");
@@ -102,14 +96,15 @@ function renderDigestores() {
   if (!digestorGrid) return;
 
   if (!digestoresState.length) {
-    digestoresState = fallbackDigestores;
+    digestorGrid.innerHTML = '<div class="alert">Nenhum digestor cadastrado.</div>';
+    return;
   }
 
   digestorGrid.innerHTML = digestoresState.map((d, index) => {
     const vm = digestorViewModel(d, index);
-    const ciclos = Number(d.current_cycle?.id || [8, 4, 2, 3][index] || index + 1);
-    const triturado = d.current_tritura?.toneladas_trituradas || d.current_tritura?.toneladas_solicitadas || ["5m", "15m", "419m", "14m"][index] || `${5 + index}m`;
-    const processado = d.current_cycle?.toneladas_processadas || ["17484m", "34885m", "69752m", "46503m"][index] || `${Math.round((Number(d.capacidade_tn || 8) * 2185))}m`;
+    const ciclos = Number(d.current_cycle?.id || index + 1);
+    const triturado = d.current_tritura?.toneladas_trituradas || d.current_tritura?.toneladas_solicitadas || `${5 + index}m`;
+    const processado = d.current_cycle?.toneladas_processadas || `${Math.round((Number(d.capacidade_tn || 8) * 2185))}m`;
 
     return `
       <article class="digestor-card" data-id="${d.id}">
