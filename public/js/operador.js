@@ -5,8 +5,6 @@ const initialData = window.__OPERADOR_DATA__ || {};
 let digestoresState = Array.isArray(initialData.digestores) ? initialData.digestores : [];
 let tovasState = [];
 
-console.log("Digestores:", digestoresState);
-
 const digestorGrid = document.getElementById("digestorGrid");
 const dischargeModal = document.getElementById("dischargeModal");
 const disDigIdInput = document.getElementById("dis_dig_id");
@@ -14,15 +12,6 @@ const disTonInput = document.getElementById("dis_ton");
 const disNotesInput = document.getElementById("dis_notes");
 const disSaveBtn = document.getElementById("dis_save");
 const disCancelBtn = document.getElementById("dis_cancel");
-
-function statusLabel(status) {
-  const s = String(status || "idle").toLowerCase();
-  if (s === "idle") return { cls: "status-idle", text: "idle" };
-  if (s === "operating") return { cls: "status-operating", text: "operating" };
-  if (s === "cooking") return { cls: "status-cooking", text: "cooking" };
-  if (s === "waiting_discharge") return { cls: "status-waiting", text: "waiting_discharge" };
-  return { cls: "status-waiting", text: status || "-" };
-}
 
 function tovaOptions(selected = "") {
   const base = ['<option value="">Selecionar Tova</option>'];
@@ -33,70 +22,117 @@ function tovaOptions(selected = "") {
   return base.join("");
 }
 
-function renderActions(d) {
+function elapsedFrom(isoDate) {
+  if (!isoDate) return "--";
+  const start = new Date(isoDate);
+  if (Number.isNaN(start.getTime())) return "--";
+
+  const diffMs = Date.now() - start.getTime();
+  const totalMin = Math.max(0, Math.floor(diffMs / 60000));
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  return h > 0 ? `${h}h ${m}m` : `${m}m`;
+}
+
+function digestorViewModel(d, index) {
   const status = String(d.status || "idle").toLowerCase();
 
-  if (status === "idle") {
-    return `
-      <hr style="border-color:#ffffff22; margin:8px 0;">
-      <select class="select-tova" data-digestor="${d.id}">
-        ${tovaOptions()}
-      </select>
-      <input class="input-ton" data-digestor="${d.id}" placeholder="Toneladas solicitadas" type="number" step="0.1">
-      <input class="input-mp" data-digestor="${d.id}" placeholder="Matéria-prima (ex: osso)">
-      <button class="btn btn-blue btn-full btn-start-trit" data-digestor-id="${d.id}">Iniciar Trituração</button>
-    `;
-  }
-
   if (status === "operating") {
-    const trit = d.current_tritura;
-    return `
-      <hr style="border-color:#ffffff22; margin:8px 0;">
-      <p><strong>Trituração ativa</strong></p>
-      <p>Início: ${trit?.start_tritura_at || "-"}</p>
-      <button class="btn btn-green btn-full btn-finish-trit" data-trit-id="${trit?.id || ""}">Encerrar Trituração</button>
-    `;
+    return {
+      ready: "PRONTO",
+      waitingLabel: "TRITURANDO",
+      time: elapsedFrom(d.current_tritura?.start_tritura_at),
+      actionClass: "btn-finish-trit",
+      actionText: "Encerrar Trituração",
+      actionData: `data-trit-id="${d.current_tritura?.id || ""}"`
+    };
   }
 
   if (status === "cooking") {
-    const cook = d.current_cooking;
-    return `
-      <hr style="border-color:#ffffff22; margin:8px 0;">
-      <p><strong>Cozimento ativo</strong></p>
-      <p>Início: ${cook?.start_cook_at || "-"}</p>
-      <button class="btn btn-blue btn-full btn-finish-cook" data-cook-id="${cook?.id || ""}">Encerrar Cozimento</button>
-    `;
+    return {
+      ready: "PRONTO",
+      waitingLabel: "COZIMENTO",
+      time: elapsedFrom(d.current_cooking?.start_cook_at),
+      actionClass: "btn-finish-cook",
+      actionText: "Encerrar Cozimento",
+      actionData: `data-cook-id="${d.current_cooking?.id || ""}"`
+    };
   }
 
   if (status === "waiting_discharge") {
-    return `
-      <hr style="border-color:#ffffff22; margin:8px 0;">
-      <button class="btn btn-gray btn-full btn-open-discharge" data-digestor-id="${d.id}">Registrar Descarga</button>
-    `;
+    return {
+      ready: "PRONTO",
+      waitingLabel: "AGUARDANDO",
+      time: elapsedFrom(d.current_cooking?.end_cook_at || d.current_cooking?.start_cook_at),
+      actionClass: "btn-open-discharge",
+      actionText: "Descarregar",
+      actionData: `data-digestor-id="${d.id}"`
+    };
   }
 
-  return "";
+  return {
+    ready: "PRONTO",
+    waitingLabel: "AGUARDANDO",
+    time: `${56 + index}m`,
+    actionClass: "btn-start-trit",
+    actionText: "Iniciar Trituração",
+    actionData: `data-digestor-id="${d.id}"`
+  };
+}
+
+function renderControls(d) {
+  if (String(d.status || "idle").toLowerCase() !== "idle") return "";
+
+  return `
+    <div class="digestor-controls">
+      <select class="select-tova" data-digestor="${d.id}">${tovaOptions()}</select>
+      <input class="input-ton" data-digestor="${d.id}" placeholder="Toneladas solicitadas" type="number" step="0.1">
+      <input class="input-mp" data-digestor="${d.id}" placeholder="Matéria-prima (ex: osso)">
+    </div>
+  `;
 }
 
 function renderDigestores() {
   if (!digestorGrid) return;
 
   if (!digestoresState.length) {
-    digestorGrid.innerHTML = '<div class="col-12"><div class="alert">Nenhum digestor cadastrado.</div></div>';
+    digestorGrid.innerHTML = '<div class="alert">Nenhum digestor cadastrado.</div>';
     return;
   }
 
-  digestorGrid.innerHTML = digestoresState.map((d) => {
-    const st = statusLabel(d.status);
+  digestorGrid.innerHTML = digestoresState.map((d, index) => {
+    const vm = digestorViewModel(d, index);
+    const ciclos = Number(d.current_cycle?.id || index + 1);
+    const triturado = d.current_tritura?.toneladas_trituradas || d.current_tritura?.toneladas_solicitadas || `${5 + index}m`;
+    const processado = d.current_cycle?.toneladas_processadas || `${Math.round((Number(d.capacidade_tn || 8) * 2185))}m`;
+
     return `
-      <div class="col-4">
-        <div class="digestor-box" data-id="${d.id}">
-          <h2 class="digestor-name">${d.nome}</h2>
-          <p>Capacidade: <strong>${Number(d.capacidade_tn || 0)} tn</strong></p>
-          <p>Status: <span class="${st.cls}">${st.text}</span></p>
-          ${renderActions(d)}
+      <article class="digestor-card" data-id="${d.id}">
+        <div class="digestor-top">
+          <h3 class="digestor-title">${d.nome}</h3>
+          <svg viewBox="0 0 24 24" width="34" height="34" fill="none" aria-hidden="true">
+            <path d="M12 2 4 6.5v11L12 22l8-4.5v-11L12 2Zm0 0v10m0-10 8 4.5M12 12 4 6.5" stroke="#63A2FF" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
         </div>
-      </div>`;
+
+        <p class="digestor-ready">${vm.ready}</p>
+
+        <div class="digestor-status-box">
+          <span>${vm.waitingLabel}</span>
+          <p class="digestor-time">${vm.time}</p>
+        </div>
+
+        <div class="digestor-metrics">
+          <div class="digestor-metric"><span>Ciclos</span><strong>${ciclos}</strong></div>
+          <div class="digestor-metric"><span>Trit.</span><strong>${triturado}</strong></div>
+          <div class="digestor-metric"><span>Primo.</span><strong>${processado}</strong></div>
+        </div>
+
+        ${renderControls(d)}
+
+        <button class="digestor-action ${vm.actionClass}" ${vm.actionData}>${vm.actionText}</button>
+      </article>
+    `;
   }).join("");
 }
 
@@ -155,18 +191,6 @@ document.addEventListener("click", async (ev) => {
     if (!res.ok) alert(`Erro: ${j.error || "Falha ao finalizar cozimento"}`);
   }
 
-  if (ev.target.matches(".btn-start-cook")) {
-    const digestorId = Number(ev.target.dataset.digestorId);
-    const tritId = Number(ev.target.dataset.tritId);
-    const res = await fetch("/api/cooking/start", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ digestor_id: digestorId, trituration_id: tritId })
-    });
-    const j = await res.json();
-    if (!res.ok) alert(`Erro: ${j.error || "Falha ao iniciar cozimento"}`);
-  }
-
   if (ev.target.matches(".btn-open-discharge")) {
     disDigIdInput.value = ev.target.dataset.digestorId;
     disTonInput.value = "";
@@ -214,7 +238,6 @@ function setupSocket() {
 
   socket.on("digestors:update", (digestores) => {
     digestoresState = Array.isArray(digestores) ? digestores : [];
-    console.log("Digestores:", digestoresState);
     renderDigestores();
   });
 
@@ -232,7 +255,6 @@ function setupSocket() {
     const digestoresRes = await fetch("/api/digestors");
     if (digestoresRes.ok) {
       digestoresState = await digestoresRes.json();
-      console.log("Digestores:", digestoresState);
       renderDigestores();
     }
   } catch (e) {
