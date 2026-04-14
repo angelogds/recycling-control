@@ -272,6 +272,11 @@ app.get("/operador/historico", ensureAuth, (req, res) => {
   res.render("operador_historico", { usuario: req.session.user, title: "Histórico de Ciclos" });
 });
 
+// dashboard view
+app.get("/dashboard", ensureAuth, (req, res) => {
+  res.render("dashboard", { usuario: req.session.user, title: "Dashboard" });
+});
+
 // portaria views
 app.get("/portaria", ensureAuth, ensureRole("portaria"), (req, res) => {
   res.render("portaria_painel", { usuario: req.session.user });
@@ -429,8 +434,15 @@ app.post("/api/digestor/discharge", ensureAuth, (req, res) => {
 
 // Cycles history
 app.get("/api/cycles/all", ensureAuth, (req, res) => {
-  const sql = `SELECT cy.id, cy.digestor_id, cy.trituration_id, cy.cooking_id, cy.started_at, cy.ended_at, cy.status, d.nome AS digestor_name
-               FROM cycles cy LEFT JOIN digestors d ON cy.digestor_id = d.id ORDER BY cy.id DESC LIMIT 200`;
+  const sql = `SELECT cy.id, cy.digestor_id, cy.trituration_id, cy.cooking_id, cy.started_at, cy.ended_at, cy.status,
+                      d.nome AS digestor_name,
+                      tc.start_tritura_at, tc.end_tritura_at, tc.toneladas_trituradas,
+                      cc.start_cook_at, cc.end_cook_at
+               FROM cycles cy
+               LEFT JOIN digestors d ON cy.digestor_id = d.id
+               LEFT JOIN trituration_cycles tc ON cy.trituration_id = tc.id
+               LEFT JOIN cooking_cycles cc ON cy.cooking_id = cc.id
+               ORDER BY cy.id DESC LIMIT 200`;
   db.all(sql, [], (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
     res.json(rows || []);
