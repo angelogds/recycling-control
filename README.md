@@ -14,3 +14,6 @@ A aplicação roda em `http://localhost:3002` por padrão.
 
 ## Estrutura
 /...
+
+## Documento base do processo
+- Consulte `docs/BASE_SISTEMA_RECICLAGEM.md` para a especificação funcional detalhada do fluxo portaria → tova → trituração → cozimento → encerramento.
