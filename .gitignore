@@ -1,9 +1,9 @@
 node_modules/
 .env
-database.sqlite
-public/reports/
-
--e 
-# Environment files
 *.env
 *.env.*
+!.env.example
+database.sqlite
+sessions.sqlite
+public/reports/*
+!public/reports/.gitkeep
