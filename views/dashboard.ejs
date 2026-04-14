@@ -3,31 +3,87 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Dashboard - Produção</title>
+  <title>Dashboard - Produtividade em Tempo Real</title>
   <link rel="stylesheet" href="/css/style.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
   <div class="top-bar">
-    Dashboard - Produção
+    Dashboard de Produtividade em Tempo Real
     <div>
       <a href="/operador/painel" style="color:#fff;margin-right:12px">Painel</a>
       <a href="/logout" style="color:#fff">Sair</a>
     </div>
   </div>
 
-  <div class="container" style="max-width:1100px;margin:22px auto;">
-    <div class="card">
-      <div class="card-title">Produção Diária (Últimos 14 dias)</div>
-      <canvas id="chartProdLine" height="120"></canvas>
+  <div class="container" style="max-width:1200px;margin:22px auto;">
+    <div class="row">
+      <div class="card col-4">
+        <div class="card-title">Meta Diária (toneladas)</div>
+        <div class="metric-value" id="metaDiaria">-</div>
+        <div class="progress-wrap">
+          <div class="progress-bar" id="metaBar"></div>
+        </div>
+        <div class="muted-text" id="metaPercentual">0%</div>
+      </div>
+      <div class="card col-4">
+        <div class="card-title">Throughput Hoje</div>
+        <div class="metric-value" id="throughputHoje">-</div>
+        <div class="muted-text">Total processado no dia</div>
+      </div>
+      <div class="card col-4">
+        <div class="card-title">Ciclos</div>
+        <div class="metric-grid">
+          <div><strong id="ciclosAtivos">-</strong><span>Ativos</span></div>
+          <div><strong id="ciclosFinalizados">-</strong><span>Finalizados hoje</span></div>
+          <div><strong id="entradasHoje">-</strong><span>Entradas hoje</span></div>
+        </div>
+      </div>
     </div>
 
     <div class="row">
       <div class="card col-6">
-        <div class="card-title">Eficiência por Digestor (últimos 30 ciclos)</div>
-        <canvas id="chartEffPie" height="220"></canvas>
+        <div class="card-title">Throughput por Digestor (hoje)</div>
+        <canvas id="chartThroughputDigestor" height="220"></canvas>
       </div>
 
+      <div class="card col-6">
+        <div class="card-title">Ranking por Turno</div>
+        <div class="row controls-row">
+          <div class="col-6">
+            <label for="shiftDate">Data de referência</label>
+            <input id="shiftDate" type="date">
+          </div>
+          <div class="col-6">
+            <label for="shiftSelect">Turno</label>
+            <select id="shiftSelect">
+              <option value="morning">Manhã (06h - 14h)</option>
+              <option value="afternoon">Tarde (14h - 22h)</option>
+              <option value="night">Noite (22h - 06h)</option>
+            </select>
+          </div>
+        </div>
+        <table class="table-premium ranking-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Operador</th>
+              <th>Ciclos</th>
+              <th>Toneladas</th>
+            </tr>
+          </thead>
+          <tbody id="rankingBody">
+            <tr><td colspan="4">Carregando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="card col-6">
+        <div class="card-title">Produção Diária</div>
+        <canvas id="chartProdLine" height="220"></canvas>
+      </div>
       <div class="card col-6">
         <div class="card-title">Tempo médio por etapa (min)</div>
         <canvas id="chartTimeBar" height="220"></canvas>

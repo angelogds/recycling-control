@@ -277,6 +277,103 @@ app.get("/dashboard", ensureAuth, (req, res) => {
   res.render("dashboard", { usuario: req.session.user, title: "Dashboard" });
 });
 
+
+app.get("/api/dashboard/productivity", ensureAuth, (req, res) => {
+  const dateStr = (req.query.date || new Date().toISOString().slice(0, 10));
+  const shift = (req.query.shift || "morning").toLowerCase();
+  const dailyGoalTons = Number(process.env.DAILY_GOAL_TONS || 120);
+
+  function shiftRange(referenceDate, selectedShift) {
+    const [year, month, day] = referenceDate.split("-").map(Number);
+    const start = new Date(Date.UTC(year, month - 1, day, 6, 0, 0));
+    const end = new Date(Date.UTC(year, month - 1, day, 14, 0, 0));
+
+    if (selectedShift === "afternoon") {
+      start.setUTCHours(14, 0, 0, 0);
+      end.setUTCHours(22, 0, 0, 0);
+      return { startIso: start.toISOString(), endIso: end.toISOString() };
+    }
+
+    if (selectedShift === "night") {
+      start.setUTCHours(22, 0, 0, 0);
+      end.setUTCDate(end.getUTCDate() + 1);
+      end.setUTCHours(6, 0, 0, 0);
+      return { startIso: start.toISOString(), endIso: end.toISOString() };
+    }
+
+    return { startIso: start.toISOString(), endIso: end.toISOString() };
+  }
+
+  const { startIso, endIso } = shiftRange(dateStr, shift);
+
+  db.get("SELECT COALESCE(SUM(toneladas_trituradas), 0) AS toneladas_hoje FROM trituration_cycles WHERE date(end_tritura_at) = date('now')", [], (tonsErr, tonsRow) => {
+    if (tonsErr) return res.status(500).json({ error: tonsErr.message });
+
+    db.get("SELECT COUNT(*) AS entradas_hoje FROM entries WHERE date(arrival_at) = date('now')", [], (entriesErr, entriesRow) => {
+      if (entriesErr) return res.status(500).json({ error: entriesErr.message });
+
+      db.get("SELECT COUNT(*) AS ciclos_ativos FROM cycles WHERE status = 'in_progress'", [], (activeErr, activeRow) => {
+        if (activeErr) return res.status(500).json({ error: activeErr.message });
+
+        db.get("SELECT COUNT(*) AS ciclos_finalizados_hoje FROM cycles WHERE status = 'finished' AND date(ended_at) = date('now')", [], (finishedErr, finishedRow) => {
+          if (finishedErr) return res.status(500).json({ error: finishedErr.message });
+
+          db.all(`SELECT d.id, d.nome,
+                         COALESCE(SUM(CASE WHEN date(tc.end_tritura_at) = date('now') THEN tc.toneladas_trituradas ELSE 0 END), 0) AS toneladas_hoje,
+                         COALESCE(COUNT(DISTINCT CASE WHEN date(cy.ended_at) = date('now') THEN cy.id END), 0) AS ciclos_hoje
+                  FROM digestors d
+                  LEFT JOIN trituration_cycles tc ON tc.digestor_id = d.id
+                  LEFT JOIN cycles cy ON cy.digestor_id = d.id
+                  GROUP BY d.id, d.nome
+                  ORDER BY d.id`, [], (digestorErr, digestorRows) => {
+            if (digestorErr) return res.status(500).json({ error: digestorErr.message });
+
+            db.all(`SELECT
+                      COALESCE(u.nome, u.email, 'Operador #' || tc.operator_id) AS operador,
+                      COUNT(tc.id) AS ciclos,
+                      COALESCE(SUM(tc.toneladas_trituradas), 0) AS toneladas
+                    FROM trituration_cycles tc
+                    LEFT JOIN users u ON u.id = tc.operator_id
+                    WHERE tc.start_tritura_at >= ? AND tc.start_tritura_at < ?
+                    GROUP BY tc.operator_id, u.nome, u.email
+                    ORDER BY toneladas DESC, ciclos DESC
+                    LIMIT 10`, [startIso, endIso], (rankingErr, rankingRows) => {
+              if (rankingErr) return res.status(500).json({ error: rankingErr.message });
+
+              const toneladasHoje = Number(tonsRow?.toneladas_hoje || 0);
+              const goalProgress = dailyGoalTons > 0 ? Math.min(100, (toneladasHoje / dailyGoalTons) * 100) : 0;
+
+              res.json({
+                meta_diaria_tn: dailyGoalTons,
+                progresso_meta_percentual: Number(goalProgress.toFixed(1)),
+                resumo: {
+                  entradas_hoje: Number(entriesRow?.entradas_hoje || 0),
+                  toneladas_hoje: Number(toneladasHoje.toFixed(2)),
+                  ciclos_ativos: Number(activeRow?.ciclos_ativos || 0),
+                  ciclos_finalizados_hoje: Number(finishedRow?.ciclos_finalizados_hoje || 0)
+                },
+                throughput_por_digestor: (digestorRows || []).map((row) => ({
+                  digestor_id: row.id,
+                  digestor_nome: row.nome,
+                  toneladas_hoje: Number(Number(row.toneladas_hoje || 0).toFixed(2)),
+                  ciclos_hoje: Number(row.ciclos_hoje || 0)
+                })),
+                ranking_turno: rankingRows || [],
+                turno: {
+                  referencia: dateStr,
+                  nome: shift,
+                  inicio: startIso,
+                  fim: endIso
+                }
+              });
+            });
+          });
+        });
+      });
+    });
+  });
+});
+
 // portaria views
 app.get("/portaria", ensureAuth, ensureRole("portaria"), (req, res) => {
   res.render("portaria_painel", { usuario: req.session.user });

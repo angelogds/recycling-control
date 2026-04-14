@@ -229,3 +229,68 @@ label {
 @media(max-width: 780px) {
     .col-4, .col-6 { width: 100%; }
 }
+
+/* -----------------------
+   DASHBOARD PRODUTIVIDADE
+-------------------------*/
+.metric-value {
+    font-size: 34px;
+    font-weight: 700;
+    margin-top: 4px;
+    margin-bottom: 10px;
+}
+
+.metric-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+.metric-grid div {
+    background: rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 10px;
+    text-align: center;
+}
+
+.metric-grid strong {
+    display: block;
+    font-size: 24px;
+}
+
+.metric-grid span,
+.muted-text {
+    color: #dff7e7;
+    font-size: 14px;
+}
+
+.progress-wrap {
+    width: 100%;
+    height: 10px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.2);
+    overflow: hidden;
+    margin: 8px 0;
+}
+
+.progress-bar {
+    width: 0;
+    height: 100%;
+    background: linear-gradient(90deg, #11c15d, #4ed88b);
+    transition: width .3s ease;
+}
+
+.controls-row {
+    align-items: end;
+}
+
+.ranking-table td,
+.ranking-table th {
+    text-align: left;
+}
+
+@media(max-width: 980px) {
+    .metric-grid {
+        grid-template-columns: 1fr;
+    }
+}
