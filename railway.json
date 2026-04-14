@@ -1,5 +1,8 @@
 {
   "$schema": "https://railway.app/railway.schema.json",
+  "build": {
+    "buildCommand": "npm install --omit=dev"
+  },
   "deploy": {
     "healthcheckPath": "/health"
   }
