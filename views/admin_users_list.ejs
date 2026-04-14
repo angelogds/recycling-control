@@ -9,7 +9,10 @@
 <body>
   <div class="top-bar">
     <div>Admin • Usuários</div>
-    <div><a href="/operador/painel">Voltar</a></div>
+    <div style="display:flex; gap:10px; align-items:center;">
+      <button class="theme-toggle" type="button" data-theme-toggle>🌙 Escuro</button>
+      <a href="/operador/painel">Voltar</a>
+    </div>
   </div>
 
   <div class="container">
@@ -18,19 +21,32 @@
       <div style="margin-bottom:12px;">
         <a class="btn btn-green" href="/admin/users/new">Novo Usuário</a>
       </div>
+      <div class="row" style="margin-bottom: 14px;">
+        <div class="col-6">
+          <div class="card" style="margin-bottom:0;">
+            <strong>Gestores (admin):</strong> <%= totalGestores %>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="card" style="margin-bottom:0;">
+            <strong>Total de digestores:</strong> <%= totalDigestores %>
+          </div>
+        </div>
+      </div>
 
       <table class="table-premium">
-        <thead><tr><th>#</th><th>Username</th><th>Nome</th><th>Role</th><th>Ações</th></tr></thead>
+        <thead><tr><th>#</th><th>Username</th><th>E-mail</th><th>Nome</th><th>Role</th><th>Ações</th></tr></thead>
         <tbody>
           <% if (!users || users.length === 0) { %>
-            <tr><td colspan="5">Nenhum usuário cadastrado</td></tr>
+            <tr><td colspan="6">Nenhum usuário cadastrado</td></tr>
           <% } else { %>
             <% users.forEach(u => { %>
               <tr>
                 <td><%= u.id %></td>
                 <td><%= u.username %></td>
+                <td><%= u.email || '-' %></td>
                 <td><%= u.nome %></td>
-                <td><%= u.role %></td>
+                <td><%= u.role === 'admin' ? 'administrativo' : u.role %></td>
                 <td>
                   <a class="btn btn-gray" href="/admin/users/<%= u.id %>/edit">Editar</a>
                   <form style="display:inline" action="/admin/users/<%= u.id %>/delete" method="POST" onsubmit="return confirm('Excluir usuário?');">
@@ -44,5 +60,6 @@
       </table>
     </div>
   </div>
+  <script src="/js/theme.js"></script>
 </body>
 </html>

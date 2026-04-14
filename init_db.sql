@@ -4,6 +4,7 @@
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT UNIQUE NOT NULL,
+    email TEXT UNIQUE,
     nome TEXT,
     role TEXT NOT NULL DEFAULT 'operador',
     password TEXT NOT NULL
@@ -97,4 +98,3 @@ CREATE TABLE IF NOT EXISTS digestor_discharges (
     notes TEXT,
     discharged_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
-

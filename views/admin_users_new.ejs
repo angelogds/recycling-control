@@ -9,7 +9,10 @@
 <body>
   <div class="top-bar">
     <div>Admin • Novo Usuário</div>
-    <div><a href="/admin/users">Voltar</a></div>
+    <div style="display:flex; gap:10px; align-items:center;">
+      <button class="theme-toggle" type="button" data-theme-toggle>🌙 Escuro</button>
+      <a href="/admin/users">Voltar</a>
+    </div>
   </div>
 
   <div class="container">
@@ -22,13 +25,15 @@
         <input name="username" required>
         <label>Nome</label>
         <input name="nome">
+        <label>E-mail</label>
+        <input name="email" type="email" placeholder="usuario@empresa.com">
         <label>Senha</label>
         <input name="password" type="password" required>
         <label>Role</label>
         <select name="role">
           <option value="operador">Operador</option>
           <option value="portaria">Portaria</option>
-          <option value="admin">Admin</option>
+          <option value="admin">Administrativo</option>
         </select>
 
         <div style="margin-top:12px;">
@@ -37,5 +42,6 @@
       </form>
     </div>
   </div>
+  <script src="/js/theme.js"></script>
 </body>
 </html>
