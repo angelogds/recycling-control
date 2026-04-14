@@ -130,6 +130,44 @@ function ensureUsersColumns() {
   });
 }
 
+function ensureEntriesColumns() {
+  return new Promise((resolve, reject) => {
+    db.all("PRAGMA table_info(entries)", [], (err, columns) => {
+      if (err) return reject(err);
+      const names = new Set((columns || []).map((c) => c.name));
+      const alters = [];
+
+      if (!names.has("yard_at")) alters.push("ALTER TABLE entries ADD COLUMN yard_at TEXT");
+      if (!names.has("start_unload_at")) alters.push("ALTER TABLE entries ADD COLUMN start_unload_at TEXT");
+      if (!names.has("end_unload_at")) alters.push("ALTER TABLE entries ADD COLUMN end_unload_at TEXT");
+
+      function runNext(idx) {
+        if (idx >= alters.length) return resolve();
+        db.run(alters[idx], [], (alterErr) => {
+          if (alterErr) return reject(alterErr);
+          runNext(idx + 1);
+        });
+      }
+
+      runNext(0);
+    });
+  });
+}
+
+function ensureCookingColumns() {
+  return new Promise((resolve, reject) => {
+    db.all("PRAGMA table_info(cooking_cycles)", [], (err, columns) => {
+      if (err) return reject(err);
+      const names = new Set((columns || []).map((c) => c.name));
+      if (names.has("alert_note")) return resolve();
+      db.run("ALTER TABLE cooking_cycles ADD COLUMN alert_note TEXT", [], (alterErr) => {
+        if (alterErr) return reject(alterErr);
+        resolve();
+      });
+    });
+  });
+}
+
 // -------------------- BLOCO 2: AUTH helpers & LOGIN (edit here) ==== ////
 
 // Middleware: garantir autenticação (usa req.session.user)
@@ -249,12 +287,12 @@ function broadcastState() {
   });
 
   // entries (portaria)
-  db.all("SELECT id, truck_plate, toneladas_declared, arrival_at, status FROM entries WHERE status != 'reception_finished' ORDER BY arrival_at DESC LIMIT 50", [], (err, rows) => {
+  db.all("SELECT id, truck_plate, toneladas_declared, arrival_at, yard_at, start_unload_at, end_unload_at, status FROM entries WHERE status IN ('arrived','yard','unloading') ORDER BY arrival_at DESC LIMIT 50", [], (err, rows) => {
     if (err) { console.error("DB error (entries):", err); io.emit("entries:update", []); }
     else io.emit("entries:update", rows || []);
   });
 
-  db.all("SELECT id, truck_plate, toneladas_declared, arrival_at FROM entries WHERE status = 'reception_finished' ORDER BY arrival_at DESC LIMIT 50", [], (err, rows) => {
+  db.all("SELECT id, truck_plate, toneladas_declared, arrival_at, end_unload_at FROM entries WHERE status = 'reception_finished' ORDER BY arrival_at DESC LIMIT 50", [], (err, rows) => {
     if (err) { console.error("DB error (entries finished):", err); io.emit("entries:finished:update", []); }
     else io.emit("entries:finished:update", rows || []);
   });
@@ -409,7 +447,8 @@ app.post("/portaria/chegada", ensureAuth, ensureRole("portaria"), (req, res) => 
   const frota = (req.body.frota || req.body.placa || "").trim();
   const toneladas = req.body.toneladas;
   if (!frota || !toneladas) return res.status(400).send("Frota e toneladas são obrigatórios.");
-  db.run("INSERT INTO entries (truck_plate, toneladas_declared, portaria_user_id) VALUES (?, ?, ?)", [frota, toneladas, req.session.user.id], function (err) {
+  const now = new Date().toISOString();
+  db.run("INSERT INTO entries (truck_plate, toneladas_declared, portaria_user_id, status, yard_at, arrival_at) VALUES (?, ?, ?, 'yard', ?, ?)", [frota, toneladas, req.session.user.id, now, now], function (err) {
     if (err) { console.error("Erro ao inserir entrada:", err); return res.status(500).send("Erro ao registrar chegada."); }
     broadcastState();
     res.redirect("/portaria");
@@ -424,6 +463,51 @@ app.post("/api/entries/:id/finish", ensureAuth, ensureRole("portaria"), (req, re
     broadcastState();
     return res.json({ ok: true });
   });
+});
+
+app.get("/api/entries/yard", ensureAuth, (req, res) => {
+  db.all(
+    "SELECT id, truck_plate, toneladas_declared, arrival_at, yard_at, start_unload_at, end_unload_at, status FROM entries WHERE status IN ('arrived','yard','unloading') ORDER BY arrival_at DESC LIMIT 100",
+    [],
+    (err, rows) => {
+      if (err) return res.status(500).json({ error: err.message });
+      return res.json(rows || []);
+    }
+  );
+});
+
+app.post("/api/entries/:id/start-unload", ensureAuth, (req, res) => {
+  const id = Number(req.params.id);
+  if (!id) return res.status(400).json({ error: "ID inválido" });
+
+  const now = new Date().toISOString();
+  db.run(
+    "UPDATE entries SET status = 'unloading', start_unload_at = COALESCE(start_unload_at, ?) WHERE id = ? AND status IN ('arrived','yard','unloading')",
+    [now, id],
+    function (err) {
+      if (err) return res.status(500).json({ error: err.message });
+      if (this.changes === 0) return res.status(404).json({ error: "Entrada não encontrada ou já finalizada." });
+      broadcastState();
+      return res.json({ ok: true, started_at: now });
+    }
+  );
+});
+
+app.post("/api/entries/:id/finish-unload", ensureAuth, (req, res) => {
+  const id = Number(req.params.id);
+  if (!id) return res.status(400).json({ error: "ID inválido" });
+
+  const now = new Date().toISOString();
+  db.run(
+    "UPDATE entries SET status = 'reception_finished', end_unload_at = ?, start_unload_at = COALESCE(start_unload_at, ?) WHERE id = ? AND status IN ('arrived','yard','unloading')",
+    [now, now, id],
+    function (err) {
+      if (err) return res.status(500).json({ error: err.message });
+      if (this.changes === 0) return res.status(404).json({ error: "Entrada não encontrada ou já finalizada." });
+      broadcastState();
+      return res.json({ ok: true, finished_at: now });
+    }
+  );
 });
 
 // Tovas list / edit
@@ -496,10 +580,22 @@ app.post("/api/trituracao/finish", ensureAuth, (req, res) => {
   if (!trituration_id) return res.status(400).json({ error: 'Dados incompletos' });
 
   const now = new Date().toISOString();
-  db.run(`UPDATE trituration_cycles SET end_tritura_at = ?, toneladas_trituradas = ?, status = 'finished' WHERE id = ?`, [now, toneladas_trituradas || 0, trituration_id], function (err) {
-    if (err) { console.error('Err finish trit:', err); return res.status(500).json({ error: err.message }); }
-    broadcastState();
-    return res.json({ ok: true, finished_at: now });
+  db.get("SELECT digestor_id FROM trituration_cycles WHERE id = ?", [trituration_id], (findErr, trit) => {
+    if (findErr) return res.status(500).json({ error: findErr.message });
+    if (!trit) return res.status(404).json({ error: "Trituração não encontrada" });
+
+    db.run(`UPDATE trituration_cycles SET end_tritura_at = ?, toneladas_trituradas = ?, status = 'finished' WHERE id = ?`, [now, toneladas_trituradas || 0, trituration_id], function (err) {
+      if (err) { console.error('Err finish trit:', err); return res.status(500).json({ error: err.message }); }
+
+      db.get("SELECT id FROM cooking_cycles WHERE trituration_id = ? AND status IN ('created','started') LIMIT 1", [trituration_id], (cookErr, row) => {
+        if (cookErr) return res.status(500).json({ error: cookErr.message });
+        if (row) {
+          broadcastState();
+          return res.json({ ok: true, finished_at: now, cooking_already_started: true });
+        }
+        return startCooking(trit.digestor_id, trituration_id, req.session.user, res);
+      });
+    });
   });
 });
 
@@ -567,6 +663,19 @@ app.post("/api/digestor/discharge", ensureAuth, (req, res) => {
       broadcastState();
       res.json({ discharge_id: this.lastID });
     });
+  });
+});
+
+app.post("/api/cooking/:id/alert-note", ensureAuth, (req, res) => {
+  const id = Number(req.params.id);
+  const note = String(req.body.note || "").trim();
+  if (!id) return res.status(400).json({ error: "cooking_id inválido" });
+  if (!note) return res.status(400).json({ error: "Descrição é obrigatória." });
+
+  db.run("UPDATE cooking_cycles SET alert_note = ? WHERE id = ?", [note, id], function (err) {
+    if (err) return res.status(500).json({ error: err.message });
+    broadcastState();
+    return res.json({ ok: true });
   });
 });
 
@@ -998,6 +1107,8 @@ function seedFactoryDefaultsIfNeeded() {
   try {
     await openDatabase();
     await ensureUsersColumns();
+    await ensureEntriesColumns();
+    await ensureCookingColumns();
     adminSeedStatus = await seedAdminIfNeeded();
     factorySeedStatus = await seedFactoryDefaultsIfNeeded();
   } catch (err) {
