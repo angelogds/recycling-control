@@ -15,17 +15,29 @@
 
   <div class="container">
     <div class="card">
-      <div class="card-title">Chegadas de Caminhões</div>
+      <div class="card-title">Entradas Recentes de Subprodutos</div>
       <div style="margin-bottom:12px;">
         <a class="btn btn-green" href="/portaria/chegada">Registrar Chegada</a>
       </div>
 
       <table class="table-premium">
         <thead>
-          <tr><th>Placa</th><th>Toneladas declaradas</th><th>Chegada</th><th>Status</th></tr>
+          <tr><th>Frota</th><th>Toneladas declaradas</th><th>Chegada</th><th>Status</th><th>Ação</th></tr>
         </thead>
         <tbody id="entriesBody">
-          <tr><td colspan="4">Aguardando registros...</td></tr>
+          <tr><td colspan="5">Aguardando registros...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Frotas com Baixa Concluída</div>
+      <table class="table-premium">
+        <thead>
+          <tr><th>Frota</th><th>Toneladas</th><th>Chegada</th></tr>
+        </thead>
+        <tbody id="entriesFinishedBody">
+          <tr><td colspan="3">Nenhuma baixa registrada.</td></tr>
         </tbody>
       </table>
     </div>
@@ -34,21 +46,46 @@
 <script>
   const socket = io();
   const entriesBody = document.getElementById('entriesBody');
+  const entriesFinishedBody = document.getElementById('entriesFinishedBody');
 
   socket.on('entries:update', (rows) => {
     entriesBody.innerHTML = '';
     if (!rows || rows.length === 0) {
-      entriesBody.innerHTML = '<tr><td colspan="4">Nenhuma entrada pendente</td></tr>';
+      entriesBody.innerHTML = '<tr><td colspan="5">Nenhuma entrada pendente</td></tr>';
       return;
     }
     rows.forEach(r => {
       const tr = document.createElement('tr');
-      tr.innerHTML = `<td>${r.truck_plate}</td><td>${r.toneladas_declared||0}</td><td>${r.arrival_at||''}</td><td>${r.status||''}</td>`;
+      tr.innerHTML = `
+        <td>${r.truck_plate}</td>
+        <td>${r.toneladas_declared||0}</td>
+        <td>${r.arrival_at||''}</td>
+        <td>${r.status||''}</td>
+        <td><button class="btn btn-blue btn-mark-finished" data-entry-id="${r.id}">Dar baixa</button></td>`;
       entriesBody.appendChild(tr);
     });
   });
 
-  // request initial state via socket by connecting (server broadcasts on connect)
+  socket.on('entries:finished:update', (rows) => {
+    entriesFinishedBody.innerHTML = '';
+    if (!rows || rows.length === 0) {
+      entriesFinishedBody.innerHTML = '<tr><td colspan="3">Nenhuma baixa registrada.</td></tr>';
+      return;
+    }
+    rows.forEach(r => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${r.truck_plate}</td><td>${r.toneladas_declared||0}</td><td>${r.arrival_at||''}</td>`;
+      entriesFinishedBody.appendChild(tr);
+    });
+  });
+
+  document.addEventListener('click', async (ev) => {
+    if (!ev.target.matches('.btn-mark-finished')) return;
+    const id = ev.target.dataset.entryId;
+    const response = await fetch(`/api/entries/${id}/finish`, { method: 'POST' });
+    const data = await response.json();
+    if (!response.ok) alert(data.error || 'Erro ao dar baixa');
+  });
 </script>
 </body>
 </html>

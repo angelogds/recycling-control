@@ -1,0 +1,95 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin — Relatórios</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="top-bar">
+    <div>Admin • Relatórios Diários</div>
+    <div style="display:flex; gap:12px;">
+      <a href="/admin/users">Configurações</a>
+      <a href="/operador/painel">Voltar</a>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="card">
+      <div class="card-title">Filtro de relatório</div>
+      <div class="row">
+        <div class="col-6">
+          <label>Data</label>
+          <input id="reportDate" type="date" value="<%= defaultDate %>">
+        </div>
+      </div>
+      <div style="display:flex; gap:8px;">
+        <button id="btnLoad" class="btn btn-blue">Atualizar relatório</button>
+        <button id="btnPdf" class="btn btn-green">Gerar PDF</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Resumo do dia</div>
+      <div id="summaryBox">Carregando...</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Digestores e ciclos</div>
+      <div id="digestorsBox">Carregando...</div>
+    </div>
+  </div>
+
+<script>
+const reportDate = document.getElementById('reportDate');
+const summaryBox = document.getElementById('summaryBox');
+const digestorsBox = document.getElementById('digestorsBox');
+
+async function loadReport() {
+  const date = reportDate.value;
+  const res = await fetch(`/api/admin/reports/daily?date=${date}`);
+  const data = await res.json();
+  if (!res.ok) {
+    alert(data.error || 'Erro ao buscar relatório');
+    return;
+  }
+
+  summaryBox.innerHTML = `
+    <p><strong>Data:</strong> ${data.date}</p>
+    <p><strong>Toneladas processadas:</strong> ${data.toneladas_processadas_dia}</p>
+    <p><strong>Frotas utilizadas:</strong> ${data.frotas_utilizadas.length ? data.frotas_utilizadas.join(', ') : 'Nenhuma'}</p>
+  `;
+
+  digestorsBox.innerHTML = '';
+  if (!data.digestores.length) {
+    digestorsBox.innerHTML = '<p>Nenhum digestor cadastrado.</p>';
+    return;
+  }
+
+  data.digestores.forEach((d) => {
+    const wrapper = document.createElement('div');
+    wrapper.style.marginBottom = '18px';
+    const ciclos = (d.ciclos || []).map((c) => `<li>Ciclo ${c.cycle_id}: ${c.tempo_ciclo_min} min (${c.started_at} → ${c.ended_at})</li>`).join('');
+    wrapper.innerHTML = `
+      <h3>${d.nome}</h3>
+      <p><strong>Toneladas:</strong> ${d.toneladas_processadas}</p>
+      <p><strong>Tempo total:</strong> ${d.tempo_total_min} min</p>
+      <p><strong>Total de ciclos:</strong> ${d.ciclos_total}</p>
+      <ul>${ciclos || '<li>Sem ciclos neste dia</li>'}</ul>
+      <hr style="border-color:#ffffff22; margin:8px 0;">
+    `;
+    digestorsBox.appendChild(wrapper);
+  });
+}
+
+document.getElementById('btnLoad').addEventListener('click', loadReport);
+document.getElementById('btnPdf').addEventListener('click', () => {
+  const date = reportDate.value;
+  window.open(`/admin/reports/daily/pdf?date=${date}`, '_blank');
+});
+
+loadReport();
+</script>
+</body>
+</html>
